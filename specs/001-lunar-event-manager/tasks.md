@@ -25,9 +25,9 @@ description: "Task list for Lunar Event Manager Core Engine Implementation"
 
 **Purpose**: Project initialization and basic structure
 
-- [ ] T001 Initialize pure TypeScript project and vitest environment
-- [ ] T002 Configure tsconfig to output framework-agnostic ESM/CJS bundles
-- [ ] T003 [P] Configure strict eslint and prettier rules targeting immutable patterns
+- [x] T001 Initialize pure TypeScript project and vitest environment
+- [x] T002 Configure tsconfig to output framework-agnostic ESM/CJS bundles
+- [x] T003 [P] Configure strict eslint and prettier rules targeting immutable patterns
 
 ---
 
@@ -37,10 +37,10 @@ description: "Task list for Lunar Event Manager Core Engine Implementation"
 
 **⚠️ CRITICAL**: No user story work can begin until this phase is complete
 
-- [ ] T004 Create core domain types (`LunarDate`, `SolarDate`, `LunarEvent`) in `src/core/models/types.ts`
-- [ ] T005 Create `LeapMonthRule` enum and export schema payload types in `src/core/models/types.ts`
-- [ ] T006 Implement core astronomical/lookup mathematical conversion purely in `src/core/lunar-math/converter.ts`
-- [ ] T007 Write validation tests verifying lunar-to-solar basic math logic across known dates in `tests/domain/converter.test.ts`
+- [x] T004 Create core domain types (`LunarDate`, `SolarDate`, `LunarEvent`) in `src/core/models/types.ts`
+- [x] T005 Create `LeapMonthRule` enum and export schema payload types in `src/core/models/types.ts`
+- [x] T006 Implement core astronomical/lookup mathematical conversion purely in `src/core/lunar-math/converter.ts`
+- [x] T007 Write validation tests verifying lunar-to-solar basic math logic across known dates in `tests/domain/converter.test.ts`
 
 **Checkpoint**: Foundation ready - basic domain conversions exist and are functionally pure.
 
@@ -53,13 +53,13 @@ description: "Task list for Lunar Event Manager Core Engine Implementation"
 **Independent Test**: Arrays can be updated without network; basic events can be correctly associated with a static Solar Year conversion array.
 
 ### Tests for User Story 1
-- [ ] T008 [P] [US1] Write test cases ensuring offline CRUD mechanisms properly handle immutability in `tests/application/crud.test.ts`
-- [ ] T009 [P] [US1] Write contract tests forcing exactly 1 or 0 projected solar occurrences per regular lunar event in `tests/contract/occurrences.test.ts`
+- [x] T008 [P] [US1] Write test cases ensuring offline CRUD mechanisms properly handle immutability in `tests/application/crud.test.ts`
+- [x] T009 [P] [US1] Write contract tests forcing exactly 1 or 0 projected solar occurrences per regular lunar event in `tests/contract/occurrences.test.ts`
 
 ### Implementation for User Story 1
-- [ ] T010 [US1] Implement CRUD array pure functions (Add, Update, Remove) in `src/application/events/crud.ts`
-- [ ] T011 [US1] Implement `calculateOccurrencesForYear` mapping generic events through converter arrays in `src/lib/index.ts`
-- [ ] T012 [US1] Verify no network APIs or side-effects accidentally leak during the build steps above.
+- [x] T010 [US1] Implement CRUD array pure functions (Add, Update, Remove) in `src/application/events/crud.ts`
+- [x] T011 [US1] Implement `calculateOccurrencesForYear` mapping generic events through converter arrays in `src/lib/index.ts`
+- [x] T012 [US1] Verify no network APIs or side-effects accidentally leak during the build steps above.
 
 **Checkpoint**: User Story 1 & 4 are fully functional and offline-certified. The library handles standard offline events safely.
 
@@ -72,12 +72,12 @@ description: "Task list for Lunar Event Manager Core Engine Implementation"
 **Independent Test**: An event created with `REGULAR_ONLY` ignores leap months, `LEAP_ONLY` vanishes in non-leap years, `BOTH` creates 2 events dynamically in leap years.
 
 ### Tests for User Story 2
-- [ ] T013 [P] [US2] Write exact test suites for all 3 enum leap month rules using a known 2026/2028 leap scenario in `tests/domain/rules.test.ts`
+- [x] T013 [P] [US2] Write exact test suites for all 3 enum leap month rules using a known 2026/2028 leap scenario in `tests/domain/rules.test.ts`
 
 ### Implementation for User Story 2
-- [ ] T014 [US2] Implement explicit leap month bounds filtering logic in `src/core/rules/leap-month.ts`
-- [ ] T015 [US2] Integrate the bounds filtering into `calculateOccurrencesForYear` previously built in `src/lib/index.ts`
-- [ ] T016 [US2] Enforce Validation rule ensuring invalid day combinations (day 30, month 29-day variant) throw errors gracefully.
+- [x] T014 [US2] Implement explicit leap month bounds filtering logic in `src/core/rules/leap-month.ts`
+- [x] T015 [US2] Integrate the bounds filtering into `calculateOccurrencesForYear` previously built in `src/lib/index.ts`
+- [x] T016 [US2] Enforce Validation rule ensuring invalid day combinations (day 30, month 29-day variant) throw errors gracefully.
 
 **Checkpoint**: The domain engine fully understands and processes lunar anomalies deterministically.
 
@@ -90,11 +90,11 @@ description: "Task list for Lunar Event Manager Core Engine Implementation"
 **Independent Test**: Requesting events next month securely rolls boundaries over solar and lunar new year cycles natively.
 
 ### Tests for User Story 3
-- [ ] T017 [P] [US3] Write chronological sorting tests testing 100+ simulated arrays spanning multiple years in `tests/application/upcoming.test.ts`
+- [x] T017 [P] [US3] Write chronological sorting tests testing 100+ simulated arrays spanning multiple years in `tests/application/upcoming.test.ts`
 
 ### Implementation for User Story 3
-- [ ] T018 [US3] Implement chronological pipeline `getUpcomingEvents` taking reference static solar bounds in `src/application/queries/upcoming.ts`
-- [ ] T019 [US3] Expose `getUpcomingEvents` contract explicitly in `src/lib/index.ts`
+- [x] T018 [US3] Implement chronological pipeline `getUpcomingEvents` taking reference static solar bounds in `src/application/queries/upcoming.ts`
+- [x] T019 [US3] Expose `getUpcomingEvents` contract explicitly in `src/lib/index.ts`
 
 **Checkpoint**: Users can calculate and verify chronological proximity purely natively.
 
@@ -107,13 +107,13 @@ description: "Task list for Lunar Event Manager Core Engine Implementation"
 **Independent Test**: Output arrays parse identically, duplicate IDs perfectly resolve to the newest content state smoothly.
 
 ### Tests for User Story 5
-- [ ] T020 [P] [US5] Write deterministic merge algorithm unit tests verifying specific Overwrite/Skip/Add states in `tests/application/sync.test.ts`
-- [ ] T021 [P] [US5] Write schema payload tests against mock JSON fragments in `tests/application/export.test.ts`
+- [x] T020 [P] [US5] Write deterministic merge algorithm unit tests verifying specific Overwrite/Skip/Add states in `tests/application/sync.test.ts`
+- [x] T021 [P] [US5] Write schema payload tests against mock JSON fragments in `tests/application/export.test.ts`
 
 ### Implementation for User Story 5
-- [ ] T022 [US5] Implement strict `importEvents` reducer logic matching ID equality constraints exactly in `src/application/sync/import.ts`
-- [ ] T023 [US5] Implement `validateExportPayload` array bounds validator parsing data offline in `src/application/sync/export.ts`
-- [ ] T024 [US5] Connect Export/Import functions explicitly in `src/lib/index.ts`
+- [x] T022 [US5] Implement strict `importEvents` reducer logic matching ID equality constraints exactly in `src/application/sync/import.ts`
+- [x] T023 [US5] Implement `validateExportPayload` array bounds validator parsing data offline in `src/application/sync/export.ts`
+- [x] T024 [US5] Connect Export/Import functions explicitly in `src/lib/index.ts`
 
 **Checkpoint**: Entire sync engine runs deterministically completely offline.
 
@@ -123,9 +123,9 @@ description: "Task list for Lunar Event Manager Core Engine Implementation"
 
 **Purpose**: Improvements that affect multiple user stories
 
-- [ ] T025 [P] Run a performance benchmark ensuring logic scales < 100ms calculations under max bounds
-- [ ] T026 Code cleanup, ensure complete code coverage (Aim for 100% on domain).
-- [ ] T027 Final Constitution sanity check mapping purely to JSON bounds rules.
+- [x] T025 [P] Run a performance benchmark ensuring logic scales < 100ms calculations under max bounds
+- [x] T026 Code cleanup, ensure complete code coverage (Aim for 100% on domain).
+- [x] T027 Final Constitution sanity check mapping purely to JSON bounds rules.
 
 ---
 
