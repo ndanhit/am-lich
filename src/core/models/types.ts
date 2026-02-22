@@ -18,6 +18,11 @@ export type LunarDateContext = {
     lunarYear: number;
     isLeapMonth: boolean;
     canChiYear: string;
+    canChiMonth: string;
+    canChiDay: string;
+    fateElement: string;
+    auspiciousHours: string[];
+    incompatibleAges: string[];
 };
 
 export enum LeapMonthRule {

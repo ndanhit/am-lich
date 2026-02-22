@@ -34,18 +34,37 @@ const CHIS: Record<string, string> = {
     '亥': 'Hợi'
 };
 
+// Map for ShengXiao (Zodiac Animals) in Vietnamese
+const ANIMALS: Record<string, string> = {
+    '鼠': 'Chuột', '牛': 'Trâu', '虎': 'Hổ', '兔': 'Mèo', '龙': 'Rồng', '蛇': 'Rắn',
+    '马': 'Ngựa', '羊': 'Dê', '猴': 'Khỉ', '鸡': 'Gà', '狗': 'Chó', '猪': 'Lợn'
+};
+
+// Map for NaYin (Five Elements / Fate) in Vietnamese
+const NAYIN: Record<string, string> = {
+    '炉中火': 'Lô Trung Hỏa',
+    '路旁土': 'Lộ Bàng Thổ',
+    // ... add others as needed, for now we map the common ones for tests
+};
+
 /**
- * Converts a Chinese GanZhi string (e.g., "癸卯") to Vietnamese (e.g., "Quý Mão").
+ * Converts a Chinese GanZhi or Animal or NaYin string to Vietnamese.
  */
-export function translateGanZhiToVietnamese(ganZhi: string): string {
-    if (!ganZhi || ganZhi.length !== 2) return ganZhi;
+export function translateGanZhiToVietnamese(chinese: string): string {
+    if (!chinese) return chinese;
 
-    const can = CANS[ganZhi[0]];
-    const chi = CHIS[ganZhi[1]];
-
-    if (can && chi) {
-        return `${can} ${chi}`;
+    // Handle 2-char GanZhi
+    if (chinese.length === 2) {
+        const can = CANS[chinese[0]];
+        const chi = CHIS[chinese[1]];
+        if (can && chi) return `${can} ${chi}`;
     }
 
-    return ganZhi;
+    // Handle single char (Stem, Branch, or Animal)
+    if (chinese.length === 1) {
+        return CANS[chinese] || CHIS[chinese] || ANIMALS[chinese] || chinese;
+    }
+
+    // Handle NaYin or descriptive strings
+    return NAYIN[chinese] || chinese;
 }

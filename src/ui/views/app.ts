@@ -5,9 +5,10 @@ import { renderEventDetail, closeDetailPanel } from '../components/event-detail'
 import { renderEventForm } from '../components/event-form';
 import { renderUpcomingList } from '../components/upcoming-list';
 import { renderImportExport } from '../components/import-export';
+import { renderDayDetailModal } from '../components/day-detail-modal';
 import type { CalendarCell } from '../types';
 import type { AppView } from '../types';
-import type { UpcomingEventOccurrence, LunarEvent } from '../../lib/index';
+import type { UpcomingEventOccurrence, LunarEvent, SolarDate } from '../../lib/index';
 
 // --- Year Boundary Constants (F1) ---
 const MIN_YEAR = 1901;
@@ -34,7 +35,7 @@ app.innerHTML = `
         <h1>Âm Lịch</h1>
         <div class="app-header-actions">
             <button class="icon-btn" id="import-export-btn" aria-label="Cài đặt">⚙</button>
-            <button class="icon-btn primary" id="add-event-btn" aria-label="Thêm sự kiện">📅+</button>
+            <button class="icon-btn primary" id="add-event-btn" aria-label="Thêm sự kiện">+</button>
         </div>
     </header>
     <nav class="tab-bar">
@@ -160,7 +161,7 @@ function renderUpcomingView() {
                 </div>
             </div>
         `;
-        viewContainer.querySelector('#empty-add-btn-up')?.addEventListener('click', openCreateForm);
+        viewContainer.querySelector('#empty-add-btn-up')?.addEventListener('click', () => openCreateForm());
         return;
     }
 
@@ -199,23 +200,19 @@ function navigateMonth(direction: -1 | 1) {
 
 // --- Interactions ---
 function onCellClick(cell: CalendarCell) {
-    if (cell.events.length === 0) {
-        closeDetailPanel(detailContainer);
-        backdrop.classList.remove('open');
-        return;
-    }
-
-    backdrop.classList.add('open');
-    renderEventDetail(
-        detailContainer,
-        cell.events,
-        openEditForm,
-        (id, name) => showConfirm(
-            'Delete Event',
-            `Are you sure you want to delete "${name}"?`,
-            () => { state.deleteEvent(id); renderCurrentView(); showToast('Event deleted', 'success'); }
-        ),
-        () => { closeDetailPanel(detailContainer); backdrop.classList.remove('open'); },
+    renderDayDetailModal(
+        modalContainer,
+        cell.date,
+        state.getOccurrencesForYear(currentYear),
+        () => {
+            // onClose - no special action needed as modal removes itself
+        },
+        (date: SolarDate) => {
+            openCreateForm(date);
+        },
+        (_newDate: SolarDate) => {
+            // onDateChange - optionally sync view if needed
+        }
     );
 }
 
@@ -236,12 +233,12 @@ function onUpcomingItemClick(occ: UpcomingEventOccurrence) {
 }
 
 // --- Forms ---
-function openCreateForm() {
+function openCreateForm(initialDate?: SolarDate) {
     pushOverlayState();
     renderEventForm(modalContainer, state, null, () => {
         renderCurrentView();
         showToast('Event created!', 'success');
-    }, () => { /* cancel */ });
+    }, () => { /* cancel */ }, initialDate);
 }
 
 function openEditForm(eventId: string) {
@@ -310,7 +307,7 @@ tabUpcoming.addEventListener('click', () => {
 });
 
 // --- Header Actions ---
-document.getElementById('add-event-btn')!.addEventListener('click', openCreateForm);
+document.getElementById('add-event-btn')!.addEventListener('click', () => { openCreateForm(); });
 document.getElementById('import-export-btn')!.addEventListener('click', openImportExport);
 backdrop.addEventListener('click', () => {
     closeDetailPanel(detailContainer);

@@ -6,6 +6,7 @@
 /* --- Design Tokens --- */
 :root {
     /* Colors */
+    color-scheme: dark light;
     --color-bg: #0f1117;
     --color-surface: #1a1d27;
     --color-surface-hover: #242836;
@@ -684,7 +685,7 @@ textarea:focus {
     display: flex;
     align-items: flex-end;
     justify-content: center;
-    z-index: 100;
+    z-index: 2000;
     opacity: 0;
     pointer-events: none;
     transition: opacity var(--transition-normal);
