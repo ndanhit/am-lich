@@ -1,5 +1,5 @@
 import type { LunarEvent, SolarDate, UpcomingEventOccurrence, LunarDateContext } from '../lib/index';
-import { LeapMonthRule } from '../lib/index';
+import { LeapMonthRule, RecurrenceRule } from '../lib/index';
 
 /** A single cell in the monthly calendar grid */
 export type CalendarCell = {
@@ -7,6 +7,8 @@ export type CalendarCell = {
     lunar?: LunarDateContext;
     isCurrentMonth: boolean;
     isToday: boolean;
+    isSunday?: boolean;      // New: For red highlighting
+    dayOfWeek?: number;     // New: 0-6 where 0 is Monday
     isFirstDayOfLunar?: boolean;
     events: UpcomingEventOccurrence[];
 };
@@ -24,11 +26,20 @@ export type EventFormData = {
     name: string;
     lunarDay: number;
     lunarMonth: number;
+    lunarYear?: number;
+    recurrence: RecurrenceRule;
     leapMonthRule: LeapMonthRule;
 };
 
 /** Active view in the app */
 export type AppView = 'calendar' | 'upcoming';
+
+/** Human-readable labels for recurrence rules */
+export const RECURRENCE_LABELS: Record<RecurrenceRule, string> = {
+    [RecurrenceRule.YEARLY]: 'Hàng năm',
+    [RecurrenceRule.MONTHLY]: 'Hàng tháng',
+    [RecurrenceRule.ONCE]: 'Một lần',
+};
 
 /** Human-readable labels for leap month rules */
 export const LEAP_MONTH_LABELS: Record<LeapMonthRule, string> = {
@@ -50,4 +61,4 @@ export const MONTH_NAMES_SHORT = [
 ];
 
 /** Day-of-week headers */
-export const WEEKDAY_HEADERS = ['CN', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7'];
+export const WEEKDAY_HEADERS = ['T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'CN'];

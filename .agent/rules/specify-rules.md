@@ -7,6 +7,8 @@ Auto-generated from all feature plans. Last updated: 2026-02-22
 - `localStorage` (local source of truth) (003-enhance-ui-ux)
 - TypeScript 5.9+ + `lunar-javascript` (Core logic), Vanilla CSS (Styling), esbuild (Bundler) (004-day-detail-modal)
 - LocalStorage (via `LocalStorageAdapter`) (004-day-detail-modal)
+- TypeScript 5.9+ + `lunar-javascript`, Vanilla CSS3, esbuild (005-ui-ux-polish)
+- LocalStorage (for persisted month state) (005-ui-ux-polish)
 
 - TypeScript 5.x (Core Engine — frozen)
 - Vanilla JavaScript, HTML5, CSS3 (UI layer)
@@ -61,10 +63,10 @@ npm run format         # Prettier
 - Zero network requests — fully offline
 
 ## Recent Changes
+- 005-ui-ux-polish: Added TypeScript 5.9+ + `lunar-javascript`, Vanilla CSS3, esbuild
 - 004-day-detail-modal: Added TypeScript 5.9+ + `lunar-javascript` (Core logic), Vanilla CSS (Styling), esbuild (Bundler)
 - 003-enhance-ui-ux: Added TypeScript 5.9+ + `lunar-javascript` (domain conversion), `esbuild` (bundling), `vitest` (testing)
 
-- 001-lunar-event-manager: Core Engine complete (30 tests passing, 25ms/10k events)
 
 <!-- MANUAL ADDITIONS START -->
 <!-- MANUAL ADDITIONS END -->

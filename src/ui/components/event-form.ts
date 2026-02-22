@@ -1,7 +1,7 @@
-import { LeapMonthRule } from '../../lib/index';
+import { LeapMonthRule, RecurrenceRule } from '../../lib/index';
 import type { LunarEvent } from '../../lib/index';
 import type { EventFormData } from '../types';
-import { LEAP_MONTH_LABELS } from '../types';
+import { LEAP_MONTH_LABELS, RECURRENCE_LABELS } from '../types';
 import type { AppState } from '../state';
 import { convertSolarToLunar } from '../../core/lunar-math/converter';
 import type { SolarDate } from '../../core/models/types';
@@ -26,8 +26,13 @@ export function renderEventForm(
     if (isEdit) {
         defaultDay = String(editEvent.lunarDate.day);
         defaultMonth = String(editEvent.lunarDate.month);
-    } else if (initialDate) {
-        const lunar = convertSolarToLunar(initialDate.year, initialDate.month, initialDate.day);
+    } else {
+        const referenceDate = initialDate || {
+            year: new Date().getFullYear(),
+            month: new Date().getMonth() + 1,
+            day: new Date().getDate()
+        };
+        const lunar = convertSolarToLunar(referenceDate.year, referenceDate.month, referenceDate.day);
         if (lunar) {
             defaultDay = String(lunar.lunarDay);
             defaultMonth = String(Math.abs(lunar.lunarMonth));
@@ -50,30 +55,39 @@ export function renderEventForm(
                     <div class="char-count"><span id="char-current">${isEdit ? editEvent.name.length : 0}</span>/100</div>
                     <div class="form-error" id="name-error"></div>
                 </div>
-                <div class="form-row">
+                <div class="form-group">
+                    <label>Lặp lại</label>
+                    <div class="recurrence-options">
+                        ${Object.values(RecurrenceRule).map(rule => `
+                            <label class="recurrence-option">
+                                <input type="radio" name="recurrence" value="${rule}" ${(isEdit ? editEvent.recurrence === rule : rule === RecurrenceRule.YEARLY) ? 'checked' : ''}>
+                                ${RECURRENCE_LABELS[rule]}
+                            </label>
+                        `).join('')}
+                    </div>
+                </div>
+
+                <div class="form-row" id="date-row">
+                    <div class="form-group" id="year-group" style="display: ${(isEdit && editEvent.recurrence === RecurrenceRule.ONCE) ? 'block' : 'none'}">
+                        <label for="lunar-year">Năm âm</label>
+                        <input type="number" id="lunar-year" min="1901" max="2099" placeholder="2026"
+                               value="${isEdit ? (editEvent.lunarYear || 2026) : (initialDate ? initialDate.year : 2026)}">
+                        <div class="form-error" id="year-error"></div>
+                    </div>
+                    <div class="form-group" id="month-group" style="display: ${(isEdit && editEvent.recurrence === RecurrenceRule.MONTHLY) ? 'none' : 'block'}">
+                        <label for="lunar-month">Tháng âm</label>
+                        <input type="number" id="lunar-month" min="1" max="12" placeholder="1–12"
+                               value="${defaultMonth}" required>
+                        <div class="form-error" id="month-error"></div>
+                    </div>
                     <div class="form-group">
                         <label for="lunar-day">Ngày âm</label>
                         <input type="number" id="lunar-day" min="1" max="30" placeholder="1–30"
                                value="${defaultDay}" required>
                         <div class="form-error" id="day-error"></div>
                     </div>
-                    <div class="form-group">
-                        <label for="lunar-month">Tháng âm</label>
-                        <input type="number" id="lunar-month" min="1" max="12" placeholder="1–12"
-                               value="${defaultMonth}" required>
-                        <div class="form-error" id="month-error"></div>
-                    </div>
                 </div>
-                <div class="form-group">
-                    <label for="leap-rule">Quy tắc tháng nhuận</label>
-                    <select id="leap-rule">
-                        ${Object.values(LeapMonthRule).map(rule =>
-        `<option value="${rule}" ${isEdit && editEvent.leapMonthRule === rule ? 'selected' : ''}>
-                                ${LEAP_MONTH_LABELS[rule]}
-                            </option>`
-    ).join('')}
-                    </select>
-                </div>
+
                 <button type="submit" class="btn btn-primary btn-block" id="submit-btn" aria-label="${isEdit ? 'Lưu thay đổi' : 'Tạo sự kiện'}">
                     ${isEdit ? 'Lưu thay đổi' : 'Tạo sự kiện'}
                 </button>
@@ -102,18 +116,42 @@ export function renderEventForm(
         if (e.target === overlay) closeForm(overlay, onCancel);
     });
 
-    // Form submit
-    const form = overlay.querySelector('#event-form') as HTMLFormElement;
-    form.addEventListener('submit', (e) => {
+    // --- Dynamic Field Visibility ---
+    const monthGroup = overlay.querySelector('#month-group') as HTMLElement;
+    const yearGroup = overlay.querySelector('#year-group') as HTMLElement;
+    const recurrenceInputs = overlay.querySelectorAll('input[name="recurrence"]');
+
+    recurrenceInputs.forEach(input => {
+        input.addEventListener('change', (e) => {
+            const val = (e.target as HTMLInputElement).value as RecurrenceRule;
+            if (val === RecurrenceRule.MONTHLY) {
+                monthGroup.style.display = 'none';
+                yearGroup.style.display = 'none';
+            } else if (val === RecurrenceRule.ONCE) {
+                monthGroup.style.display = 'block';
+                yearGroup.style.display = 'block';
+            } else {
+                monthGroup.style.display = 'block';
+                yearGroup.style.display = 'none';
+            }
+        });
+    });
+
+    // --- Form Submission ---
+    overlay.querySelector('#event-form')!.addEventListener('submit', (e) => {
         e.preventDefault();
-        clearErrors(overlay);
+
+        // Clear previous errors
+        overlay.querySelectorAll('.form-error').forEach(el => el.textContent = '');
+        overlay.querySelectorAll('.form-group').forEach(g => g.classList.remove('has-error'));
 
         const name = nameInput.value.trim();
+        const recurrence = (overlay.querySelector('input[name="recurrence"]:checked') as HTMLInputElement).value as RecurrenceRule;
         const day = parseInt((overlay.querySelector('#lunar-day') as HTMLInputElement).value);
         const month = parseInt((overlay.querySelector('#lunar-month') as HTMLInputElement).value);
-        const rule = (overlay.querySelector('#leap-rule') as HTMLSelectElement).value as LeapMonthRule;
+        const year = parseInt((overlay.querySelector('#lunar-year') as HTMLInputElement).value);
 
-        // Client-side quick checks (not domain logic, just empty-field guards)
+        // Client-side quick checks
         if (!name) {
             showError(overlay, 'name-error', 'event-name', 'Tên sự kiện không được để trống');
             return;
@@ -124,12 +162,24 @@ export function renderEventForm(
             return;
         }
 
-        if (isNaN(month)) {
+        if (recurrence !== RecurrenceRule.MONTHLY && isNaN(month)) {
             showError(overlay, 'month-error', 'lunar-month', 'Tháng âm không hợp lệ');
             return;
         }
 
-        const formData: EventFormData = { name, lunarDay: day, lunarMonth: month, leapMonthRule: rule };
+        if (recurrence === RecurrenceRule.ONCE && isNaN(year)) {
+            showError(overlay, 'year-error', 'lunar-year', 'Năm âm không hợp lệ');
+            return;
+        }
+
+        const formData: EventFormData = {
+            name,
+            lunarDay: day,
+            lunarMonth: recurrence === RecurrenceRule.MONTHLY ? 1 : month, // month 1 serves as dummy for monthly
+            lunarYear: recurrence === RecurrenceRule.ONCE ? year : undefined,
+            recurrence: recurrence,
+            leapMonthRule: LeapMonthRule.REGULAR_ONLY
+        };
 
         try {
             if (isEdit) {

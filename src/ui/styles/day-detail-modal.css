@@ -147,27 +147,6 @@ section h3 {
     backdrop-filter: blur(4px);
 }
 
-.fortune-grid {
-    display: grid;
-    gap: 10px;
-}
-
-.fortune-item {
-    display: flex;
-    justify-content: space-between;
-    padding: 10px;
-    background: var(--color-surface-hover);
-    border-radius: 10px;
-    font-size: 0.95rem;
-}
-
-.fortune-item .label {
-    color: var(--color-text-secondary);
-}
-
-.fortune-item .value {
-    font-weight: 600;
-}
 
 .event-list {
     display: grid;

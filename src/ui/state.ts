@@ -1,4 +1,5 @@
-import type { LunarEvent, SolarDate, UpcomingEventOccurrence } from '../lib/index';
+import { LeapMonthRule, RecurrenceRule } from '../core/models/types';
+import type { LunarEvent, SolarDate, UpcomingEventOccurrence, LunarDateContext } from '../core/models/types';
 import {
     calculateOccurrencesForYear,
     getUpcomingEvents,
@@ -9,7 +10,6 @@ import {
     generateExportPayload,
     validateImportPayload,
     validateEventCreationParams,
-    LeapMonthRule,
 } from '../lib/index';
 import type { StorageAdapter } from '../adapters/storage/local-storage-adapter';
 import type { EventFormData } from './types';
@@ -85,6 +85,8 @@ export class AppState {
             id: crypto.randomUUID(),
             name: form.name.trim().slice(0, 100),
             lunarDate: { day: form.lunarDay, month: form.lunarMonth },
+            lunarYear: form.recurrence === RecurrenceRule.ONCE ? form.lunarYear : undefined,
+            recurrence: form.recurrence,
             leapMonthRule: form.leapMonthRule,
             createdAt: Date.now(),
             updatedAt: Date.now(),
@@ -106,6 +108,8 @@ export class AppState {
             ...existing,
             name: form.name.trim().slice(0, 100),
             lunarDate: { day: form.lunarDay, month: form.lunarMonth },
+            lunarYear: form.recurrence === RecurrenceRule.ONCE ? form.lunarYear : undefined,
+            recurrence: form.recurrence,
             leapMonthRule: form.leapMonthRule,
             updatedAt: Date.now(),
         };

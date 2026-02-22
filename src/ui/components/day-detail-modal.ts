@@ -1,6 +1,7 @@
-import { SolarDate, LunarDateContext, UpcomingEventOccurrence } from '../../core/models/types';
+import { SolarDate, LunarDateContext, UpcomingEventOccurrence, RecurrenceRule } from '../../core/models/types';
 import { convertSolarToLunar } from '../../core/lunar-math/converter';
 import { formatSolarDate, formatLunarDate } from '../../lib/formatters';
+import { RECURRENCE_LABELS } from '../types';
 
 export interface DayDetailState {
     activeSolarDate: SolarDate;
@@ -79,30 +80,17 @@ export function renderDayDetailModal(
                     <div class="lunar-line-3">Ngày ${lunarContext.canChiDay} - Tháng ${lunarContext.canChiMonth}</div>
                 </section>
 
-                <section class="section-fortune">
-                    <div class="fortune-grid">
-                        <div class="fortune-item">
-                            <span class="label">Mệnh ngày:</span>
-                            <span class="value">${lunarContext.fateElement}</span>
-                        </div>
-                        <div class="fortune-item">
-                            <span class="label">Giờ hoàng đạo:</span>
-                            <span class="value">${lunarContext.auspiciousHours.join(', ')}</span>
-                        </div>
-                        <div class="fortune-item">
-                            <span class="label">Tuổi xung:</span>
-                            <span class="value">${lunarContext.incompatibleAges.join(', ')}</span>
-                        </div>
-                    </div>
-                </section>
-
                 <section class="section-events">
                     <h3>Sự kiện</h3>
                     <div class="event-list">
                         ${state.events.length > 0 ?
                 state.events.map(e => `
                                 <div class="event-item">
-                                    <span class="event-name">${e.event.name}</span>
+                                    <div class="event-info">
+                                        <span class="event-name">${e.event.name}</span>
+                                        ${e.event.recurrence && e.event.recurrence !== RecurrenceRule.ONCE ?
+                        `<span class="event-recurrence-badge">${RECURRENCE_LABELS[e.event.recurrence]}</span>` : ''}
+                                    </div>
                                 </div>
                             `).join('') :
                 '<p class="no-events">Không có sự kiện nào.</p>'
@@ -143,9 +131,12 @@ export function renderDayDetailModal(
         });
 
         const pickerTrigger = content.querySelector('.quick-view-btn');
-        pickerTrigger?.addEventListener('click', () => {
+        const openPicker = (e: Event) => {
+            e.preventDefault();
             datePicker.showPicker();
-        });
+        };
+        pickerTrigger?.addEventListener('click', openPicker);
+        pickerTrigger?.addEventListener('touchend', openPicker);
 
         datePicker.addEventListener('change', (e) => {
             const val = (e.target as HTMLInputElement).value;

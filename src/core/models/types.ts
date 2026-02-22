@@ -31,10 +31,18 @@ export enum LeapMonthRule {
     BOTH = 'BOTH',
 }
 
+export enum RecurrenceRule {
+    YEARLY = 'YEARLY',
+    MONTHLY = 'MONTHLY',
+    ONCE = 'ONCE',
+}
+
 export type LunarEvent = {
     id: string;
     name: string;
     lunarDate: LunarDate;
+    lunarYear?: number;
+    recurrence: RecurrenceRule;
     leapMonthRule: LeapMonthRule;
     updatedAt: number;
     createdAt: number;

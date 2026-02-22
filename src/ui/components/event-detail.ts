@@ -1,5 +1,5 @@
-import type { UpcomingEventOccurrence } from '../../lib/index';
-import { LEAP_MONTH_LABELS } from '../types';
+import { RecurrenceRule, UpcomingEventOccurrence } from '../../core/models/types';
+import { RECURRENCE_LABELS } from '../types';
 import { formatSolarDate, formatLunarDate } from '../../lib/index';
 
 /** Render event detail panel */
@@ -20,22 +20,29 @@ export function renderEventDetail(
     const panel = document.createElement('div');
     panel.className = 'detail-panel open';
 
-    // Render first event or list
+    // Render occurrences
     const html = occurrences.map(occ => {
         const ev = occ.event;
         const daysText = occ.daysUntil === 0 ? 'Hôm nay' :
             occ.daysUntil === 1 ? 'Ngày mai' :
                 `${occ.daysUntil} ngày nữa`;
-        const leapLabel = LEAP_MONTH_LABELS[ev.leapMonthRule];
+
         const leapTag = occ.isLeapMonthOccurrence ? ' <span style="color:var(--color-warning)">(Nhuận)</span>' : '';
 
         const lunarStr = occ.lunarContext ? formatLunarDate(occ.lunarContext) : `Tháng ${ev.lunarDate.month}, Ngày ${ev.lunarDate.day}`;
         const solarStr = formatSolarDate(occ.solarDate);
 
+        const recurrenceBadge = (ev.recurrence && ev.recurrence !== RecurrenceRule.ONCE)
+            ? `<span class="event-recurrence-badge">${RECURRENCE_LABELS[ev.recurrence]}</span>`
+            : '';
+
         return `
             <div class="detail-event-item" data-event-id="${ev.id}">
                 <div class="detail-panel-header">
-                    <h3>${escapeHtml(ev.name)}${leapTag}</h3>
+                    <div class="event-name-row">
+                        <h3>${escapeHtml(ev.name)}${leapTag}</h3>
+                        ${recurrenceBadge}
+                    </div>
                 </div>
                 <div class="detail-meta">
                     <div class="detail-meta-item">
@@ -45,10 +52,6 @@ export function renderEventDetail(
                     <div class="detail-meta-item">
                         <span class="label">Ngày dương lịch</span>
                         <span>${solarStr}</span>
-                    </div>
-                    <div class="detail-meta-item">
-                        <span class="label">Quy tắc nhuận</span>
-                        <span>${leapLabel}</span>
                     </div>
                     <div class="detail-meta-item">
                         <span class="label">Sắp tới trong</span>

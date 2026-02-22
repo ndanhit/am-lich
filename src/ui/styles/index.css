@@ -6,33 +6,33 @@
 /* --- Design Tokens --- */
 :root {
     /* Colors */
-    color-scheme: dark light;
-    --color-bg: #0f1117;
-    --color-surface: #1a1d27;
-    --color-surface-hover: #242836;
-    --color-surface-active: #2e3342;
-    --color-border: #2e3342;
-    --color-border-subtle: #1e2230;
+    color-scheme: light;
+    --color-bg: #f8f9fc;
+    --color-surface: #ffffff;
+    --color-surface-hover: #f3f4f6;
+    --color-surface-active: #e5e7eb;
+    --color-border: #e5e7eb;
+    --color-border-subtle: #f3f4f6;
 
-    --color-primary: #6c63ff;
-    --color-primary-hover: #7b73ff;
-    --color-primary-soft: rgba(108, 99, 255, 0.12);
+    --color-primary: #5b52e6;
+    --color-primary-hover: #4f46e5;
+    --color-primary-soft: rgba(91, 82, 230, 0.08);
 
-    --color-accent: #ff6b9d;
-    --color-accent-soft: rgba(255, 107, 157, 0.15);
+    --color-accent: #e84393;
+    --color-accent-soft: rgba(232, 67, 147, 0.10);
 
-    --color-success: #4ade80;
-    --color-warning: #fbbf24;
-    --color-error: #f87171;
-    --color-error-soft: rgba(248, 113, 113, 0.12);
+    --color-success: #16a34a;
+    --color-warning: #d97706;
+    --color-error: #dc2626;
+    --color-error-soft: rgba(220, 38, 38, 0.08);
 
-    --color-text: #e8eaed;
-    --color-text-secondary: #9ca3af;
-    --color-text-muted: #6b7280;
+    --color-text: #1f2937;
+    --color-text-secondary: #6b7280;
+    --color-text-muted: #9ca3af;
 
-    --color-today-ring: #6c63ff;
-    --color-event-dot: #ff6b9d;
-    --color-leap-dot: #fbbf24;
+    --color-today-ring: #5b52e6;
+    --color-event-dot: #e84393;
+    --color-leap-dot: #d97706;
 
     /* Typography */
     --font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
@@ -63,10 +63,10 @@
     --radius-full: 9999px;
 
     /* Shadows */
-    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.3);
-    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.4);
-    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.5);
-    --shadow-glow: 0 0 20px rgba(108, 99, 255, 0.2);
+    --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
+    --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
+    --shadow-glow: 0 0 20px rgba(91, 82, 230, 0.1);
 
     /* Transitions */
     --transition-fast: 150ms ease;
@@ -74,40 +74,13 @@
     --transition-slow: 300ms ease-in-out;
 }
 
-/* Light mode override (U2: complete token set) */
-@media (prefers-color-scheme: light) {
+/* --- Mobile Font Scaling (US4) --- */
+@media (max-width: 768px) {
     :root {
-        --color-bg: #f8f9fc;
-        --color-surface: #ffffff;
-        --color-surface-hover: #f3f4f6;
-        --color-surface-active: #e5e7eb;
-        --color-border: #e5e7eb;
-        --color-border-subtle: #f3f4f6;
-
-        --color-primary: #5b52e6;
-        --color-primary-hover: #4f46e5;
-        --color-primary-soft: rgba(91, 82, 230, 0.08);
-
-        --color-accent: #e84393;
-        --color-accent-soft: rgba(232, 67, 147, 0.10);
-
-        --color-success: #16a34a;
-        --color-warning: #d97706;
-        --color-error: #dc2626;
-        --color-error-soft: rgba(220, 38, 38, 0.08);
-
-        --color-text: #1f2937;
-        --color-text-secondary: #6b7280;
-        --color-text-muted: #9ca3af;
-
-        --color-today-ring: #5b52e6;
-        --color-event-dot: #e84393;
-        --color-leap-dot: #d97706;
-
-        --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.05);
-        --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.08);
-        --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.12);
-        --shadow-glow: 0 0 20px rgba(91, 82, 230, 0.1);
+        --font-size-xs: calc(0.825rem * 1.2);
+        --font-size-sm: calc(0.975rem * 1.2);
+        --font-size-base: calc(1.125rem * 1.2);
+        --font-size-md: calc(1.275rem * 1.2);
     }
 }
 
@@ -259,12 +232,25 @@ textarea:focus {
 .calendar {
     padding: var(--space-4);
     flex: 1;
+    animation: calendarFadeIn var(--transition-slow);
+}
+
+@keyframes calendarFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(8px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .calendar-nav {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: center;
     margin-bottom: var(--space-4);
 }
 
@@ -311,6 +297,10 @@ textarea:focus {
     letter-spacing: 0.05em;
 }
 
+.calendar-weekdays span:last-child {
+    color: var(--color-accent);
+}
+
 .calendar-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
@@ -341,6 +331,10 @@ textarea:focus {
 .calendar-cell.today {
     background: var(--color-primary-soft);
     box-shadow: inset 0 0 0 2px var(--color-today-ring);
+}
+
+.calendar-cell.sunday .day-number {
+    color: var(--color-accent);
 }
 
 .calendar-cell .day-number {
@@ -965,6 +959,84 @@ textarea:focus {
     100% {
         background-position: -200% 0;
     }
+}
+
+/* --- Floating "Today" Button (US2) --- */
+.today-fab {
+    position: fixed;
+    bottom: var(--space-6);
+    right: var(--space-6);
+    background: var(--color-accent);
+    color: white;
+    padding: var(--space-3) var(--space-5);
+    border-radius: var(--radius-full);
+    font-size: var(--font-size-sm);
+    font-weight: 600;
+    box-shadow: var(--shadow-lg);
+    cursor: pointer;
+    z-index: 90;
+    transition: all var(--transition-normal);
+    opacity: 0;
+    transform: translateY(20px) scale(0.9);
+    pointer-events: none;
+    user-select: none;
+}
+
+.today-fab.show {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+    pointer-events: auto;
+}
+
+.today-fab:hover {
+    background: var(--color-accent-soft);
+    color: var(--color-accent);
+    transform: scale(1.05);
+}
+
+.today-fab:active {
+    transform: scale(0.95);
+}
+
+/* --- Recurrence Options --- */
+.recurrence-options {
+    display: flex;
+    gap: var(--space-4);
+    margin: var(--space-2) 0 var(--space-4);
+}
+
+.recurrence-option {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    font-size: var(--font-size-sm);
+    cursor: pointer;
+    font-weight: 500;
+}
+
+.recurrence-option input {
+    margin: 0;
+    cursor: pointer;
+}
+
+/* --- Recurrence Badges --- */
+.event-name-row,
+.event-info {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    flex-wrap: wrap;
+}
+
+.event-recurrence-badge {
+    font-size: 10px;
+    padding: 2px 6px;
+    background: var(--color-accent-soft);
+    color: var(--color-accent);
+    border-radius: var(--radius-sm);
+    text-transform: uppercase;
+    font-weight: 700;
+    letter-spacing: 0.02em;
 }
 
 /* --- Fade transition for calendar --- */

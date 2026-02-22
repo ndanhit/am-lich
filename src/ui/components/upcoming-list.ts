@@ -1,7 +1,8 @@
 import type { SolarDate, UpcomingEventOccurrence } from '../../lib/index';
-import { MONTH_NAMES_SHORT, LEAP_MONTH_LABELS } from '../types';
+import { MONTH_NAMES_SHORT, RECURRENCE_LABELS } from '../types';
 import { formatSolarDate } from '../../lib/index';
 import type { AppState } from '../state';
+import { RecurrenceRule } from '../../core/models/types';
 
 /** Get today's solar date */
 function getToday(): SolarDate {
@@ -50,6 +51,10 @@ export function renderUpcomingList(
             : '';
 
         const solarStr = formatSolarDate(occ.solarDate);
+        const lunarYearStr = occ.event.lunarYear ? `/${occ.event.lunarYear}` : '';
+        const recurrenceBadge = (occ.event.recurrence && occ.event.recurrence !== RecurrenceRule.ONCE)
+            ? `<span class="event-recurrence-badge">${RECURRENCE_LABELS[occ.event.recurrence]}</span>`
+            : '';
 
         item.innerHTML = `
             <div class="upcoming-date-badge">
@@ -57,9 +62,12 @@ export function renderUpcomingList(
                 <span class="day">${occ.solarDate.day}</span>
             </div>
             <div class="upcoming-info">
-                <div class="event-name">${escapeHtml(occ.event.name)}</div>
+                <div class="event-name-row">
+                    <div class="event-name">${escapeHtml(occ.event.name)}</div>
+                    ${recurrenceBadge}
+                </div>
                 <div class="lunar-label">Dương lịch: ${solarStr}</div>
-                <div class="lunar-label sub">Âm lịch ${occ.event.lunarDate.month}/${occ.event.lunarDate.day}${leapTag}</div>
+                <div class="lunar-label sub">Âm lịch ${occ.event.lunarDate.month}/${occ.event.lunarDate.day}${lunarYearStr}${leapTag}</div>
             </div>
             <span class="days-until-badge ${occ.daysUntil === 0 ? 'today' : occ.daysUntil <= 7 ? 'soon' : ''}">
                 ${formatDaysUntil(occ.daysUntil)}

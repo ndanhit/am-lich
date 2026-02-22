@@ -38,17 +38,21 @@ export function buildCalendarViewModel(state: AppState, year: number, month: num
     const daysInPrev = getDaysInMonth(prevYear, prevMonth);
 
     const cells: CalendarCell[] = [];
+    const leadingDays = (firstDow + 6) % 7;
 
     // Pad with previous month days
-    for (let i = firstDow - 1; i >= 0; i--) {
+    for (let i = leadingDays - 1; i >= 0; i--) {
         const day = daysInPrev - i;
         const date: SolarDate = { year: prevYear, month: prevMonth, day };
         const lunar = convertSolarToLunar(date.year, date.month, date.day) || undefined;
+        const currentIdx = cells.length;
         cells.push({
             date,
             lunar,
             isCurrentMonth: false,
             isToday: isSameDate(date, today),
+            isSunday: currentIdx % 7 === 6,
+            dayOfWeek: currentIdx % 7,
             isFirstDayOfLunar: lunar?.lunarDay === 1,
             events: occurrences.filter(o => isSameDate(o.solarDate, date)),
         });
@@ -58,28 +62,35 @@ export function buildCalendarViewModel(state: AppState, year: number, month: num
     for (let day = 1; day <= daysInMonth; day++) {
         const date: SolarDate = { year, month, day };
         const lunar = convertSolarToLunar(date.year, date.month, date.day) || undefined;
+        const currentIdx = cells.length;
         cells.push({
             date,
             lunar,
             isCurrentMonth: true,
             isToday: isSameDate(date, today),
+            isSunday: currentIdx % 7 === 6,
+            dayOfWeek: currentIdx % 7,
             isFirstDayOfLunar: lunar?.lunarDay === 1,
             events: occurrences.filter(o => isSameDate(o.solarDate, date)),
         });
     }
 
     // Fill remaining to complete rows of 7
-    const remaining = (7 - (cells.length % 7)) % 7;
     const nextMonth = month === 12 ? 1 : month + 1;
     const nextYear = month === 12 ? year + 1 : year;
-    for (let day = 1; day <= remaining; day++) {
+
+    while (cells.length % 7 !== 0) {
+        const day = (cells.length - leadingDays - daysInMonth) + 1;
         const date: SolarDate = { year: nextYear, month: nextMonth, day };
         const lunar = convertSolarToLunar(date.year, date.month, date.day) || undefined;
+        const currentIdx = cells.length;
         cells.push({
             date,
             lunar,
             isCurrentMonth: false,
             isToday: isSameDate(date, today),
+            isSunday: currentIdx % 7 === 6,
+            dayOfWeek: currentIdx % 7,
             isFirstDayOfLunar: lunar?.lunarDay === 1,
             events: occurrences.filter(o => isSameDate(o.solarDate, date)),
         });
@@ -106,14 +117,9 @@ export function renderCalendar(
     const nav = document.createElement('div');
     nav.className = 'calendar-nav';
     nav.innerHTML = `
-        <button id="cal-prev" aria-label="Previous month">‹</button>
         <h2>${viewModel.monthLabel}</h2>
-        <button id="cal-next" aria-label="Next month">›</button>
     `;
     container.appendChild(nav);
-
-    nav.querySelector('#cal-prev')!.addEventListener('click', () => onNavigate(-1));
-    nav.querySelector('#cal-next')!.addEventListener('click', () => onNavigate(1));
 
     // Weekday headers
     const weekdays = document.createElement('div');
@@ -134,6 +140,7 @@ export function renderCalendar(
         el.className = 'calendar-cell';
         if (!cell.isCurrentMonth) el.classList.add('other-month');
         if (cell.isToday) el.classList.add('today');
+        if (cell.isSunday) el.classList.add('sunday');
 
         const dayNum = document.createElement('span');
         dayNum.className = 'day-number';
