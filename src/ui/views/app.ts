@@ -20,6 +20,7 @@ const state = new AppState(adapter);
 let currentView: AppView = 'calendar';
 let currentYear: number;
 let currentMonth: number;
+let isLoading = false;
 
 // Initialize to current month
 const now = new Date();
@@ -32,13 +33,13 @@ app.innerHTML = `
     <header class="app-header">
         <h1>Âm Lịch</h1>
         <div class="app-header-actions">
-            <button class="icon-btn" id="import-export-btn" aria-label="Import/Export events">⚙</button>
-            <button class="icon-btn primary" id="add-event-btn" aria-label="Create new event">+</button>
+            <button class="icon-btn" id="import-export-btn" aria-label="Cài đặt">⚙</button>
+            <button class="icon-btn primary" id="add-event-btn" aria-label="Thêm sự kiện">📅+</button>
         </div>
     </header>
     <nav class="tab-bar">
-        <button class="tab-btn active" id="tab-calendar" aria-label="Calendar view">📅 Calendar</button>
-        <button class="tab-btn" id="tab-upcoming" aria-label="Upcoming events view">📋 Upcoming</button>
+        <button class="tab-btn active" id="tab-calendar" aria-label="Lịch">📅 Lịch</button>
+        <button class="tab-btn" id="tab-upcoming" aria-label="Sắp tới">📋 Sắp tới</button>
     </nav>
     <main id="view-container"></main>
     <div id="detail-container"></div>
@@ -72,8 +73,8 @@ function showConfirm(title: string, message: string, onConfirm: () => void) {
             <h3>${title}</h3>
             <p>${message}</p>
             <div class="confirm-dialog-actions">
-                <button class="btn btn-secondary" id="confirm-cancel">Cancel</button>
-                <button class="btn btn-danger" id="confirm-ok">Delete</button>
+                <button class="btn btn-secondary" id="confirm-cancel">Hủy</button>
+                <button class="btn btn-danger" id="confirm-ok">Xóa</button>
             </div>
         </div>
     `;
@@ -85,6 +86,25 @@ function showConfirm(title: string, message: string, onConfirm: () => void) {
         onConfirm();
     });
 }
+
+// --- History API (FR-018) ---
+function pushOverlayState() {
+    window.history.pushState({ overlay: true }, '');
+}
+
+window.addEventListener('popstate', (event) => {
+    // If we popped and an overlay is open, close it
+    const modalOverlay = document.querySelector('.modal-overlay.open');
+    const detailPanel = document.querySelector('.detail-panel.open');
+
+    if (modalOverlay) {
+        modalOverlay.classList.remove('open');
+        setTimeout(() => modalOverlay.remove(), 300);
+    } else if (detailPanel) {
+        closeDetailPanel(detailContainer);
+        backdrop.classList.remove('open');
+    }
+});
 
 // --- Render Views ---
 function renderCurrentView() {
@@ -101,8 +121,7 @@ function renderCurrentView() {
 function renderCalendarView() {
     const vm = buildCalendarViewModel(state, currentYear, currentMonth);
 
-    // Check for true empty state (no events at all)
-    if (state.getEvents().length === 0) {
+    if (isLoading) {
         viewContainer.innerHTML = `
             <div class="calendar">
                 <div class="calendar-nav">
@@ -110,16 +129,14 @@ function renderCalendarView() {
                     <h2>${vm.monthLabel}</h2>
                     <button id="cal-next" aria-label="Next month">›</button>
                 </div>
-            </div>
-            <div class="empty-state">
-                <div class="empty-state-icon">🌙</div>
-                <p>No events yet — tap + to create your first event</p>
-                <button class="btn btn-primary" id="empty-add-btn">Create Event</button>
+                <div class="loading-container">
+                    <div class="spinner"></div>
+                    <p>Đang tải...</p>
+                </div>
             </div>
         `;
         viewContainer.querySelector('#cal-prev')!.addEventListener('click', () => navigateMonth(-1));
         viewContainer.querySelector('#cal-next')!.addEventListener('click', () => navigateMonth(1));
-        viewContainer.querySelector('#empty-add-btn')?.addEventListener('click', openCreateForm);
         return;
     }
 
@@ -135,11 +152,11 @@ function renderUpcomingView() {
     if (state.getEvents().length === 0) {
         viewContainer.innerHTML = `
             <div class="upcoming-list">
-                <h2>Upcoming Events</h2>
+                <h2>Sự kiện sắp tới</h2>
                 <div class="empty-state">
                     <div class="empty-state-icon">📅</div>
-                    <p>No upcoming events</p>
-                    <button class="btn btn-primary" id="empty-add-btn-up">Create Event</button>
+                    <p>Chưa có sự kiện sắp tới</p>
+                    <button class="btn btn-primary" id="empty-add-btn-up">Tạo sự kiện</button>
                 </div>
             </div>
         `;
@@ -168,12 +185,16 @@ function navigateMonth(direction: -1 | 1) {
     currentMonth = nextMonth;
     currentYear = nextYear;
 
-    // F2: Debounce rapid navigation
+    // Simulate loading for UX (FR-017)
+    isLoading = true;
+    renderCurrentView();
+
     if (navDebounceTimer) clearTimeout(navDebounceTimer);
     navDebounceTimer = setTimeout(() => {
         navDebounceTimer = null;
+        isLoading = false;
         renderCurrentView();
-    }, 50);
+    }, 200);
 }
 
 // --- Interactions ---
@@ -200,6 +221,7 @@ function onCellClick(cell: CalendarCell) {
 
 function onUpcomingItemClick(occ: UpcomingEventOccurrence) {
     backdrop.classList.add('open');
+    pushOverlayState();
     renderEventDetail(
         detailContainer,
         [occ],
@@ -215,6 +237,7 @@ function onUpcomingItemClick(occ: UpcomingEventOccurrence) {
 
 // --- Forms ---
 function openCreateForm() {
+    pushOverlayState();
     renderEventForm(modalContainer, state, null, () => {
         renderCurrentView();
         showToast('Event created!', 'success');
@@ -228,6 +251,7 @@ function openEditForm(eventId: string) {
     closeDetailPanel(detailContainer);
     backdrop.classList.remove('open');
 
+    pushOverlayState();
     renderEventForm(modalContainer, state, event, () => {
         renderCurrentView();
         showToast('Event updated!', 'success');
@@ -236,13 +260,14 @@ function openEditForm(eventId: string) {
 
 // --- Import/Export Modal ---
 function openImportExport() {
+    pushOverlayState();
     const overlay = document.createElement('div');
     overlay.className = 'modal-overlay open';
     overlay.innerHTML = `
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Settings</h2>
-                <button class="detail-panel-close" id="ie-close" aria-label="Close settings">✕</button>
+                <h2>Cài đặt</h2>
+                <button class="detail-panel-close" id="ie-close" aria-label="Đóng cài đặt">✕</button>
             </div>
             <div id="ie-content"></div>
         </div>

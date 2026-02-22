@@ -3,10 +3,21 @@ export type LunarDate = {
     month: number;
 };
 
+export const MIN_YEAR = 1901;
+export const MAX_YEAR = 2099;
+
 export type SolarDate = {
     year: number;
     month: number;
     day: number;
+};
+
+export type LunarDateContext = {
+    lunarDay: number;
+    lunarMonth: number;
+    lunarYear: number;
+    isLeapMonth: boolean;
+    canChiYear: string;
 };
 
 export enum LeapMonthRule {
@@ -27,6 +38,7 @@ export type LunarEvent = {
 export type UpcomingEventOccurrence = {
     event: LunarEvent;
     solarDate: SolarDate;
+    lunarContext?: LunarDateContext;
     isLeapMonthOccurrence: boolean;
     daysUntil: number;
 };

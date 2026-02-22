@@ -12,15 +12,15 @@ export function renderImportExport(
     section.className = 'import-export-section';
 
     section.innerHTML = `
-        <h2 style="font-size:var(--font-size-md);font-weight:600;margin-bottom:var(--space-2)">Data Management</h2>
-        <button class="btn btn-secondary btn-block" id="export-btn" aria-label="Export events">
-            📤 Export Events
+        <h2 style="font-size:var(--font-size-md);font-weight:600;margin-bottom:var(--space-2)">Quản lý dữ liệu</h2>
+        <button class="btn btn-secondary btn-block" id="export-btn" aria-label="Xuất sự kiện">
+            📤 Xuất sự kiện
         </button>
         <div class="file-input-wrapper">
-            <button class="btn btn-secondary btn-block" id="import-trigger" aria-label="Import events">
-                📥 Import Events
+            <button class="btn btn-secondary btn-block" id="import-trigger" aria-label="Nhập sự kiện">
+                📥 Nhập sự kiện
             </button>
-            <input type="file" id="import-file" accept=".json,application/json" aria-label="Select file to import">
+            <input type="file" id="import-file" accept=".json,application/json" aria-label="Chọn tệp để nhập">
         </div>
     `;
 
@@ -37,9 +37,9 @@ export function renderImportExport(
             a.download = `am-lich-events-${new Date().toISOString().slice(0, 10)}.json`;
             a.click();
             URL.revokeObjectURL(url);
-            showToast('Events exported successfully', 'success');
+            showToast('Xuất sự kiện thành công', 'success');
         } catch (err: any) {
-            showToast(`Export failed: ${err.message}`, 'error');
+            showToast(`Lỗi khi xuất: ${err.message}`, 'error');
         }
     });
 
@@ -52,9 +52,9 @@ export function renderImportExport(
         try {
             const text = await file.text();
             const result = await state.importFromJson(text);
-            showToast(`Imported successfully: ${result.added} new events`, 'success');
+            showToast(`Nhập thành công: ${result.added} sự kiện mới`, 'success');
         } catch (err: any) {
-            showToast(`Import failed: ${err.message}`, 'error');
+            showToast(`Lỗi khi nhập: ${err.message}`, 'error');
         }
 
         // Reset file input so the same file can be re-selected

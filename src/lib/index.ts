@@ -1,5 +1,7 @@
 import { LunarEvent, UpcomingEventOccurrence, LeapMonthRule } from '../core/models/types';
-import { convertLunarToSolar } from '../core/lunar-math/converter';
+import { convertLunarToSolar, convertSolarToLunar } from '../core/lunar-math/converter';
+export { convertLunarToSolar, convertSolarToLunar };
+export * from './formatters';
 
 /**
  * Validates constraints around Leap Month behavior (US2) and computes the valid
@@ -25,8 +27,9 @@ export function calculateOccurrencesForYear(
             occurrences.push({
                 event,
                 solarDate: standardSolar,
+                lunarContext: convertSolarToLunar(standardSolar.year, standardSolar.month, standardSolar.day) || undefined,
                 isLeapMonthOccurrence: false,
-                daysUntil: 0 // To be computed dynamically by application layer based on User's current date
+                daysUntil: 0
             });
         }
 
@@ -35,6 +38,7 @@ export function calculateOccurrencesForYear(
             occurrences.push({
                 event,
                 solarDate: leapSolar,
+                lunarContext: convertSolarToLunar(leapSolar.year, leapSolar.month, leapSolar.day) || undefined,
                 isLeapMonthOccurrence: true,
                 daysUntil: 0
             });
@@ -46,6 +50,7 @@ export function calculateOccurrencesForYear(
                 occurrences.push({
                     event,
                     solarDate: standardSolar,
+                    lunarContext: convertSolarToLunar(standardSolar.year, standardSolar.month, standardSolar.day) || undefined,
                     isLeapMonthOccurrence: false,
                     daysUntil: 0
                 });
@@ -54,6 +59,7 @@ export function calculateOccurrencesForYear(
                 occurrences.push({
                     event,
                     solarDate: leapSolar,
+                    lunarContext: convertSolarToLunar(leapSolar.year, leapSolar.month, leapSolar.day) || undefined,
                     isLeapMonthOccurrence: true,
                     daysUntil: 0
                 });
@@ -70,4 +76,4 @@ export { generateExportPayload, validateImportPayload } from '../application/syn
 export { addEvent, updateEvent, removeEvent } from '../application/events/crud';
 export { validateEventCreationParams } from '../core/rules/leap-month';
 export { LeapMonthRule } from '../core/models/types';
-export type { LunarEvent, LunarDate, SolarDate, UpcomingEventOccurrence, ExportPayload } from '../core/models/types';
+export type { LunarEvent, LunarDate, SolarDate, UpcomingEventOccurrence, ExportPayload, LunarDateContext } from '../core/models/types';
