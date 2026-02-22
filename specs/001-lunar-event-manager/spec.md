@@ -133,11 +133,11 @@ Can be tested by exporting stored events, re-importing them into a clean environ
 
 ## Edge Cases
 
-- What happens when a lunar date does not exist in a given year (e.g., leap month missing)?
-- How does the system handle invalid lunar day values (e.g., 31)?
-- What happens when importing malformed data?
-- How does the system behave at year boundaries (end of solar year vs lunar year)?
-- What happens if multiple events occur on the same lunar date?
+- **Invalid Dates**: Mathematical bounds must reject Day > 30, and Day 30 in a 29-day leap/regular month permutation. Rejected instantly at creation by pure functions.
+- **Corrupted Payloads**: Functions consuming import JSON must perform runtime schema validation (Zod/Type Guards) and return a deterministic Error, never crashing the main thread.
+- **Missing Leap Month**: `LEAP_ONLY` occurrences silently yield `[]` (0 hits) during years lacking that specific leap month.
+- **Year Boundary Calculations**: The solar-to-lunar window logic must seamlessly calculate events occurring in Lunar Month 12 crossing into the next Solar Year without looping indefinitely.
+- **Same-Day Collisions**: Multiple events resolving to the same solar date are stored sequentially and grouped by the presentation layer; the core returns flat arrays.
 
 ---
 
@@ -146,21 +146,20 @@ Can be tested by exporting stored events, re-importing them into a clean environ
 ### Functional Requirements
 
 - **FR-001**: System MUST allow users to create recurring events defined by lunar day, lunar month, and leap month indicator.
-- **FR-002**: System MUST convert solar dates to lunar dates accurately and deterministically.
-- **FR-003**: System MUST convert lunar dates to corresponding solar dates for any given year.
-- **FR-004**: System MUST display events on solar dates that correspond to their lunar definitions.
-- **FR-005**: System MUST correctly handle leap month variations without dropping events.
-- **FR-006**: System MUST calculate upcoming event occurrences from a given reference date.
-- **FR-007**: System MUST function fully without network connectivity.
-- **FR-008**: System MUST support exporting all stored events into a structured format.
-- **FR-009**: System MUST support importing events with deterministic conflict resolution.
-- **FR-010**: System MUST reject malformed or incomplete imported data.
+- **FR-002**: System MUST convert solar dates to lunar dates accurately and deterministically using internal algorithms without external API/Network connectivity.
+- **FR-003**: System MUST convert lunar dates to corresponding solar dates for any given year up to 2100.
+- **FR-004**: System MUST calculate upcoming event occurrences bounded purely by mathematical limits, decoupled entirely from UI constructs (No DOM/Window usage in Core).
+- **FR-005**: System MUST correctly handle leap month explicit rules (`REGULAR_ONLY`, `LEAP_ONLY`, `BOTH`) mathematically without dropping defined occurrence limits.
+- **FR-006**: System MUST persist and function fully offline; storage adapters must be abstracted away from Core rules.
+- **FR-007**: System MUST support exporting all stored events into a `ExportPayload` JSON structure containing an array of events and versioning.
+- **FR-008**: System MUST deterministically import data by matching Unique IDs. Identical contents are skipped; differing content completely overwrites the local entry (No implicit field merges).
+- **FR-009**: System MUST perform isolated rollback/aborts if an imported JSON file fails runtime schema validation mid-parse.
 
 ### Key Entities
 
-- **LunarEvent**: Represents a recurring event defined by lunar day, lunar month, and leap month indicator.
-- **LunarDate**: Represents a lunar calendar date including day, month, year, and leap month status.
-- **UpcomingEventOccurrence**: Represents a calculated future solar date corresponding to a stored lunar event.
+- **LunarEvent**: Represents a recurring event defined by id, name, lunarDate (day, month), leapMonthRule, and timestamps.
+- **LunarDate**: Represents a lunar calendar date including day and month.
+- **UpcomingEventOccurrence**: Computed projection containing the original event, the matched SolarDate, and days until occurrence.
 
 ---
 
