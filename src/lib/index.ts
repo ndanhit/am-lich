@@ -67,3 +67,7 @@ export function calculateOccurrencesForYear(
 export { getUpcomingEvents } from '../application/queries/upcoming';
 export { importEvents } from '../application/sync/import';
 export { generateExportPayload, validateImportPayload } from '../application/sync/export';
+export { addEvent, updateEvent, removeEvent } from '../application/events/crud';
+export { validateEventCreationParams } from '../core/rules/leap-month';
+export { LeapMonthRule } from '../core/models/types';
+export type { LunarEvent, LunarDate, SolarDate, UpcomingEventOccurrence, ExportPayload } from '../core/models/types';
