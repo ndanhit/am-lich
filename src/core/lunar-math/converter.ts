@@ -1,5 +1,6 @@
-import { LunarYear, Lunar, requiredMinYear, requiredMaxYear } from 'lunar-javascript';
-import { LunarDate, SolarDate } from '../models/types';
+import { LunarYear, Lunar, Solar, requiredMinYear, requiredMaxYear } from 'lunar-javascript';
+import { LunarDate, SolarDate, LunarDateContext, MIN_YEAR, MAX_YEAR } from '../models/types';
+import { translateGanZhiToVietnamese } from '../models/can-chi';
 
 const lunarYearCache = new Map<number, any>();
 
@@ -77,6 +78,39 @@ export function convertLunarToSolar(
     } catch (err) {
         // Math bounds exceeded or invalid input
         solarCache.set(cacheKey, null);
+        return null;
+    }
+}
+const solarToLunarCache = new Map<string, LunarDateContext | null>();
+
+/**
+ * Converts a Solar Gregorian date to a Lunar date context.
+ * Includes Vietnamese Can Chi names and leap month indicators.
+ */
+export function convertSolarToLunar(year: number, month: number, day: number): LunarDateContext | null {
+    if (year < MIN_YEAR || year > MAX_YEAR) return null;
+
+    const cacheKey = `${year}-${month}-${day}`;
+    if (solarToLunarCache.has(cacheKey)) {
+        return solarToLunarCache.get(cacheKey)!;
+    }
+
+    try {
+        const solar = Solar.fromYmd(year, month, day);
+        const lunar = solar.getLunar();
+
+        const result: LunarDateContext = {
+            lunarDay: lunar.getDay(),
+            lunarMonth: lunar.getMonth(),
+            lunarYear: lunar.getYear(),
+            isLeapMonth: lunar.getMonth() < 0,
+            canChiYear: translateGanZhiToVietnamese(lunar.getYearInGanZhi())
+        };
+
+        solarToLunarCache.set(cacheKey, result);
+        return result;
+    } catch (err) {
+        solarToLunarCache.set(cacheKey, null);
         return null;
     }
 }

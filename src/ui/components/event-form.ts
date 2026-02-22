@@ -15,7 +15,7 @@ export function renderEventForm(
     onCancel: () => void,
 ): void {
     const isEdit = editEvent !== null;
-    const title = isEdit ? 'Edit Event' : 'New Event';
+    const title = isEdit ? 'Sửa sự kiện' : 'Sự kiện mới';
 
     const overlay = document.createElement('div');
     overlay.className = 'modal-overlay open';
@@ -27,28 +27,28 @@ export function renderEventForm(
             </div>
             <form id="event-form" novalidate>
                 <div class="form-group">
-                    <label for="event-name">Event Name</label>
-                    <input type="text" id="event-name" maxlength="100" placeholder="e.g. Ancestor Memorial Day"
+                    <label for="event-name">Tên sự kiện</label>
+                    <input type="text" id="event-name" maxlength="100" placeholder="ví dụ: Giỗ tổ Hùng Vương"
                            value="${isEdit ? escapeAttr(editEvent.name) : ''}" required>
                     <div class="char-count"><span id="char-current">${isEdit ? editEvent.name.length : 0}</span>/100</div>
                     <div class="form-error" id="name-error"></div>
                 </div>
                 <div class="form-row">
                     <div class="form-group">
-                        <label for="lunar-day">Lunar Day</label>
+                        <label for="lunar-day">Ngày âm</label>
                         <input type="number" id="lunar-day" min="1" max="30" placeholder="1–30"
                                value="${isEdit ? editEvent.lunarDate.day : ''}" required>
                         <div class="form-error" id="day-error"></div>
                     </div>
                     <div class="form-group">
-                        <label for="lunar-month">Lunar Month</label>
+                        <label for="lunar-month">Tháng âm</label>
                         <input type="number" id="lunar-month" min="1" max="12" placeholder="1–12"
                                value="${isEdit ? editEvent.lunarDate.month : ''}" required>
                         <div class="form-error" id="month-error"></div>
                     </div>
                 </div>
                 <div class="form-group">
-                    <label for="leap-rule">Leap Month Rule</label>
+                    <label for="leap-rule">Quy tắc tháng nhuận</label>
                     <select id="leap-rule">
                         ${Object.values(LeapMonthRule).map(rule =>
         `<option value="${rule}" ${isEdit && editEvent.leapMonthRule === rule ? 'selected' : ''}>
@@ -57,8 +57,8 @@ export function renderEventForm(
     ).join('')}
                     </select>
                 </div>
-                <button type="submit" class="btn btn-primary btn-block" id="submit-btn">
-                    ${isEdit ? 'Save Changes' : 'Create Event'}
+                <button type="submit" class="btn btn-primary btn-block" id="submit-btn" aria-label="${isEdit ? 'Lưu thay đổi' : 'Tạo sự kiện'}">
+                    ${isEdit ? 'Lưu thay đổi' : 'Tạo sự kiện'}
                 </button>
             </form>
         </div>
@@ -98,17 +98,17 @@ export function renderEventForm(
 
         // Client-side quick checks (not domain logic, just empty-field guards)
         if (!name) {
-            showError(overlay, 'name-error', 'event-name', 'Event name is required');
+            showError(overlay, 'name-error', 'event-name', 'Tên sự kiện không được để trống');
             return;
         }
 
         if (isNaN(day)) {
-            showError(overlay, 'day-error', 'lunar-day', 'Lunar day is required');
+            showError(overlay, 'day-error', 'lunar-day', 'Ngày âm không hợp lệ');
             return;
         }
 
         if (isNaN(month)) {
-            showError(overlay, 'month-error', 'lunar-month', 'Lunar month is required');
+            showError(overlay, 'month-error', 'lunar-month', 'Tháng âm không hợp lệ');
             return;
         }
 
@@ -123,7 +123,7 @@ export function renderEventForm(
             closeForm(overlay, onSaved);
         } catch (err: any) {
             // Domain validation error from Core Engine
-            const msg = err.message || 'Invalid input';
+            const msg = err.message || 'Dữ liệu không hợp lệ';
             if (msg.includes('day')) {
                 showError(overlay, 'day-error', 'lunar-day', msg);
             } else if (msg.includes('month')) {

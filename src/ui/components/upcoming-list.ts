@@ -1,5 +1,6 @@
 import type { SolarDate, UpcomingEventOccurrence } from '../../lib/index';
 import { MONTH_NAMES_SHORT, LEAP_MONTH_LABELS } from '../types';
+import { formatSolarDate } from '../../lib/index';
 import type { AppState } from '../state';
 
 /** Get today's solar date */
@@ -20,7 +21,7 @@ export function renderUpcomingList(
     section.className = 'upcoming-list';
 
     const h2 = document.createElement('h2');
-    h2.textContent = 'Upcoming Events';
+    h2.textContent = 'Sự kiện sắp tới';
     section.appendChild(h2);
 
     const today = getToday();
@@ -30,7 +31,7 @@ export function renderUpcomingList(
         section.innerHTML += `
             <div class="empty-state">
                 <div class="empty-state-icon">📅</div>
-                <p>No upcoming events</p>
+                <p>Chưa có sự kiện sắp tới</p>
             </div>
         `;
         container.appendChild(section);
@@ -45,8 +46,10 @@ export function renderUpcomingList(
         item.setAttribute('aria-label', `${occ.event.name}, ${formatDaysUntil(occ.daysUntil)}`);
 
         const leapTag = occ.isLeapMonthOccurrence
-            ? ' <span class="leap-tag">(Leap)</span>'
+            ? ' <span class="leap-tag">(Nhuận)</span>'
             : '';
+
+        const solarStr = formatSolarDate(occ.solarDate);
 
         item.innerHTML = `
             <div class="upcoming-date-badge">
@@ -55,7 +58,8 @@ export function renderUpcomingList(
             </div>
             <div class="upcoming-info">
                 <div class="event-name">${escapeHtml(occ.event.name)}</div>
-                <div class="lunar-label">Lunar ${occ.event.lunarDate.month}/${occ.event.lunarDate.day}${leapTag}</div>
+                <div class="lunar-label">Dương lịch: ${solarStr}</div>
+                <div class="lunar-label sub">Âm lịch ${occ.event.lunarDate.month}/${occ.event.lunarDate.day}${leapTag}</div>
             </div>
             <span class="days-until-badge ${occ.daysUntil === 0 ? 'today' : occ.daysUntil <= 7 ? 'soon' : ''}">
                 ${formatDaysUntil(occ.daysUntil)}
@@ -77,9 +81,9 @@ export function renderUpcomingList(
 }
 
 function formatDaysUntil(days: number): string {
-    if (days === 0) return 'Today';
-    if (days === 1) return 'Tomorrow';
-    return `${days}d`;
+    if (days === 0) return 'Hôm nay';
+    if (days === 1) return 'Ngày mai';
+    return `${days} ngày`;
 }
 
 function escapeHtml(str: string): string {

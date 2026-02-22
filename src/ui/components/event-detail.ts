@@ -1,5 +1,6 @@
 import type { UpcomingEventOccurrence } from '../../lib/index';
 import { LEAP_MONTH_LABELS } from '../types';
+import { formatSolarDate, formatLunarDate } from '../../lib/index';
 
 /** Render event detail panel */
 export function renderEventDetail(
@@ -22,11 +23,14 @@ export function renderEventDetail(
     // Render first event or list
     const html = occurrences.map(occ => {
         const ev = occ.event;
-        const daysText = occ.daysUntil === 0 ? 'Today' :
-            occ.daysUntil === 1 ? 'Tomorrow' :
-                `${occ.daysUntil} days`;
+        const daysText = occ.daysUntil === 0 ? 'Hôm nay' :
+            occ.daysUntil === 1 ? 'Ngày mai' :
+                `${occ.daysUntil} ngày nữa`;
         const leapLabel = LEAP_MONTH_LABELS[ev.leapMonthRule];
-        const leapTag = occ.isLeapMonthOccurrence ? ' <span style="color:var(--color-warning)">(Leap)</span>' : '';
+        const leapTag = occ.isLeapMonthOccurrence ? ' <span style="color:var(--color-warning)">(Nhuận)</span>' : '';
+
+        const lunarStr = occ.lunarContext ? formatLunarDate(occ.lunarContext) : `Tháng ${ev.lunarDate.month}, Ngày ${ev.lunarDate.day}`;
+        const solarStr = formatSolarDate(occ.solarDate);
 
         return `
             <div class="detail-event-item" data-event-id="${ev.id}">
@@ -35,25 +39,25 @@ export function renderEventDetail(
                 </div>
                 <div class="detail-meta">
                     <div class="detail-meta-item">
-                        <span class="label">Lunar date</span>
-                        <span>Month ${ev.lunarDate.month}, Day ${ev.lunarDate.day}</span>
+                        <span class="label">Ngày âm lịch</span>
+                        <span>${lunarStr}</span>
                     </div>
                     <div class="detail-meta-item">
-                        <span class="label">Solar date</span>
-                        <span>${occ.solarDate.year}/${String(occ.solarDate.month).padStart(2, '0')}/${String(occ.solarDate.day).padStart(2, '0')}</span>
+                        <span class="label">Ngày dương lịch</span>
+                        <span>${solarStr}</span>
                     </div>
                     <div class="detail-meta-item">
-                        <span class="label">Leap rule</span>
+                        <span class="label">Quy tắc nhuận</span>
                         <span>${leapLabel}</span>
                     </div>
                     <div class="detail-meta-item">
-                        <span class="label">Next in</span>
+                        <span class="label">Sắp tới trong</span>
                         <span>${daysText}</span>
                     </div>
                 </div>
                 <div class="detail-actions">
-                    <button class="btn btn-secondary edit-btn" data-id="${ev.id}" aria-label="Edit ${escapeHtml(ev.name)}">Edit</button>
-                    <button class="btn btn-danger delete-btn" data-id="${ev.id}" data-name="${escapeHtml(ev.name)}" aria-label="Delete ${escapeHtml(ev.name)}">Delete</button>
+                    <button class="btn btn-secondary edit-btn" data-id="${ev.id}" aria-label="Sửa ${escapeHtml(ev.name)}">Sửa</button>
+                    <button class="btn btn-danger delete-btn" data-id="${ev.id}" data-name="${escapeHtml(ev.name)}" aria-label="Xóa ${escapeHtml(ev.name)}">Xóa</button>
                 </div>
             </div>
         `;

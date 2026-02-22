@@ -1,3 +1,4 @@
+import { convertSolarToLunar } from '../../lib/index';
 import type { UpcomingEventOccurrence, SolarDate } from '../../lib/index';
 import type { CalendarViewModel, CalendarCell } from '../types';
 import { MONTH_NAMES, WEEKDAY_HEADERS } from '../types';
@@ -42,10 +43,13 @@ export function buildCalendarViewModel(state: AppState, year: number, month: num
     for (let i = firstDow - 1; i >= 0; i--) {
         const day = daysInPrev - i;
         const date: SolarDate = { year: prevYear, month: prevMonth, day };
+        const lunar = convertSolarToLunar(date.year, date.month, date.day) || undefined;
         cells.push({
             date,
+            lunar,
             isCurrentMonth: false,
             isToday: isSameDate(date, today),
+            isFirstDayOfLunar: lunar?.lunarDay === 1,
             events: occurrences.filter(o => isSameDate(o.solarDate, date)),
         });
     }
@@ -53,10 +57,13 @@ export function buildCalendarViewModel(state: AppState, year: number, month: num
     // Current month days
     for (let day = 1; day <= daysInMonth; day++) {
         const date: SolarDate = { year, month, day };
+        const lunar = convertSolarToLunar(date.year, date.month, date.day) || undefined;
         cells.push({
             date,
+            lunar,
             isCurrentMonth: true,
             isToday: isSameDate(date, today),
+            isFirstDayOfLunar: lunar?.lunarDay === 1,
             events: occurrences.filter(o => isSameDate(o.solarDate, date)),
         });
     }
@@ -67,10 +74,13 @@ export function buildCalendarViewModel(state: AppState, year: number, month: num
     const nextYear = month === 12 ? year + 1 : year;
     for (let day = 1; day <= remaining; day++) {
         const date: SolarDate = { year: nextYear, month: nextMonth, day };
+        const lunar = convertSolarToLunar(date.year, date.month, date.day) || undefined;
         cells.push({
             date,
+            lunar,
             isCurrentMonth: false,
             isToday: isSameDate(date, today),
+            isFirstDayOfLunar: lunar?.lunarDay === 1,
             events: occurrences.filter(o => isSameDate(o.solarDate, date)),
         });
     }
@@ -129,6 +139,15 @@ export function renderCalendar(
         dayNum.className = 'day-number';
         dayNum.textContent = String(cell.date.day);
         el.appendChild(dayNum);
+
+        if (cell.lunar) {
+            const lunarDay = document.createElement('span');
+            lunarDay.className = 'lunar-day';
+            if (cell.isFirstDayOfLunar) lunarDay.classList.add('mung-1');
+            lunarDay.textContent = cell.isFirstDayOfLunar ? `1/${cell.lunar.lunarMonth}` : String(cell.lunar.lunarDay);
+            el.setAttribute('data-lunar-date', `${cell.lunar.lunarYear}-${cell.lunar.lunarMonth}-${cell.lunar.lunarDay}`);
+            el.appendChild(lunarDay);
+        }
 
         if (cell.events.length > 0) {
             if (cell.events.length <= 3) {
