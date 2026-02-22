@@ -28,8 +28,54 @@ const now = new Date();
 currentYear = now.getFullYear();
 currentMonth = now.getMonth() + 1;
 
+// --- Navigation State (US1) ---
+let lastScrollTime = 0;
+let isNavigationTransitioning = false;
+const SCROLL_COOLDOWN = 400; // ms
+
+function isOverlayOpen() {
+    return !!(document.querySelector('.modal-overlay.open') ||
+        document.querySelector('.detail-panel.open'));
+}
+
 // --- DOM Setup ---
 const app = document.getElementById('app')!;
+
+// Vertical Scroll Navigation (US1)
+app.addEventListener('wheel', (e) => {
+    if (currentView !== 'calendar' || isNavigationTransitioning || isOverlayOpen()) return;
+
+    const now = Date.now();
+    if (now - lastScrollTime < SCROLL_COOLDOWN) return;
+
+    if (Math.abs(e.deltaY) > 50) {
+        const direction = e.deltaY > 0 ? 1 : -1;
+        lastScrollTime = now;
+        navigateMonth(direction);
+    }
+}, { passive: true });
+
+let touchStartY = 0;
+app.addEventListener('touchstart', (e) => {
+    if (currentView !== 'calendar' || isNavigationTransitioning || isOverlayOpen()) return;
+    touchStartY = e.touches[0].clientY;
+}, { passive: true });
+
+app.addEventListener('touchend', (e) => {
+    if (currentView !== 'calendar' || isNavigationTransitioning || isOverlayOpen()) return;
+
+    const touchEndY = e.changedTouches[0].clientY;
+    const deltaY = touchStartY - touchEndY;
+
+    if (Math.abs(deltaY) > 80) { // Swipe threshold
+        const direction = deltaY > 0 ? 1 : -1;
+        const now = Date.now();
+        if (now - lastScrollTime < SCROLL_COOLDOWN) return;
+
+        lastScrollTime = now;
+        navigateMonth(direction);
+    }
+}, { passive: true });
 app.innerHTML = `
     <header class="app-header">
         <h1>Âm Lịch</h1>
@@ -48,6 +94,7 @@ app.innerHTML = `
     <div id="backdrop" class="backdrop"></div>
     <div id="toast" class="toast"></div>
     <div id="confirm" class="confirm-dialog"></div>
+    <div id="today-fab" class="today-fab" aria-label="Hôm nay">Hôm nay</div>
 `;
 
 const viewContainer = document.getElementById('view-container')!;
@@ -111,6 +158,7 @@ window.addEventListener('popstate', (event) => {
 function renderCurrentView() {
     closeDetailPanel(detailContainer);
     backdrop.classList.remove('open');
+    updateTodayFab();
 
     if (currentView === 'calendar') {
         renderCalendarView();
@@ -119,6 +167,28 @@ function renderCurrentView() {
     }
 }
 
+function updateTodayFab() {
+    const fab = document.getElementById('today-fab');
+    if (!fab) return;
+
+    const now = new Date();
+    const isTodayMonth = currentYear === now.getFullYear() && currentMonth === (now.getMonth() + 1);
+
+    if (!isTodayMonth && currentView === 'calendar') {
+        fab.classList.add('show');
+    } else {
+        fab.classList.remove('show');
+    }
+}
+
+// Today FAB Click (US2)
+document.getElementById('today-fab')?.addEventListener('click', () => {
+    const now = new Date();
+    currentYear = now.getFullYear();
+    currentMonth = now.getMonth() + 1;
+    renderCurrentView();
+});
+
 function renderCalendarView() {
     const vm = buildCalendarViewModel(state, currentYear, currentMonth);
 
@@ -126,9 +196,7 @@ function renderCalendarView() {
         viewContainer.innerHTML = `
             <div class="calendar">
                 <div class="calendar-nav">
-                    <button id="cal-prev" aria-label="Previous month">‹</button>
                     <h2>${vm.monthLabel}</h2>
-                    <button id="cal-next" aria-label="Next month">›</button>
                 </div>
                 <div class="loading-container">
                     <div class="spinner"></div>
@@ -136,8 +204,6 @@ function renderCalendarView() {
                 </div>
             </div>
         `;
-        viewContainer.querySelector('#cal-prev')!.addEventListener('click', () => navigateMonth(-1));
-        viewContainer.querySelector('#cal-next')!.addEventListener('click', () => navigateMonth(1));
         return;
     }
 
@@ -179,7 +245,7 @@ function navigateMonth(direction: -1 | 1) {
 
     // F1: Year boundary check
     if (nextYear < MIN_YEAR || nextYear > MAX_YEAR) {
-        showToast(`${direction === -1 ? 'Earliest' : 'Latest'} supported year reached (${direction === -1 ? MIN_YEAR : MAX_YEAR})`, 'warning');
+        showToast(`${direction === -1 ? 'Sớm nhất' : 'Muộn nhất'} năm hỗ trợ là (${direction === -1 ? MIN_YEAR : MAX_YEAR})`, 'warning');
         return;
     }
 
@@ -188,14 +254,16 @@ function navigateMonth(direction: -1 | 1) {
 
     // Simulate loading for UX (FR-017)
     isLoading = true;
+    isNavigationTransitioning = true;
     renderCurrentView();
 
     if (navDebounceTimer) clearTimeout(navDebounceTimer);
     navDebounceTimer = setTimeout(() => {
         navDebounceTimer = null;
         isLoading = false;
+        isNavigationTransitioning = false;
         renderCurrentView();
-    }, 200);
+    }, 300); // 300ms transition
 }
 
 // --- Interactions ---
