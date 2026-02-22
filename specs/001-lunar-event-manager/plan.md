@@ -1,13 +1,13 @@
-# Implementation Plan: [FEATURE]
+# Implementation Plan: Lunar Event Manager
 
-**Branch**: `[###-feature-name]` | **Date**: [DATE] | **Spec**: [link]
-**Input**: Feature specification from `/specs/[###-feature-name]/spec.md`
+**Branch**: `001-lunar-event-manager` | **Date**: 2026-02-22 | **Spec**: [specs/001-lunar-event-manager/spec.md](spec.md)
+**Input**: Feature specification from `/specs/001-lunar-event-manager/spec.md`
 
 **Note**: This template is filled in by the `/speckit.plan` command. See `.specify/templates/plan-template.md` for the execution workflow.
 
 ## Summary
 
-[Extract from feature spec: primary requirement + technical approach from research]
+Build a fully offline, deterministically tested Typescript Core Engine Library for managing lunar recurring events. The engine implements strict functional purity, separating leap month logic, calculations, and data mutation out of storage adapters and UI frames, as required by the Lunar Core Engine Constitution.
 
 ## Technical Context
 
