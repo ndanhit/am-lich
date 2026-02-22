@@ -104,12 +104,23 @@ export function convertSolarToLunar(year: number, month: number, day: number): L
             lunarMonth: lunar.getMonth(),
             lunarYear: lunar.getYear(),
             isLeapMonth: lunar.getMonth() < 0,
-            canChiYear: translateGanZhiToVietnamese(lunar.getYearInGanZhi())
+            canChiYear: translateGanZhiToVietnamese(lunar.getYearInGanZhi()),
+            canChiMonth: translateGanZhiToVietnamese(lunar.getMonthInGanZhi()),
+            canChiDay: translateGanZhiToVietnamese(lunar.getDayInGanZhi()),
+            fateElement: translateGanZhiToVietnamese(lunar.getDayNaYin()),
+            auspiciousHours: (lunar.getTimes() as any[])
+                .filter(t => t.getTianShenLuck() === '吉')
+                .map(t => translateGanZhiToVietnamese(t.getZhi())),
+            incompatibleAges: [
+                translateGanZhiToVietnamese(lunar.getChongShengXiao()),
+                lunar.getChongDesc()
+            ].filter(Boolean)
         };
 
         solarToLunarCache.set(cacheKey, result);
         return result;
     } catch (err) {
+        console.error('Error in convertSolarToLunar:', err);
         solarToLunarCache.set(cacheKey, null);
         return null;
     }

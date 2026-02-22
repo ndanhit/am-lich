@@ -3,6 +3,8 @@ import type { LunarEvent } from '../../lib/index';
 import type { EventFormData } from '../types';
 import { LEAP_MONTH_LABELS } from '../types';
 import type { AppState } from '../state';
+import { convertSolarToLunar } from '../../core/lunar-math/converter';
+import type { SolarDate } from '../../core/models/types';
 
 /**
  * Render event creation/edit form as a modal overlay.
@@ -13,9 +15,24 @@ export function renderEventForm(
     editEvent: LunarEvent | null,
     onSaved: () => void,
     onCancel: () => void,
+    initialDate?: SolarDate,
 ): void {
     const isEdit = editEvent !== null;
     const title = isEdit ? 'Sửa sự kiện' : 'Sự kiện mới';
+
+    // Pre-fill logic for new events from Day Detail Modal
+    let defaultDay = '';
+    let defaultMonth = '';
+    if (isEdit) {
+        defaultDay = String(editEvent.lunarDate.day);
+        defaultMonth = String(editEvent.lunarDate.month);
+    } else if (initialDate) {
+        const lunar = convertSolarToLunar(initialDate.year, initialDate.month, initialDate.day);
+        if (lunar) {
+            defaultDay = String(lunar.lunarDay);
+            defaultMonth = String(Math.abs(lunar.lunarMonth));
+        }
+    }
 
     const overlay = document.createElement('div');
     overlay.className = 'modal-overlay open';
@@ -37,13 +54,13 @@ export function renderEventForm(
                     <div class="form-group">
                         <label for="lunar-day">Ngày âm</label>
                         <input type="number" id="lunar-day" min="1" max="30" placeholder="1–30"
-                               value="${isEdit ? editEvent.lunarDate.day : ''}" required>
+                               value="${defaultDay}" required>
                         <div class="form-error" id="day-error"></div>
                     </div>
                     <div class="form-group">
                         <label for="lunar-month">Tháng âm</label>
                         <input type="number" id="lunar-month" min="1" max="12" placeholder="1–12"
-                               value="${isEdit ? editEvent.lunarDate.month : ''}" required>
+                               value="${defaultMonth}" required>
                         <div class="form-error" id="month-error"></div>
                     </div>
                 </div>

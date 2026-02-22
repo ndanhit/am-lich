@@ -5,6 +5,8 @@ Auto-generated from all feature plans. Last updated: 2026-02-22
 ## Active Technologies
 - TypeScript 5.9+ + `lunar-javascript` (domain conversion), `esbuild` (bundling), `vitest` (testing) (003-enhance-ui-ux)
 - `localStorage` (local source of truth) (003-enhance-ui-ux)
+- TypeScript 5.9+ + `lunar-javascript` (Core logic), Vanilla CSS (Styling), esbuild (Bundler) (004-day-detail-modal)
+- LocalStorage (via `LocalStorageAdapter`) (004-day-detail-modal)
 
 - TypeScript 5.x (Core Engine — frozen)
 - Vanilla JavaScript, HTML5, CSS3 (UI layer)
@@ -59,10 +61,10 @@ npm run format         # Prettier
 - Zero network requests — fully offline
 
 ## Recent Changes
+- 004-day-detail-modal: Added TypeScript 5.9+ + `lunar-javascript` (Core logic), Vanilla CSS (Styling), esbuild (Bundler)
 - 003-enhance-ui-ux: Added TypeScript 5.9+ + `lunar-javascript` (domain conversion), `esbuild` (bundling), `vitest` (testing)
 
 - 001-lunar-event-manager: Core Engine complete (30 tests passing, 25ms/10k events)
-- 002-lunar-event-ui: Design phase complete (spec, plan, research, data-model, contracts)
 
 <!-- MANUAL ADDITIONS START -->
 <!-- MANUAL ADDITIONS END -->

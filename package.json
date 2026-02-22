@@ -4,7 +4,7 @@
   "description": "",
   "main": "index.js",
   "scripts": {
-    "build": "tsc",
+    "build": "tsc && npm run build:ui",
     "build:ui": "esbuild src/ui/views/app.ts --bundle --outfile=dist/app.bundle.js --format=iife --target=es2020 --sourcemap",
     "dev": "npm run build:ui && npx serve . -l 3456",
     "test": "vitest run",
