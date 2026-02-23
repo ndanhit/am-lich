@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { getUpcomingEvents } from '../../src/application/queries/upcoming';
-import { LunarEvent, LeapMonthRule, SolarDate } from '../../src/core/models/types';
+import { LunarEvent, LeapMonthRule, SolarDate, RecurrenceRule } from '../../src/core/models/types';
 
 describe('Chronological Upcoming Events Pipeline', () => {
 
@@ -10,6 +10,7 @@ describe('Chronological Upcoming Events Pipeline', () => {
             name: 'Lunar New Year',
             lunarDate: { day: 1, month: 1 },
             leapMonthRule: LeapMonthRule.REGULAR_ONLY,
+            recurrence: RecurrenceRule.YEARLY,
             createdAt: 0,
             updatedAt: 0
         },
@@ -18,6 +19,7 @@ describe('Chronological Upcoming Events Pipeline', () => {
             name: 'Mid-Autumn Festival',
             lunarDate: { day: 15, month: 8 },
             leapMonthRule: LeapMonthRule.REGULAR_ONLY,
+            recurrence: RecurrenceRule.YEARLY,
             createdAt: 0,
             updatedAt: 0
         },
@@ -26,6 +28,7 @@ describe('Chronological Upcoming Events Pipeline', () => {
             name: 'End of Year',
             lunarDate: { day: 29, month: 12 }, // Safe date
             leapMonthRule: LeapMonthRule.REGULAR_ONLY,
+            recurrence: RecurrenceRule.YEARLY,
             createdAt: 0,
             updatedAt: 0
         }

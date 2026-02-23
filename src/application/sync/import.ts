@@ -1,4 +1,4 @@
-import { LunarEvent } from '../../core/models/types';
+import { LunarEvent } from "../../core/models/types";
 
 /**
  * Merges imported events with local events deterministically.
@@ -7,19 +7,19 @@ import { LunarEvent } from '../../core/models/types';
  * Completely new IDs are added.
  */
 export function importEvents(
-    localEvents: LunarEvent[],
-    importedEvents: LunarEvent[]
+  localEvents: LunarEvent[],
+  importedEvents: LunarEvent[],
 ): LunarEvent[] {
-    const localMap = new Map(localEvents.map(e => [e.id, e]));
+  const localMap = new Map(localEvents.map((e) => [e.id, e]));
 
-    for (const imported of importedEvents) {
-        const local = localMap.get(imported.id);
+  for (const imported of importedEvents) {
+    const local = localMap.get(imported.id);
 
-        // If it does not exist locally, or imported version is strictly newer, overwrite/add
-        if (!local || imported.updatedAt > local.updatedAt) {
-            localMap.set(imported.id, imported);
-        }
+    // If it does not exist locally, or imported version is strictly newer, overwrite/add
+    if (!local || imported.updatedAt > local.updatedAt) {
+      localMap.set(imported.id, imported);
     }
+  }
 
-    return Array.from(localMap.values());
+  return Array.from(localMap.values());
 }
