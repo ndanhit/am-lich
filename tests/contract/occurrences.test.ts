@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { calculateOccurrencesForYear } from '../../src/lib/index';
-import { LunarEvent, LeapMonthRule } from '../../src/core/models/types';
+import { LunarEvent, LeapMonthRule, RecurrenceRule } from '../../src/core/models/types';
 
 describe('Occurrences Core API Contract', () => {
     const tetEvent: LunarEvent = {
@@ -8,6 +8,7 @@ describe('Occurrences Core API Contract', () => {
         name: 'Lunar New Year',
         lunarDate: { day: 1, month: 1 },
         leapMonthRule: LeapMonthRule.REGULAR_ONLY,
+        recurrence: RecurrenceRule.YEARLY,
         createdAt: 0,
         updatedAt: 0
     };
@@ -29,6 +30,8 @@ describe('Occurrences Core API Contract', () => {
             name: 'Only happens in Leap Month 5',
             lunarDate: { day: 15, month: 5 },
             leapMonthRule: LeapMonthRule.LEAP_ONLY,
+            recurrence: RecurrenceRule.ONCE,
+            lunarYear: 2026,
             createdAt: 0,
             updatedAt: 0
         };
@@ -44,6 +47,7 @@ describe('Occurrences Core API Contract', () => {
             name: 'Happens in Month 5 and Leap Month 5',
             lunarDate: { day: 15, month: 5 },
             leapMonthRule: LeapMonthRule.BOTH,
+            recurrence: RecurrenceRule.YEARLY,
             createdAt: 0,
             updatedAt: 0
         };

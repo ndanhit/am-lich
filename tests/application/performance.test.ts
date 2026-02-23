@@ -1,6 +1,6 @@
 import { describe, it, expect } from 'vitest';
 import { calculateOccurrencesForYear } from '../../src/lib/index';
-import { LunarEvent, LeapMonthRule } from '../../src/core/models/types';
+import { LunarEvent, LeapMonthRule, RecurrenceRule } from '../../src/core/models/types';
 
 describe('Performance Benchmarks', () => {
 
@@ -17,6 +17,7 @@ describe('Performance Benchmarks', () => {
                     month: (i % 12) + 1 // 1 to 12
                 },
                 leapMonthRule: LeapMonthRule.REGULAR_ONLY,
+                recurrence: RecurrenceRule.YEARLY,
                 createdAt: 0,
                 updatedAt: 0
             });

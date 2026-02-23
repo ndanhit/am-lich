@@ -1,42 +1,54 @@
-import { RecurrenceRule, UpcomingEventOccurrence } from '../../core/models/types';
-import { RECURRENCE_LABELS } from '../types';
-import { formatSolarDate, formatLunarDate } from '../../lib/index';
+import {
+  RecurrenceRule,
+  UpcomingEventOccurrence,
+} from "../../core/models/types";
+import { RECURRENCE_LABELS } from "../types";
+import { formatSolarDate, formatLunarDate } from "../../lib/index";
 
 /** Render event detail panel */
 export function renderEventDetail(
-    container: HTMLElement,
-    occurrences: UpcomingEventOccurrence[],
-    onEdit: (eventId: string) => void,
-    onDelete: (eventId: string, eventName: string) => void,
-    onClose: () => void,
+  container: HTMLElement,
+  occurrences: UpcomingEventOccurrence[],
+  onEdit: (eventId: string) => void,
+  onDelete: (eventId: string, eventName: string) => void,
+  onClose: () => void,
 ): void {
-    if (occurrences.length === 0) {
-        closeDetailPanel(container);
-        return;
-    }
+  if (occurrences.length === 0) {
+    closeDetailPanel(container);
+    return;
+  }
 
-    container.innerHTML = '';
+  container.innerHTML = "";
 
-    const panel = document.createElement('div');
-    panel.className = 'detail-panel open';
+  const panel = document.createElement("div");
+  panel.className = "detail-panel open";
 
-    // Render occurrences
-    const html = occurrences.map(occ => {
-        const ev = occ.event;
-        const daysText = occ.daysUntil === 0 ? 'Hôm nay' :
-            occ.daysUntil === 1 ? 'Ngày mai' :
-                `${occ.daysUntil} ngày nữa`;
+  // Render occurrences
+  const html = occurrences
+    .map((occ) => {
+      const ev = occ.event;
+      const daysText =
+        occ.daysUntil === 0
+          ? "Hôm nay"
+          : occ.daysUntil === 1
+            ? "Ngày mai"
+            : `${occ.daysUntil} ngày nữa`;
 
-        const leapTag = occ.isLeapMonthOccurrence ? ' <span style="color:var(--color-warning)">(Nhuận)</span>' : '';
+      const leapTag = occ.isLeapMonthOccurrence
+        ? ' <span style="color:var(--color-warning)">(Nhuận)</span>'
+        : "";
 
-        const lunarStr = occ.lunarContext ? formatLunarDate(occ.lunarContext) : `Tháng ${ev.lunarDate.month}, Ngày ${ev.lunarDate.day}`;
-        const solarStr = formatSolarDate(occ.solarDate);
+      const lunarStr = occ.lunarContext
+        ? formatLunarDate(occ.lunarContext)
+        : `Tháng ${ev.lunarDate.month}, Ngày ${ev.lunarDate.day}`;
+      const solarStr = formatSolarDate(occ.solarDate);
 
-        const recurrenceBadge = (ev.recurrence && ev.recurrence !== RecurrenceRule.ONCE)
-            ? `<span class="event-recurrence-badge">${RECURRENCE_LABELS[ev.recurrence]}</span>`
-            : '';
+      const recurrenceBadge =
+        ev.recurrence && ev.recurrence !== RecurrenceRule.ONCE
+          ? `<span class="event-recurrence-badge">${RECURRENCE_LABELS[ev.recurrence]}</span>`
+          : "";
 
-        return `
+      return `
             <div class="detail-event-item" data-event-id="${ev.id}">
                 <div class="detail-panel-header">
                     <div class="event-name-row">
@@ -64,48 +76,55 @@ export function renderEventDetail(
                 </div>
             </div>
         `;
-    }).join('<hr style="border:none;border-top:1px solid var(--color-border-subtle);margin:var(--space-4) 0">');
+    })
+    .join(
+      '<hr style="border:none;border-top:1px solid var(--color-border-subtle);margin:var(--space-4) 0">',
+    );
 
-    panel.innerHTML = `
+  panel.innerHTML = `
         <div style="display:flex;justify-content:flex-end;margin-bottom:var(--space-2)">
             <button class="detail-panel-close" aria-label="Close panel">✕</button>
         </div>
         ${html}
     `;
 
-    container.appendChild(panel);
+  container.appendChild(panel);
 
-    // Wire close
-    panel.querySelector('.detail-panel-close')!.addEventListener('click', onClose);
+  // Wire close
+  panel
+    .querySelector(".detail-panel-close")!
+    .addEventListener("click", onClose);
 
-    // Wire edit buttons
-    panel.querySelectorAll('.edit-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            onEdit((btn as HTMLElement).dataset.id!);
-        });
+  // Wire edit buttons
+  panel.querySelectorAll(".edit-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      onEdit((btn as HTMLElement).dataset.id!);
     });
+  });
 
-    // Wire delete buttons
-    panel.querySelectorAll('.delete-btn').forEach(btn => {
-        btn.addEventListener('click', () => {
-            const el = btn as HTMLElement;
-            onDelete(el.dataset.id!, el.dataset.name!);
-        });
+  // Wire delete buttons
+  panel.querySelectorAll(".delete-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const el = btn as HTMLElement;
+      onDelete(el.dataset.id!, el.dataset.name!);
     });
+  });
 }
 
 export function closeDetailPanel(container: HTMLElement): void {
-    const panel = container.querySelector('.detail-panel');
-    if (panel) {
-        panel.classList.remove('open');
-        setTimeout(() => { container.innerHTML = ''; }, 300);
-    } else {
-        container.innerHTML = '';
-    }
+  const panel = container.querySelector(".detail-panel");
+  if (panel) {
+    panel.classList.remove("open");
+    setTimeout(() => {
+      container.innerHTML = "";
+    }, 300);
+  } else {
+    container.innerHTML = "";
+  }
 }
 
 function escapeHtml(str: string): string {
-    const div = document.createElement('div');
-    div.textContent = str;
-    return div.innerHTML;
+  const div = document.createElement("div");
+  div.textContent = str;
+  return div.innerHTML;
 }

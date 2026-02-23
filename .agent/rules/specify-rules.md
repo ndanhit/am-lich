@@ -9,6 +9,8 @@ Auto-generated from all feature plans. Last updated: 2026-02-22
 - LocalStorage (via `LocalStorageAdapter`) (004-day-detail-modal)
 - TypeScript 5.9+ + `lunar-javascript`, Vanilla CSS3, esbuild (005-ui-ux-polish)
 - LocalStorage (for persisted month state) (005-ui-ux-polish)
+- TypeScript / ES2022 + `lunar-javascript` (Core logic), `esbuild` (Bundling), `serve` (Development) (006-resolve-user-feedback)
+- `localStorage` (LunarEvent persistence) (006-resolve-user-feedback)
 
 - TypeScript 5.x (Core Engine — frozen)
 - Vanilla JavaScript, HTML5, CSS3 (UI layer)
@@ -63,9 +65,9 @@ npm run format         # Prettier
 - Zero network requests — fully offline
 
 ## Recent Changes
+- 006-resolve-user-feedback: Added TypeScript / ES2022 + `lunar-javascript` (Core logic), `esbuild` (Bundling), `serve` (Development)
 - 005-ui-ux-polish: Added TypeScript 5.9+ + `lunar-javascript`, Vanilla CSS3, esbuild
 - 004-day-detail-modal: Added TypeScript 5.9+ + `lunar-javascript` (Core logic), Vanilla CSS (Styling), esbuild (Bundler)
-- 003-enhance-ui-ux: Added TypeScript 5.9+ + `lunar-javascript` (domain conversion), `esbuild` (bundling), `vitest` (testing)
 
 
 <!-- MANUAL ADDITIONS START -->

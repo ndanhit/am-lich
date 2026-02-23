@@ -1,14 +1,21 @@
-import { LocalStorageAdapter } from '../../adapters/storage/local-storage-adapter';
-import { AppState } from '../state';
-import { buildCalendarViewModel, renderCalendar } from '../components/calendar';
-import { renderEventDetail, closeDetailPanel } from '../components/event-detail';
-import { renderEventForm } from '../components/event-form';
-import { renderUpcomingList } from '../components/upcoming-list';
-import { renderImportExport } from '../components/import-export';
-import { renderDayDetailModal } from '../components/day-detail-modal';
-import type { CalendarCell } from '../types';
-import type { AppView } from '../types';
-import type { UpcomingEventOccurrence, LunarEvent, SolarDate } from '../../lib/index';
+import { LocalStorageAdapter } from "../../adapters/storage/local-storage-adapter";
+import { AppState } from "../state";
+import { buildCalendarViewModel, renderCalendar } from "../components/calendar";
+import {
+  renderEventDetail,
+  closeDetailPanel,
+} from "../components/event-detail";
+import { renderEventForm } from "../components/event-form";
+import { renderUpcomingList } from "../components/upcoming-list";
+import { renderImportExport } from "../components/import-export";
+import { renderDayDetailModal } from "../components/day-detail-modal";
+import type { CalendarCell } from "../types";
+import type { AppView } from "../types";
+import type {
+  UpcomingEventOccurrence,
+  LunarEvent,
+  SolarDate,
+} from "../../lib/index";
 
 // --- Year Boundary Constants (F1) ---
 const MIN_YEAR = 1901;
@@ -18,64 +25,24 @@ const MAX_YEAR = 2099;
 const adapter = new LocalStorageAdapter();
 const state = new AppState(adapter);
 
-let currentView: AppView = 'calendar';
+let currentView: AppView = "calendar";
 let currentYear: number;
 let currentMonth: number;
-let isLoading = false;
-
-// Initialize to current month
+// --- Initialize to current month ---
 const now = new Date();
 currentYear = now.getFullYear();
 currentMonth = now.getMonth() + 1;
 
-// --- Navigation State (US1) ---
-let lastScrollTime = 0;
-let isNavigationTransitioning = false;
-const SCROLL_COOLDOWN = 400; // ms
-
 function isOverlayOpen() {
-    return !!(document.querySelector('.modal-overlay.open') ||
-        document.querySelector('.detail-panel.open'));
+  return !!(
+    document.querySelector(".modal-overlay.open") ||
+    document.querySelector(".detail-panel.open")
+  );
 }
 
 // --- DOM Setup ---
-const app = document.getElementById('app')!;
+const app = document.getElementById("app")!;
 
-// Vertical Scroll Navigation (US1)
-app.addEventListener('wheel', (e) => {
-    if (currentView !== 'calendar' || isNavigationTransitioning || isOverlayOpen()) return;
-
-    const now = Date.now();
-    if (now - lastScrollTime < SCROLL_COOLDOWN) return;
-
-    if (Math.abs(e.deltaY) > 50) {
-        const direction = e.deltaY > 0 ? 1 : -1;
-        lastScrollTime = now;
-        navigateMonth(direction);
-    }
-}, { passive: true });
-
-let touchStartY = 0;
-app.addEventListener('touchstart', (e) => {
-    if (currentView !== 'calendar' || isNavigationTransitioning || isOverlayOpen()) return;
-    touchStartY = e.touches[0].clientY;
-}, { passive: true });
-
-app.addEventListener('touchend', (e) => {
-    if (currentView !== 'calendar' || isNavigationTransitioning || isOverlayOpen()) return;
-
-    const touchEndY = e.changedTouches[0].clientY;
-    const deltaY = touchStartY - touchEndY;
-
-    if (Math.abs(deltaY) > 80) { // Swipe threshold
-        const direction = deltaY > 0 ? 1 : -1;
-        const now = Date.now();
-        if (now - lastScrollTime < SCROLL_COOLDOWN) return;
-
-        lastScrollTime = now;
-        navigateMonth(direction);
-    }
-}, { passive: true });
 app.innerHTML = `
     <header class="app-header">
         <h1>Âm Lịch</h1>
@@ -97,127 +64,158 @@ app.innerHTML = `
     <div id="today-fab" class="today-fab" aria-label="Hôm nay">Hôm nay</div>
 `;
 
-const viewContainer = document.getElementById('view-container')!;
-const detailContainer = document.getElementById('detail-container')!;
-const modalContainer = document.getElementById('modal-container')!;
-const backdrop = document.getElementById('backdrop')!;
-const toastEl = document.getElementById('toast')!;
-const confirmEl = document.getElementById('confirm')!;
+const viewContainer = document.getElementById("view-container")!;
+const detailContainer = document.getElementById("detail-container")!;
+const modalContainer = document.getElementById("modal-container")!;
+const backdrop = document.getElementById("backdrop")!;
+const toast = document.getElementById("toast")!;
+const confirmDialog = document.getElementById("confirm")!;
+
+/**
+ * Surface-level confirmation dialog utility
+ */
+export async function showConfirm(
+  title: string,
+  message: string,
+): Promise<boolean> {
+  return new Promise((resolve) => {
+    confirmDialog.innerHTML = `
+            <div class="confirm-dialog-box">
+                <h3>${title}</h3>
+                <p>${message}</p>
+                <div class="confirm-dialog-actions">
+                    <button class="btn btn-secondary" id="confirm-cancel">Hủy</button>
+                    <button class="btn btn-danger" id="confirm-ok">Tiếp tục</button>
+                </div>
+            </div>
+        `;
+    confirmDialog.classList.add("open");
+
+    const cleanup = (result: boolean) => {
+      confirmDialog.classList.remove("open");
+      resolve(result);
+    };
+
+    confirmDialog
+      .querySelector("#confirm-cancel")!
+      .addEventListener("click", () => cleanup(false));
+    confirmDialog
+      .querySelector("#confirm-ok")!
+      .addEventListener("click", () => cleanup(true));
+
+    // click outside to cancel
+    confirmDialog.addEventListener(
+      "click",
+      (e) => {
+        if (e.target === confirmDialog) cleanup(false);
+      },
+      { once: true },
+    );
+  });
+}
 
 // --- Toast ---
 let toastTimer: ReturnType<typeof setTimeout>;
-function showToast(message: string, type: 'success' | 'error' | 'warning' = 'success') {
-    clearTimeout(toastTimer);
-    toastEl.textContent = message;
-    toastEl.className = `toast ${type} show`;
-    toastTimer = setTimeout(() => toastEl.classList.remove('show'), 3000);
-}
-
-// --- Confirm Dialog ---
-function showConfirm(title: string, message: string, onConfirm: () => void) {
-    confirmEl.className = 'confirm-dialog open';
-    confirmEl.innerHTML = `
-        <div class="confirm-dialog-box">
-            <h3>${title}</h3>
-            <p>${message}</p>
-            <div class="confirm-dialog-actions">
-                <button class="btn btn-secondary" id="confirm-cancel">Hủy</button>
-                <button class="btn btn-danger" id="confirm-ok">Xóa</button>
-            </div>
-        </div>
-    `;
-    confirmEl.querySelector('#confirm-cancel')!.addEventListener('click', () => {
-        confirmEl.className = 'confirm-dialog';
-    });
-    confirmEl.querySelector('#confirm-ok')!.addEventListener('click', () => {
-        confirmEl.className = 'confirm-dialog';
-        onConfirm();
-    });
+function showToast(
+  message: string,
+  type: "success" | "error" | "warning" = "success",
+) {
+  clearTimeout(toastTimer);
+  toast.textContent = message;
+  toast.className = `toast ${type} show`;
+  toastTimer = setTimeout(() => toast.classList.remove("show"), 3000);
 }
 
 // --- History API (FR-018) ---
 function pushOverlayState() {
-    window.history.pushState({ overlay: true }, '');
+  window.history.pushState({ overlay: true }, "");
 }
 
-window.addEventListener('popstate', (event) => {
-    // If we popped and an overlay is open, close it
-    const modalOverlay = document.querySelector('.modal-overlay.open');
-    const detailPanel = document.querySelector('.detail-panel.open');
+window.addEventListener("popstate", (event) => {
+  // If we popped and an overlay is open, close it
+  const modalOverlay = document.querySelector(".modal-overlay.open");
+  const detailPanel = document.querySelector(".detail-panel.open");
 
-    if (modalOverlay) {
-        modalOverlay.classList.remove('open');
-        setTimeout(() => modalOverlay.remove(), 300);
-    } else if (detailPanel) {
-        closeDetailPanel(detailContainer);
-        backdrop.classList.remove('open');
-    }
+  if (modalOverlay) {
+    modalOverlay.classList.remove("open");
+    setTimeout(() => modalOverlay.remove(), 300);
+  } else if (detailPanel) {
+    closeDetailPanel(detailContainer);
+    backdrop.classList.remove("open");
+  }
 });
 
 // --- Render Views ---
 function renderCurrentView() {
-    closeDetailPanel(detailContainer);
-    backdrop.classList.remove('open');
-    updateTodayFab();
+  closeDetailPanel(detailContainer);
+  backdrop.classList.remove("open");
+  updateTodayFab();
 
-    if (currentView === 'calendar') {
-        renderCalendarView();
-    } else {
-        renderUpcomingView();
-    }
+  if (currentView === "calendar") {
+    renderCalendarView();
+  } else {
+    renderUpcomingView();
+  }
 }
 
 function updateTodayFab() {
-    const fab = document.getElementById('today-fab');
-    if (!fab) return;
+  const fab = document.getElementById("today-fab");
+  if (!fab) return;
 
-    const now = new Date();
-    const isTodayMonth = currentYear === now.getFullYear() && currentMonth === (now.getMonth() + 1);
+  const now = new Date();
+  const isTodayMonth =
+    currentYear === now.getFullYear() && currentMonth === now.getMonth() + 1;
 
-    if (!isTodayMonth && currentView === 'calendar') {
-        fab.classList.add('show');
-    } else {
-        fab.classList.remove('show');
-    }
+  if (!isTodayMonth && currentView === "calendar") {
+    fab.classList.add("show");
+  } else {
+    fab.classList.remove("show");
+  }
 }
 
 // Today FAB Click (US2)
-document.getElementById('today-fab')?.addEventListener('click', () => {
-    const now = new Date();
-    currentYear = now.getFullYear();
-    currentMonth = now.getMonth() + 1;
-    renderCurrentView();
+document.getElementById("today-fab")?.addEventListener("click", () => {
+  const now = new Date();
+  currentYear = now.getFullYear();
+  currentMonth = now.getMonth() + 1;
+  renderCurrentView();
 });
 
 function renderCalendarView() {
-    const vm = buildCalendarViewModel(state, currentYear, currentMonth);
+  let py = currentYear,
+    pm = currentMonth - 1;
+  if (pm < 1) {
+    pm = 12;
+    py--;
+  }
 
-    if (isLoading) {
-        viewContainer.innerHTML = `
-            <div class="calendar">
-                <div class="calendar-nav">
-                    <h2>${vm.monthLabel}</h2>
-                </div>
-                <div class="loading-container">
-                    <div class="spinner"></div>
-                    <p>Đang tải...</p>
-                </div>
-            </div>
-        `;
-        return;
-    }
+  let ny = currentYear,
+    nm = currentMonth + 1;
+  if (nm > 12) {
+    nm = 1;
+    ny++;
+  }
 
-    const calContainer = document.createElement('div');
-    calContainer.className = 'calendar';
-    viewContainer.innerHTML = '';
-    viewContainer.appendChild(calContainer);
+  const prevVm = buildCalendarViewModel(state, py, pm);
+  const currVm = buildCalendarViewModel(state, currentYear, currentMonth);
+  const nextVm = buildCalendarViewModel(state, ny, nm);
 
-    renderCalendar(calContainer, vm, onCellClick, navigateMonth);
+  const calContainer = document.createElement("div");
+  calContainer.className = "calendar";
+  viewContainer.innerHTML = "";
+  viewContainer.appendChild(calContainer);
+
+  renderCalendar(
+    calContainer,
+    [prevVm, currVm, nextVm],
+    onCellClick,
+    navigateMonth,
+  );
 }
 
 function renderUpcomingView() {
-    if (state.getEvents().length === 0) {
-        viewContainer.innerHTML = `
+  if (state.getEvents().length === 0) {
+    viewContainer.innerHTML = `
             <div class="upcoming-list">
                 <h2>Sự kiện sắp tới</h2>
                 <div class="empty-state">
@@ -227,108 +225,129 @@ function renderUpcomingView() {
                 </div>
             </div>
         `;
-        viewContainer.querySelector('#empty-add-btn-up')?.addEventListener('click', () => openCreateForm());
-        return;
-    }
+    viewContainer
+      .querySelector("#empty-add-btn-up")
+      ?.addEventListener("click", () => openCreateForm());
+    return;
+  }
 
-    renderUpcomingList(viewContainer, state, onUpcomingItemClick);
+  renderUpcomingList(viewContainer, state, onUpcomingItemClick);
 }
 
-// --- Navigation (F1: year bounds, F2: debounce) ---
-let navDebounceTimer: ReturnType<typeof setTimeout> | null = null;
-
 function navigateMonth(direction: -1 | 1) {
-    let nextMonth = currentMonth + direction;
-    let nextYear = currentYear;
-    if (nextMonth > 12) { nextMonth = 1; nextYear++; }
-    if (nextMonth < 1) { nextMonth = 12; nextYear--; }
+  let nextMonth = currentMonth + direction;
+  let nextYear = currentYear;
+  if (nextMonth > 12) {
+    nextMonth = 1;
+    nextYear++;
+  }
+  if (nextMonth < 1) {
+    nextMonth = 12;
+    nextYear--;
+  }
 
-    // F1: Year boundary check
-    if (nextYear < MIN_YEAR || nextYear > MAX_YEAR) {
-        showToast(`${direction === -1 ? 'Sớm nhất' : 'Muộn nhất'} năm hỗ trợ là (${direction === -1 ? MIN_YEAR : MAX_YEAR})`, 'warning');
-        return;
-    }
+  // F1: Year boundary check
+  if (nextYear < MIN_YEAR || nextYear > MAX_YEAR) {
+    showToast(
+      `${direction === -1 ? "Sớm nhất" : "Muộn nhất"} năm hỗ trợ là (${direction === -1 ? MIN_YEAR : MAX_YEAR})`,
+      "warning",
+    );
+    return;
+  }
 
-    currentMonth = nextMonth;
-    currentYear = nextYear;
+  currentMonth = nextMonth;
+  currentYear = nextYear;
 
-    // Simulate loading for UX (FR-017)
-    isLoading = true;
-    isNavigationTransitioning = true;
-    renderCurrentView();
-
-    if (navDebounceTimer) clearTimeout(navDebounceTimer);
-    navDebounceTimer = setTimeout(() => {
-        navDebounceTimer = null;
-        isLoading = false;
-        isNavigationTransitioning = false;
-        renderCurrentView();
-    }, 300); // 300ms transition
+  renderCurrentView();
 }
 
 // --- Interactions ---
 function onCellClick(cell: CalendarCell) {
-    renderDayDetailModal(
-        modalContainer,
-        cell.date,
-        state.getOccurrencesForYear(currentYear),
-        () => {
-            // onClose - no special action needed as modal removes itself
-        },
-        (date: SolarDate) => {
-            openCreateForm(date);
-        },
-        (_newDate: SolarDate) => {
-            // onDateChange - optionally sync view if needed
-        }
-    );
+  renderDayDetailModal(
+    modalContainer,
+    cell.date,
+    state.getOccurrencesForYear(currentYear),
+    () => {
+      // onClose - no special action needed as modal removes itself
+    },
+    (date: SolarDate) => {
+      openCreateForm(date);
+    },
+    (_newDate: SolarDate) => {
+      // onDateChange - optionally sync view if needed
+    },
+  );
 }
 
 function onUpcomingItemClick(occ: UpcomingEventOccurrence) {
-    backdrop.classList.add('open');
-    pushOverlayState();
-    renderEventDetail(
-        detailContainer,
-        [occ],
-        openEditForm,
-        (id, name) => showConfirm(
-            'Delete Event',
-            `Are you sure you want to delete "${name}"?`,
-            () => { state.deleteEvent(id); renderCurrentView(); showToast('Event deleted', 'success'); }
-        ),
-        () => { closeDetailPanel(detailContainer); backdrop.classList.remove('open'); },
-    );
+  backdrop.classList.add("open");
+  pushOverlayState();
+  renderEventDetail(
+    detailContainer,
+    [occ],
+    openEditForm,
+    async (id, name) => {
+      if (
+        await showConfirm("Xóa sự kiện", `Bạn có chắc chắn muốn xóa "${name}"?`)
+      ) {
+        state.deleteEvent(id);
+        renderCurrentView();
+        showToast("Đã xóa sự kiện", "success");
+      }
+    },
+    () => {
+      closeDetailPanel(detailContainer);
+      backdrop.classList.remove("open");
+    },
+  );
 }
 
 // --- Forms ---
 function openCreateForm(initialDate?: SolarDate) {
-    pushOverlayState();
-    renderEventForm(modalContainer, state, null, () => {
-        renderCurrentView();
-        showToast('Event created!', 'success');
-    }, () => { /* cancel */ }, initialDate);
+  pushOverlayState();
+  renderEventForm(
+    modalContainer,
+    state,
+    null,
+    () => {
+      renderCurrentView();
+      showToast("Event created!", "success");
+    },
+    () => {
+      /* cancel */
+    },
+    initialDate,
+  );
 }
 
 function openEditForm(eventId: string) {
-    const event = state.getEvents().find(e => e.id === eventId);
-    if (!event) return;
+  const event = state.getEvents().find((e) => e.id === eventId);
+  if (!event) return;
 
-    closeDetailPanel(detailContainer);
-    backdrop.classList.remove('open');
+  closeDetailPanel(detailContainer);
+  backdrop.classList.remove("open");
 
-    pushOverlayState();
-    renderEventForm(modalContainer, state, event, () => {
-        renderCurrentView();
-        showToast('Event updated!', 'success');
-    }, () => { /* cancel */ });
+  pushOverlayState();
+  renderEventForm(
+    modalContainer,
+    state,
+    event,
+    () => {
+      renderCurrentView();
+      showToast("Event updated!", "success");
+    },
+    () => {
+      /* cancel */
+    },
+  );
 }
 
 // --- Import/Export Modal ---
 function openImportExport() {
-    pushOverlayState();
-    const overlay = document.createElement('div');
-    overlay.className = 'modal-overlay open';
-    overlay.innerHTML = `
+  pushOverlayState();
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay open";
+  overlay.innerHTML = `
         <div class="modal-content">
             <div class="modal-header">
                 <h2>Cài đặt</h2>
@@ -337,49 +356,62 @@ function openImportExport() {
             <div id="ie-content"></div>
         </div>
     `;
-    modalContainer.appendChild(overlay);
+  modalContainer.appendChild(overlay);
 
-    overlay.querySelector('#ie-close')!.addEventListener('click', () => {
-        overlay.classList.remove('open');
-        setTimeout(() => overlay.remove(), 300);
-    });
-    overlay.addEventListener('click', (e) => {
-        if (e.target === overlay) {
-            overlay.classList.remove('open');
-            setTimeout(() => overlay.remove(), 300);
-        }
-    });
+  overlay.querySelector("#ie-close")!.addEventListener("click", () => {
+    overlay.classList.remove("open");
+    setTimeout(() => overlay.remove(), 300);
+  });
+  overlay.addEventListener("click", (e) => {
+    if (e.target === overlay) {
+      overlay.classList.remove("open");
+      setTimeout(() => overlay.remove(), 300);
+    }
+  });
 
-    renderImportExport(overlay.querySelector('#ie-content')!, state, (msg, type) => {
-        showToast(msg, type);
-        renderCurrentView();
-    });
+  renderImportExport(
+    overlay.querySelector("#ie-content")!,
+    state,
+    (msg, type) => {
+      showToast(msg, type);
+      renderCurrentView();
+    },
+    showConfirm,
+    () => {
+      overlay.classList.remove("open");
+      setTimeout(() => overlay.remove(), 300);
+    },
+  );
 }
 
 // --- Tab Switching ---
-const tabCalendar = document.getElementById('tab-calendar')!;
-const tabUpcoming = document.getElementById('tab-upcoming')!;
+const tabCalendar = document.getElementById("tab-calendar")!;
+const tabUpcoming = document.getElementById("tab-upcoming")!;
 
-tabCalendar.addEventListener('click', () => {
-    currentView = 'calendar';
-    tabCalendar.classList.add('active');
-    tabUpcoming.classList.remove('active');
-    renderCurrentView();
+tabCalendar.addEventListener("click", () => {
+  currentView = "calendar";
+  tabCalendar.classList.add("active");
+  tabUpcoming.classList.remove("active");
+  renderCurrentView();
 });
 
-tabUpcoming.addEventListener('click', () => {
-    currentView = 'upcoming';
-    tabUpcoming.classList.add('active');
-    tabCalendar.classList.remove('active');
-    renderCurrentView();
+tabUpcoming.addEventListener("click", () => {
+  currentView = "upcoming";
+  tabUpcoming.classList.add("active");
+  tabCalendar.classList.remove("active");
+  renderCurrentView();
 });
 
 // --- Header Actions ---
-document.getElementById('add-event-btn')!.addEventListener('click', () => { openCreateForm(); });
-document.getElementById('import-export-btn')!.addEventListener('click', openImportExport);
-backdrop.addEventListener('click', () => {
-    closeDetailPanel(detailContainer);
-    backdrop.classList.remove('open');
+document.getElementById("add-event-btn")!.addEventListener("click", () => {
+  openCreateForm();
+});
+document
+  .getElementById("import-export-btn")!
+  .addEventListener("click", openImportExport);
+backdrop.addEventListener("click", () => {
+  closeDetailPanel(detailContainer);
+  backdrop.classList.remove("open");
 });
 
 // --- Initial Render ---
@@ -387,8 +419,8 @@ renderCurrentView();
 
 // Check for corrupted storage on load
 if (state.corruptedOnLoad) {
-    showToast('Could not load saved data — starting fresh.', 'warning');
-    state.clearCorruptedFlag();
+  showToast("Could not load saved data — starting fresh.", "warning");
+  state.clearCorruptedFlag();
 }
 
 // --- State Change Re-render ---
