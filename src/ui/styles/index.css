@@ -180,11 +180,9 @@ textarea:focus {
 .app-header h1 {
   font-size: var(--font-size-lg);
   font-weight: 700;
-  background: linear-gradient(
-    135deg,
-    var(--color-primary),
-    var(--color-accent)
-  );
+  background: linear-gradient(135deg,
+      var(--color-primary),
+      var(--color-accent));
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
@@ -230,14 +228,14 @@ textarea:focus {
 }
 
 .tab-btn img {
-    width: 20px;
-    height: 20px;
-    opacity: 0.6;
-    transition: all var(--transition-fast);
+  width: 24px;
+  height: 24px;
+  opacity: 0.6;
+  transition: all var(--transition-fast);
 }
 
 .tab-btn.active img {
-    opacity: 1;
+  opacity: 1;
 }
 
 /* --- Icon Buttons --- */
@@ -256,8 +254,8 @@ textarea:focus {
 }
 
 .icon-btn .icon-img {
-    width: 24px;
-    height: 24px;
+  width: 24px;
+  height: 24px;
 }
 
 .icon-btn:hover {
@@ -269,6 +267,11 @@ textarea:focus {
 .icon-btn.primary {
   /* Identical to base icon-btn for borderless look */
   color: var(--color-primary);
+}
+
+.icon-btn.primary .icon-img {
+  width: 30px;
+  height: 30px;
 }
 
 /* --- Calendar --- */
@@ -303,29 +306,30 @@ textarea:focus {
 }
 
 .calendar-nav button {
-  width: 32px;
-  height: 32px;
+  width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: var(--radius-full);
   transition: all var(--transition-fast);
   color: var(--color-text-secondary);
+  background: none;
+  padding: 0;
 }
 
 .calendar-nav button:hover:not(:disabled) {
-  background: var(--color-surface-hover);
   color: var(--color-text);
 }
 
 .nav-icon {
-    width: 18px;
-    height: 18px;
-    opacity: 0.7;
+  width: 24px;
+  height: 24px;
+  opacity: 0.7;
 }
 
 .calendar-nav button:hover .nav-icon {
-    opacity: 1;
+  opacity: 1;
 }
 
 .calendar-nav button:disabled {
@@ -1054,12 +1058,10 @@ textarea:focus {
 
 /* --- Skeleton loading --- */
 .skeleton {
-  background: linear-gradient(
-    90deg,
-    var(--color-surface) 25%,
-    var(--color-surface-hover) 50%,
-    var(--color-surface) 75%
-  );
+  background: linear-gradient(90deg,
+      var(--color-surface) 25%,
+      var(--color-surface-hover) 50%,
+      var(--color-surface) 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
   border-radius: var(--radius-md);
