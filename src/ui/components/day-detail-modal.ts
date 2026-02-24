@@ -72,12 +72,18 @@ export function renderDayDetailModal(
             <div class="modal-header">
                 <button class="close-btn" aria-label="Đóng">&times;</button>
                 <div class="nav-controls">
-                    <button class="nav-btn prev-day" aria-label="Ngày trước">&larr;</button>
+                    <button class="nav-btn prev-day" aria-label="Ngày trước">
+                        <img src="assets/images/ico-prev.svg" alt="" class="nav-icon-sm">
+                    </button>
                     <div class="current-date-display">
                         <span class="solar-label">${formatSolarDate(state.activeSolarDate)}</span>
-                        <button class="quick-view-btn" aria-label="Xem nhanh ngày">📅</button>
+                        <button class="quick-view-btn" aria-label="Xem nhanh ngày">
+                            <img src="assets/images/ico-calendar.svg" alt="" class="quick-view-icon">
+                        </button>
                     </div>
-                    <button class="nav-btn next-day" aria-label="Ngày sau">&rarr;</button>
+                    <button class="nav-btn next-day" aria-label="Ngày sau">
+                        <img src="assets/images/ico-next.svg" alt="" class="nav-icon-sm">
+                    </button>
                 </div>
             </div>
             
@@ -92,30 +98,31 @@ export function renderDayDetailModal(
                 <section class="section-events">
                     <h3>Sự kiện</h3>
                     <div class="event-list">
-                        ${
-                          state.events.length > 0
-                            ? state.events
-                                .map(
-                                  (e) => `
+                        ${state.events.length > 0
+        ? state.events
+          .map(
+            (e) => `
                                 <div class="event-item">
                                     <div class="event-info">
                                         <span class="event-name">${e.event.name}</span>
-                                        ${
-                                          e.event.recurrence &&
-                                          e.event.recurrence !==
-                                            RecurrenceRule.ONCE
-                                            ? `<span class="event-recurrence-badge">${RECURRENCE_LABELS[e.event.recurrence]}</span>`
-                                            : ""
-                                        }
+                                        ${e.event.recurrence &&
+                e.event.recurrence !==
+                RecurrenceRule.ONCE
+                ? `<span class="event-recurrence-badge">${RECURRENCE_LABELS[e.event.recurrence]}</span>`
+                : ""
+              }
                                     </div>
                                 </div>
                             `,
-                                )
-                                .join("")
-                            : '<p class="no-events">Không có sự kiện nào.</p>'
-                        }
+          )
+          .join("")
+        : '<p class="no-events">Không có sự kiện nào.</p>'
+      }
                     </div>
-                    <button class="add-event-compact-btn">Thêm sự kiện</button>
+                    <button class="add-event-compact-btn">
+                        <img src="assets/images/ico-calendar-add.svg" alt="" class="btn-icon">
+                        Thêm sự kiện
+                    </button>
                 </section>
             </div>
         `;
