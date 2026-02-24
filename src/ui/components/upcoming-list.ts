@@ -35,7 +35,9 @@ export function renderUpcomingList(
   if (occurrences.length === 0) {
     section.innerHTML += `
             <div class="empty-state">
-                <div class="empty-state-icon">📅</div>
+                <div class="empty-state-icon">
+                    <img src="assets/images/ico-events.svg" alt="" style="width: 48px; height: 48px; opacity: 0.25;">
+                </div>
                 <p>Chưa có sự kiện sắp tới</p>
             </div>
         `;

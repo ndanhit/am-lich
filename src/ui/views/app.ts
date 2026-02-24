@@ -47,13 +47,23 @@ app.innerHTML = `
     <header class="app-header">
         <h1>Âm Lịch</h1>
         <div class="app-header-actions">
-            <button class="icon-btn" id="import-export-btn" aria-label="Cài đặt">⚙</button>
-            <button class="icon-btn primary" id="add-event-btn" aria-label="Thêm sự kiện">+</button>
+            <button class="icon-btn" id="import-export-btn" aria-label="Cài đặt">
+                <img src="assets/images/ico-setting.svg" alt="" class="icon-img">
+            </button>
+            <button class="icon-btn primary" id="add-event-btn" aria-label="Thêm sự kiện">
+                <img src="assets/images/ico-calendar-add.svg" alt="" class="icon-img">
+            </button>
         </div>
     </header>
     <nav class="tab-bar">
-        <button class="tab-btn active" id="tab-calendar" aria-label="Lịch">📅 Lịch</button>
-        <button class="tab-btn" id="tab-upcoming" aria-label="Sắp tới">📋 Sắp tới</button>
+        <button class="tab-btn active" id="tab-calendar" aria-label="Lịch">
+            <img src="assets/images/ico-calendar.svg" alt="" class="tab-icon">
+            <span>Lịch</span>
+        </button>
+        <button class="tab-btn" id="tab-upcoming" aria-label="Sắp tới">
+            <img src="assets/images/ico-events.svg" alt="" class="tab-icon">
+            <span>Sắp tới</span>
+        </button>
     </nav>
     <main id="view-container"></main>
     <div id="detail-container"></div>
@@ -219,7 +229,9 @@ function renderUpcomingView() {
             <div class="upcoming-list">
                 <h2>Sự kiện sắp tới</h2>
                 <div class="empty-state">
-                    <div class="empty-state-icon">📅</div>
+                <div class="empty-state-icon">
+                    <img src="assets/images/ico-calendar.svg" alt="" style="width: 48px; height: 48px; opacity: 0.25;">
+                </div>
                     <p>Chưa có sự kiện sắp tới</p>
                     <button class="btn btn-primary" id="empty-add-btn-up">Tạo sự kiện</button>
                 </div>

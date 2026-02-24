@@ -212,6 +212,11 @@ textarea:focus {
   color: var(--color-text-secondary);
   transition: all var(--transition-fast);
   text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
 }
 
 .tab-btn:hover {
@@ -224,22 +229,35 @@ textarea:focus {
   color: var(--color-primary);
 }
 
+.tab-btn img {
+    width: 20px;
+    height: 20px;
+    opacity: 0.6;
+    transition: all var(--transition-fast);
+}
+
+.tab-btn.active img {
+    opacity: 1;
+}
+
 /* --- Icon Buttons --- */
 .icon-btn {
-  width: 48px;
-  /* Increased for better touch target with 20% font boost */
-  height: 48px;
+  width: 44px;
+  height: 44px;
   display: flex;
   align-items: center;
   justify-content: center;
   border-radius: var(--radius-md);
   transition: all var(--transition-fast);
-  font-size: calc(var(--font-size-lg) * 1.5);
   border: none;
-  /* Removed border per user request */
   background: transparent;
   color: var(--color-text-secondary);
   padding: 0;
+}
+
+.icon-btn .icon-img {
+    width: 24px;
+    height: 24px;
 }
 
 .icon-btn:hover {
@@ -298,6 +316,16 @@ textarea:focus {
 .calendar-nav button:hover:not(:disabled) {
   background: var(--color-surface-hover);
   color: var(--color-text);
+}
+
+.nav-icon {
+    width: 18px;
+    height: 18px;
+    opacity: 0.7;
+}
+
+.calendar-nav button:hover .nav-icon {
+    opacity: 1;
 }
 
 .calendar-nav button:disabled {

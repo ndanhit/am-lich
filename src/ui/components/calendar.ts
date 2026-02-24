@@ -125,9 +125,13 @@ export function renderCalendar(
   const nav = document.createElement("div");
   nav.className = "calendar-nav";
   nav.innerHTML = `
-        <button id="cal-prev" aria-label="Tháng trước">‹</button>
+        <button id="cal-prev" aria-label="Tháng trước">
+            <img src="assets/images/ico-prev.svg" alt="" class="nav-icon">
+        </button>
         <h2 style="flex:1; text-align:center;">${currentVm.monthLabel}</h2>
-        <button id="cal-next" aria-label="Tháng sau">›</button>
+        <button id="cal-next" aria-label="Tháng sau">
+            <img src="assets/images/ico-next.svg" alt="" class="nav-icon">
+        </button>
     `;
   container.appendChild(nav);
 
