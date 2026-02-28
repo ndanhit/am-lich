@@ -81,11 +81,11 @@ export function buildCalendarViewModel(
     });
   }
 
-  // Fill remaining to complete rows of 7
+  // Fill remaining to complete exactly 42 cells (6 weeks) to prevent layout shifts
   const nextMonth = month === 12 ? 1 : month + 1;
   const nextYear = month === 12 ? year + 1 : year;
 
-  while (cells.length % 7 !== 0) {
+  while (cells.length < 42) {
     const day = cells.length - leadingDays - daysInMonth + 1;
     const date: SolarDate = { year: nextYear, month: nextMonth, day };
     const lunar =

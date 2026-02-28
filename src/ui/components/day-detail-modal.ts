@@ -70,29 +70,33 @@ export function renderDayDetailModal(
 
     content.innerHTML = `
             <div class="modal-header">
-                <button class="close-btn" aria-label="Đóng">&times;</button>
-                <div class="nav-controls">
-                    <button class="nav-btn prev-day" aria-label="Ngày trước">
-                        <img src="assets/images/ico-prev.svg" alt="" class="nav-icon-sm">
-                    </button>
-                    <div class="current-date-display">
-                        <span class="solar-label">${formatSolarDate(state.activeSolarDate)}</span>
-                        <button class="quick-view-btn" aria-label="Xem nhanh ngày">
-                            <img src="assets/images/ico-calendar.svg" alt="" class="quick-view-icon">
-                        </button>
-                    </div>
-                    <button class="nav-btn next-day" aria-label="Ngày sau">
-                        <img src="assets/images/ico-next.svg" alt="" class="nav-icon-sm">
-                    </button>
-                </div>
+                <button class="close-btn" aria-label="Đóng">
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+                <div class="modal-title-text">Ngày ${formatSolarDate(state.activeSolarDate)}</div>
             </div>
             
-            <div class="modal-sections">
             <div class="modal-sections">
                 <section class="section-dates">
                     <div class="lunar-line-1">Ngày <span class="big-day">${lunarContext.lunarDay}</span></div>
                     <div class="lunar-line-2">Tháng ${Math.abs(lunarContext.lunarMonth)}${lunarContext.isLeapMonth ? " nhuận" : ""} năm ${lunarContext.canChiYear}</div>
                     <div class="lunar-line-3">Ngày ${lunarContext.canChiDay} - Tháng ${lunarContext.canChiMonth}</div>
+                    <div class="nav-controls">
+                        <button class="nav-btn prev-day" aria-label="Ngày trước">
+                            <img src="assets/images/ico-prev.svg" alt="" class="nav-icon-sm">
+                        </button>
+                        <div class="current-date-display">
+                            <button class="quick-view-btn" aria-label="Xem nhanh ngày">
+                                <img src="assets/images/ico-calendar.svg" alt="" class="quick-view-icon">
+                            </button>
+                        </div>
+                        <button class="nav-btn next-day" aria-label="Ngày sau">
+                            <img src="assets/images/ico-next.svg" alt="" class="nav-icon-sm">
+                        </button>
+                    </div>
                 </section>
 
                 <section class="section-events">
