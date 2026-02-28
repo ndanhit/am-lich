@@ -398,6 +398,7 @@ function openImportExport() {
       overlay.classList.remove("open");
       setTimeout(() => overlay.remove(), 300);
     },
+    modalContainer
   );
 }
 
