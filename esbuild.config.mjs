@@ -21,7 +21,10 @@ try {
         format: 'iife',
         target: 'es2020',
         sourcemap: true,
-        define: env,
+        define: {
+            ...env,
+            'process.env': JSON.stringify({}),
+        },
     });
     console.log('Build succeeded.');
 } catch (e) {
