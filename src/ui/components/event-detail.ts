@@ -50,13 +50,20 @@ export function renderEventDetail(
 
       return `
             <div class="detail-event-item" data-event-id="${ev.id}">
-                <div class="detail-panel-header">
-                    <div class="event-name-row">
-                        <h3>${escapeHtml(ev.name)}${leapTag}</h3>
-                        ${recurrenceBadge}
+                <div class="detail-panel-header" style="display:none;">
+                    <div class="event-name-row" style="text-align: center; width: 100%;">
+                        <div class="modal-title-text">${escapeHtml(ev.name)}${leapTag}</div>
                     </div>
                 </div>
                 <div class="detail-meta">
+                    ${recurrenceBadge
+          ? `
+                    <div class="detail-meta-item">
+                        <span class="label">Lặp lại</span>
+                        <span>${recurrenceBadge}</span>
+                    </div>`
+          : ""
+        }
                     <div class="detail-meta-item">
                         <span class="label">Ngày âm lịch</span>
                         <span>${lunarStr}</span>
@@ -82,10 +89,18 @@ export function renderEventDetail(
     );
 
   panel.innerHTML = `
-        <div style="display:flex;justify-content:flex-end;margin-bottom:var(--space-2)">
-            <button class="detail-panel-close" aria-label="Close panel">✕</button>
+        <div class="modal-header">
+            <button class="close-btn detail-panel-close" aria-label="Close panel">
+                <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                    <line x1="18" y1="6" x2="6" y2="18"></line>
+                    <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+            </button>
+            <div class="modal-title-text">${escapeHtml(occurrences[0]?.event.name || "Sự kiện")}</div>
         </div>
-        ${html}
+        <div class="modal-body">
+            ${html}
+        </div>
     `;
 
   container.appendChild(panel);

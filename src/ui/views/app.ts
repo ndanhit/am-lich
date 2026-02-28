@@ -362,10 +362,15 @@ function openImportExport() {
   overlay.innerHTML = `
         <div class="modal-content">
             <div class="modal-header">
-                <h2>Cài đặt</h2>
-                <button class="detail-panel-close" id="ie-close" aria-label="Đóng cài đặt">✕</button>
+                <button class="close-btn" id="ie-close" aria-label="Đóng cài đặt">
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+                <div class="modal-title-text">Cài đặt</div>
             </div>
-            <div id="ie-content"></div>
+            <div id="ie-content" class="modal-body"></div>
         </div>
     `;
   modalContainer.appendChild(overlay);

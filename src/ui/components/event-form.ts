@@ -48,14 +48,20 @@ export function renderEventForm(
   overlay.innerHTML = `
         <div class="modal-content">
             <div class="modal-header">
-                <h2>${title}</h2>
-                <button class="detail-panel-close" id="form-close" aria-label="Close form">✕</button>
+                <button class="close-btn" id="form-close" aria-label="Close form">
+                    <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                        <line x1="18" y1="6" x2="6" y2="18"></line>
+                        <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                </button>
+                <div class="modal-title-text">${title}</div>
             </div>
-            <form id="event-form" novalidate>
-                <div class="form-group">
-                    <label for="event-name">Tên sự kiện</label>
-                    <input type="text" id="event-name" maxlength="100" placeholder="ví dụ: Giỗ tổ Hùng Vương"
-                           value="${isEdit ? escapeAttr(editEvent.name) : ""}" required>
+            <div class="modal-body">
+                <form id="event-form" novalidate>
+                    <div class="form-group">
+                        <label for="event-name">Tên sự kiện</label>
+                        <input type="text" id="event-name" maxlength="100" placeholder="Giỗ tổ Hùng Vương,..."
+                               value="${isEdit ? escapeAttr(editEvent.name) : ""}" required>
                     <div class="char-count"><span id="char-current">${isEdit ? editEvent.name.length : 0}</span>/100</div>
                     <div class="form-error" id="name-error"></div>
                 </div>
@@ -63,15 +69,15 @@ export function renderEventForm(
                     <label>Lặp lại</label>
                     <div class="recurrence-options">
                         ${Object.values(RecurrenceRule)
-                          .map(
-                            (rule) => `
+      .map(
+        (rule) => `
                             <label class="recurrence-option">
                                 <input type="radio" name="recurrence" value="${rule}" ${(isEdit ? editEvent.recurrence === rule : rule === RecurrenceRule.YEARLY) ? "checked" : ""}>
                                 ${RECURRENCE_LABELS[rule]}
                             </label>
                         `,
-                          )
-                          .join("")}
+      )
+      .join("")}
                     </div>
                 </div>
 
@@ -100,6 +106,7 @@ export function renderEventForm(
                     ${isEdit ? "Lưu thay đổi" : "Tạo sự kiện"}
                 </button>
             </form>
+            </div>
         </div>
     `;
 

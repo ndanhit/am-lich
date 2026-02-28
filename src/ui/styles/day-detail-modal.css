@@ -10,7 +10,7 @@
   align-items: center;
   justify-content: center;
   z-index: 1000;
-  transition: opacity 0.3s ease;
+  transition: opacity var(--transition-normal);
 }
 
 .day-detail-modal {
@@ -25,28 +25,19 @@
   overflow: hidden;
   position: relative;
   color: var(--color-text);
+  animation: modalScaleUp var(--transition-normal);
 }
 
-.day-detail-modal .modal-header {
-  padding: 24px 20px 16px;
-  border-bottom: 1px solid var(--color-border-subtle);
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 12px;
-  position: relative;
-  flex-shrink: 0;
-}
+@keyframes modalScaleUp {
+  from {
+    opacity: 0;
+    transform: scale(0.95) translateY(20px);
+  }
 
-.close-btn {
-  position: absolute;
-  top: 15px;
-  right: 15px;
-  background: none;
-  border: none;
-  font-size: 24px;
-  cursor: pointer;
-  color: var(--color-text-secondary);
+  to {
+    opacity: 1;
+    transform: scale(1) translateY(0);
+  }
 }
 
 .nav-controls {
@@ -55,6 +46,7 @@
   justify-content: center;
   gap: 20px;
   width: 100%;
+  margin-top: 24px;
 }
 
 .current-date-display {
@@ -65,18 +57,14 @@
   font-size: 1.05rem;
 }
 
-.solar-label {
-  color: var(--color-text-muted);
-}
-
 .nav-btn,
 .quick-view-btn {
-  background: none;
+  background: transparent;
   border: none;
   padding: 0;
-  border-radius: 10px;
+  border-radius: 50%;
   cursor: pointer;
-  transition: opacity 0.2s;
+  transition: opacity 0.2s, transform 0.2s;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -87,27 +75,19 @@
 .nav-btn:hover,
 .quick-view-btn:hover {
   opacity: 0.7;
+  transform: scale(1.05);
 }
 
-.nav-icon-sm {
-  width: 24px;
-  height: 24px;
-  opacity: 0.6;
-}
-
+.nav-icon-sm,
 .quick-view-icon {
   width: 24px;
   height: 24px;
-  opacity: 0.7;
-}
-
-.nav-btn:hover .nav-icon-sm,
-.quick-view-btn:hover .quick-view-icon {
-  opacity: 1;
+  /* Make icons white for the orange background */
+  filter: brightness(0) invert(1);
 }
 
 .modal-sections {
-  padding: 0 20px 24px;
+  padding: 24px 48px 48px;
   overflow-y: auto;
   flex: 1;
 }
@@ -152,11 +132,11 @@ section h3 {
 }
 
 .lunar-line-2 {
-  font-size: 1.25rem;
-  font-weight: 700;
+  font-size: 1.15rem;
+  font-weight: 600;
   margin-bottom: 12px;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
+  color: rgba(255, 255, 255, 0.95);
+  letter-spacing: 0;
 }
 
 .lunar-line-3 {
@@ -223,7 +203,7 @@ section h3 {
     width: 100%;
     max-width: none;
     border-radius: 30px 30px 0 0;
-    animation: slideUp 0.3s ease-out;
+    animation: slideUp var(--transition-normal);
   }
 }
 
