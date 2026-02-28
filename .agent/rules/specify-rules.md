@@ -13,6 +13,8 @@ Auto-generated from all feature plans. Last updated: 2026-02-22
 - `localStorage` (LunarEvent persistence) (006-resolve-user-feedback)
 - TypeScript / HTML / Vanilla CSS + `esbuild`, `lunar-javascript` (001-apple-store-ui)
 - LocalStorage (existing, unaffected) (001-apple-store-ui)
+- TypeScript (ES2020 Target, Vanilla DOM) + `@supabase/supabase-js` (needs exact version matching `pension-admin-nextjs`), `esbuild` (001-supabase-backup-restore)
+- `localStorage` (Local), Supabase PostgreSQL (Remote) (001-supabase-backup-restore)
 
 - TypeScript 5.x (Core Engine — frozen)
 - Vanilla JavaScript, HTML5, CSS3 (UI layer)
@@ -67,9 +69,9 @@ npm run format         # Prettier
 - Zero network requests — fully offline
 
 ## Recent Changes
+- 001-supabase-backup-restore: Added TypeScript (ES2020 Target, Vanilla DOM) + `@supabase/supabase-js` (needs exact version matching `pension-admin-nextjs`), `esbuild`
 - 001-apple-store-ui: Added TypeScript / HTML / Vanilla CSS + `esbuild`, `lunar-javascript`
 - 006-resolve-user-feedback: Added TypeScript / ES2022 + `lunar-javascript` (Core logic), `esbuild` (Bundling), `serve` (Development)
-- 005-ui-ux-polish: Added TypeScript 5.9+ + `lunar-javascript`, Vanilla CSS3, esbuild
 
 
 <!-- MANUAL ADDITIONS START -->

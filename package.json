@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "build": "tsc && npm run build:ui",
-    "build:ui": "esbuild src/ui/views/app.ts --bundle --outfile=dist/app.bundle.js --format=iife --target=es2020 --sourcemap",
+    "build:ui": "node esbuild.config.mjs",
     "dev": "npm run build:ui && npx serve . -l 3456",
     "test": "vitest run",
     "test:watch": "vitest",
@@ -33,6 +33,7 @@
     "vitest": "^4.0.18"
   },
   "dependencies": {
+    "@supabase/supabase-js": "^2.98.0",
     "lunar-javascript": "^1.7.7"
   }
 }
