@@ -22,7 +22,7 @@ export function renderImportExport(
   authSection.innerHTML = `<p style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-bottom:var(--space-3)">⏳ Đang kiểm tra đăng nhập...</p>`;
   section.appendChild(authSection);
 
-  SyncAdapter.getUser().then(user => {
+  SyncAdapter.getSession().then(user => {
     if (user) {
       authSection.innerHTML = `
         <div class="auth-box" style="padding:var(--space-3);background:var(--color-surface);border-radius:var(--radius-md);margin-bottom:var(--space-3);border:1px solid var(--color-border)">
