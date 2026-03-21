@@ -62,12 +62,23 @@ export class SyncAdapter {
     }
 
     /**
-     * Get the current authenticated user
+     * Get the current authenticated user (validates JWT with server).
+     * Use for security-sensitive operations (backup/restore).
      */
     static async getUser() {
         const { data, error } = await supabase.auth.getUser();
         if (error || !data?.user) return null;
         return data.user;
+    }
+
+    /**
+     * Get the current session from local storage (no network call).
+     * Use for UI display purposes only.
+     */
+    static async getSession() {
+        const { data, error } = await supabase.auth.getSession();
+        if (error || !data?.session) return null;
+        return data.session.user;
     }
 
     /**

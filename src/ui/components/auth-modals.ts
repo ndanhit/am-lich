@@ -39,12 +39,14 @@ export function showLoginModal(
     </div>
   `;
   container.appendChild(overlay);
+  window.history.pushState({ overlay: true }, "");
 
   const cleanup = () => {
     overlay.classList.remove("open");
     setTimeout(() => overlay.remove(), 300);
   };
 
+  window.addEventListener("popstate", cleanup, { once: true });
   overlay.querySelector("#login-close")!.addEventListener("click", cleanup);
   overlay.addEventListener("click", (e) => {
     if (e.target === overlay) cleanup();
@@ -54,7 +56,7 @@ export function showLoginModal(
   const passInput = overlay.querySelector("#login-password") as HTMLInputElement;
   const submitBtn = overlay.querySelector("#login-submit") as HTMLButtonElement;
 
-  submitBtn.addEventListener("click", async () => {
+  const doLogin = async () => {
     try {
       if (!emailInput.value || !passInput.value) {
         showToast("Vui lòng nhập email và mật khẩu", "warning");
@@ -71,7 +73,10 @@ export function showLoginModal(
       submitBtn.disabled = false;
       submitBtn.innerHTML = "Đăng nhập";
     }
-  });
+  };
+
+  submitBtn.addEventListener("click", doLogin);
+  passInput.addEventListener("keydown", (e) => { if (e.key === "Enter") doLogin(); });
 
   overlay.querySelector("#go-to-register")!.addEventListener("click", () => {
     cleanup();
@@ -120,12 +125,14 @@ export function showRegisterModal(
     </div>
   `;
   container.appendChild(overlay);
+  window.history.pushState({ overlay: true }, "");
 
   const cleanup = () => {
     overlay.classList.remove("open");
     setTimeout(() => overlay.remove(), 300);
   };
 
+  window.addEventListener("popstate", cleanup, { once: true });
   overlay.querySelector("#register-close")!.addEventListener("click", cleanup);
   overlay.addEventListener("click", (e) => {
     if (e.target === overlay) cleanup();
@@ -136,7 +143,7 @@ export function showRegisterModal(
   const submitBtn = overlay.querySelector("#register-submit") as HTMLButtonElement;
   const msgText = overlay.querySelector("#register-msg") as HTMLParagraphElement;
 
-  submitBtn.addEventListener("click", async () => {
+  const doRegister = async () => {
     try {
       if (!emailInput.value || !passInput.value) {
         showToast("Vui lòng nhập email và mật khẩu", "warning");
@@ -157,7 +164,10 @@ export function showRegisterModal(
       submitBtn.disabled = false;
       submitBtn.innerHTML = "Đăng ký";
     }
-  });
+  };
+
+  submitBtn.addEventListener("click", doRegister);
+  passInput.addEventListener("keydown", (e) => { if (e.key === "Enter") doRegister(); });
 
   overlay.querySelector("#go-to-login")!.addEventListener("click", () => {
     cleanup();

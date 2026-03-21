@@ -22,7 +22,7 @@ export function renderImportExport(
   authSection.innerHTML = `<p style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-bottom:var(--space-3)">⏳ Đang kiểm tra đăng nhập...</p>`;
   section.appendChild(authSection);
 
-  SyncAdapter.getUser().then(user => {
+  SyncAdapter.getSession().then(user => {
     if (user) {
       authSection.innerHTML = `
         <div class="auth-box" style="padding:var(--space-3);background:var(--color-surface);border-radius:var(--radius-md);margin-bottom:var(--space-3);border:1px solid var(--color-border)">
@@ -145,7 +145,8 @@ export function renderImportExport(
         return;
       }
 
-      const result = await state.importFromJson(JSON.stringify(events), true);
+      const payload = { version: 1, exportedAt: Date.now(), events };
+      const result = await state.importFromJson(JSON.stringify(payload), true);
       showToast(`Phục hồi thành công: ${result.added} sự kiện`, "success");
       // Don't close immediately so user sees success. Wait for explicit close or let onSuccess handle it if needed.
     } catch (err: any) {
@@ -158,6 +159,7 @@ export function renderImportExport(
 
   // Import handler
   const fileInput = section.querySelector("#import-file") as HTMLInputElement;
+  section.querySelector("#import-trigger")!.addEventListener("click", () => fileInput.click());
   fileInput.addEventListener("change", async () => {
     const file = fileInput.files?.[0];
     if (!file) return;

@@ -2,7 +2,7 @@
 
 -- Create the table
 CREATE TABLE public.lich_user_events_backup (
-    id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+    id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
     user_id UUID NOT NULL REFERENCES auth.users(id) ON DELETE CASCADE,
     events_payload JSONB NOT NULL,
     updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
@@ -22,9 +22,10 @@ CREATE POLICY "Users can query their own backup"
 ON public.lich_user_events_backup FOR SELECT 
 USING (auth.uid() = user_id);
 
-CREATE POLICY "Users can update their own backup" 
-ON public.lich_user_events_backup FOR UPDATE 
-USING (auth.uid() = user_id);
+CREATE POLICY "Users can update their own backup"
+ON public.lich_user_events_backup FOR UPDATE
+USING (auth.uid() = user_id)
+WITH CHECK (auth.uid() = user_id);
 
 CREATE POLICY "Users can delete their own backup" 
 ON public.lich_user_events_backup FOR DELETE 
