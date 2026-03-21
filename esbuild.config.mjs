@@ -3,6 +3,7 @@ import fs from 'fs';
 import path from 'path';
 
 let env = {};
+// Read from .env file (local dev)
 if (fs.existsSync('.env')) {
     const envFile = fs.readFileSync('.env', 'utf-8');
     envFile.split('\n').forEach(line => {
@@ -12,6 +13,12 @@ if (fs.existsSync('.env')) {
         }
     });
 }
+// Override with actual process.env (CI/Vercel — takes priority over .env file)
+['NEXT_PUBLIC_SUPABASE_URL', 'NEXT_PUBLIC_SUPABASE_ANON_KEY'].forEach(key => {
+    if (process.env[key]) {
+        env[`process.env.${key}`] = JSON.stringify(process.env[key]);
+    }
+});
 
 try {
     await esbuild.build({
