@@ -145,7 +145,8 @@ export function renderImportExport(
         return;
       }
 
-      const result = await state.importFromJson(JSON.stringify(events), true);
+      const payload = { version: 1, exportedAt: Date.now(), events };
+      const result = await state.importFromJson(JSON.stringify(payload), true);
       showToast(`Phục hồi thành công: ${result.added} sự kiện`, "success");
       // Don't close immediately so user sees success. Wait for explicit close or let onSuccess handle it if needed.
     } catch (err: any) {
@@ -158,6 +159,7 @@ export function renderImportExport(
 
   // Import handler
   const fileInput = section.querySelector("#import-file") as HTMLInputElement;
+  section.querySelector("#import-trigger")!.addEventListener("click", () => fileInput.click());
   fileInput.addEventListener("change", async () => {
     const file = fileInput.files?.[0];
     if (!file) return;
