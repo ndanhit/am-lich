@@ -36,8 +36,17 @@ export type EventFormData = {
   leapMonthRule: LeapMonthRule;
 };
 
+/** DTO for the create/edit quick memo form */
+export type MemoFormData = {
+  title: string;
+  note: string;
+  solarYear: number;
+  solarMonth: number;
+  solarDay: number;
+};
+
 /** Active view in the app */
-export type AppView = "calendar" | "upcoming";
+export type AppView = "calendar" | "upcoming" | "memo";
 
 /** Human-readable labels for recurrence rules */
 export const RECURRENCE_LABELS: Record<RecurrenceRule, string> = {

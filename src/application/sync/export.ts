@@ -3,6 +3,7 @@ import {
   ExportPayload,
   LeapMonthRule,
   RecurrenceRule,
+  QuickMemo,
 } from "../../core/models/types";
 import { validateEventCreationParams } from "../../core/rules/leap-month";
 
@@ -68,20 +69,62 @@ export function validateImportPayload(jsonPayload: string): ExportPayload {
     };
   });
 
+  // Optional memos field — older v1 exports won't have it
+  let validatedMemos: QuickMemo[] | undefined;
+  if (raw.memos !== undefined) {
+    if (!Array.isArray(raw.memos)) {
+      throw new Error("Payload memos must be an array");
+    }
+    validatedMemos = raw.memos.map((m: any) => {
+      if (!m.id || typeof m.id !== "string") throw new Error("Invalid memo ID");
+      if (typeof m.title !== "string") throw new Error("Invalid memo title");
+      if (typeof m.note !== "string") throw new Error("Invalid memo note");
+      if (
+        !m.solarDate ||
+        typeof m.solarDate.year !== "number" ||
+        typeof m.solarDate.month !== "number" ||
+        typeof m.solarDate.day !== "number"
+      ) {
+        throw new Error("Invalid memo solarDate");
+      }
+      if (typeof m.createdAt !== "number" || typeof m.updatedAt !== "number") {
+        throw new Error("Invalid memo timestamps");
+      }
+      return {
+        id: m.id,
+        title: m.title,
+        note: m.note,
+        solarDate: {
+          year: m.solarDate.year,
+          month: m.solarDate.month,
+          day: m.solarDate.day,
+        },
+        createdAt: m.createdAt,
+        updatedAt: m.updatedAt,
+      };
+    });
+  }
+
   return {
     version: 1,
     exportedAt: raw.exportedAt,
     events: validatedEvents,
+    ...(validatedMemos !== undefined ? { memos: validatedMemos } : {}),
   };
 }
 
 /**
- * Generates an offline compliant JSON payload for backup
+ * Generates an offline compliant JSON payload for backup.
+ * Memos are optional — when present they round-trip through import.
  */
-export function generateExportPayload(events: LunarEvent[]): ExportPayload {
+export function generateExportPayload(
+  events: LunarEvent[],
+  memos?: QuickMemo[],
+): ExportPayload {
   return {
     version: 1,
     exportedAt: Date.now(),
     events,
+    ...(memos !== undefined ? { memos } : {}),
   };
 }
