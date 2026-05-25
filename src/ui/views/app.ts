@@ -9,12 +9,15 @@ import { renderEventForm } from "../components/event-form";
 import { renderUpcomingList } from "../components/upcoming-list";
 import { renderImportExport } from "../components/import-export";
 import { renderDayDetailModal } from "../components/day-detail-modal";
+import { renderMemoForm } from "../components/memo-form";
+import { renderMemoList } from "../components/memo-list";
 import type { CalendarCell } from "../types";
 import type { AppView } from "../types";
 import type {
   UpcomingEventOccurrence,
   LunarEvent,
   SolarDate,
+  QuickMemo,
 } from "../../lib/index";
 
 // --- Year Boundary Constants (F1) ---
@@ -63,6 +66,10 @@ app.innerHTML = `
         <button class="tab-btn" id="tab-upcoming" aria-label="Sắp tới">
             <img src="assets/images/ico-events.svg" alt="" class="tab-icon">
             <span>Sắp tới</span>
+        </button>
+        <button class="tab-btn" id="tab-memo" aria-label="Memo">
+            <img src="assets/images/ico-events.svg" alt="" class="tab-icon">
+            <span>Memo</span>
         </button>
     </nav>
     <main id="view-container"></main>
@@ -160,12 +167,24 @@ function renderCurrentView() {
   closeDetailPanel(detailContainer);
   backdrop.classList.remove("open");
   updateTodayFab();
+  updateAddButtonLabel();
 
   if (currentView === "calendar") {
     renderCalendarView();
-  } else {
+  } else if (currentView === "upcoming") {
     renderUpcomingView();
+  } else {
+    renderMemoView();
   }
+}
+
+function updateAddButtonLabel() {
+  const btn = document.getElementById("add-event-btn");
+  if (!btn) return;
+  btn.setAttribute(
+    "aria-label",
+    currentView === "memo" ? "Thêm memo" : "Thêm sự kiện",
+  );
 }
 
 function updateTodayFab() {
@@ -181,6 +200,16 @@ function updateTodayFab() {
   } else {
     fab.classList.remove("show");
   }
+}
+
+function renderMemoView() {
+  renderMemoList(
+    viewContainer,
+    state,
+    openEditMemoForm,
+    onMemoDeleteRequest,
+    openCreateMemoForm,
+  );
 }
 
 // Today FAB Click (US2)
@@ -354,6 +383,49 @@ function openEditForm(eventId: string) {
   );
 }
 
+// --- Memo Forms ---
+function openCreateMemoForm() {
+  pushOverlayState();
+  renderMemoForm(
+    modalContainer,
+    state,
+    null,
+    () => {
+      renderCurrentView();
+      showToast("Đã tạo memo", "success");
+    },
+    () => {
+      /* cancel */
+    },
+  );
+}
+
+function openEditMemoForm(memo: QuickMemo) {
+  pushOverlayState();
+  renderMemoForm(
+    modalContainer,
+    state,
+    memo,
+    () => {
+      renderCurrentView();
+      showToast("Đã cập nhật memo", "success");
+    },
+    () => {
+      /* cancel */
+    },
+  );
+}
+
+async function onMemoDeleteRequest(memo: QuickMemo) {
+  if (
+    await showConfirm("Xóa memo", `Bạn có chắc chắn muốn xóa "${memo.title}"?`)
+  ) {
+    state.deleteMemo(memo.id);
+    renderCurrentView();
+    showToast("Đã xóa memo", "success");
+  }
+}
+
 // --- Import/Export Modal ---
 function openImportExport() {
   pushOverlayState();
@@ -405,24 +477,32 @@ function openImportExport() {
 // --- Tab Switching ---
 const tabCalendar = document.getElementById("tab-calendar")!;
 const tabUpcoming = document.getElementById("tab-upcoming")!;
+const tabMemo = document.getElementById("tab-memo")!;
+const tabs: Record<AppView, HTMLElement> = {
+  calendar: tabCalendar,
+  upcoming: tabUpcoming,
+  memo: tabMemo,
+};
 
-tabCalendar.addEventListener("click", () => {
-  currentView = "calendar";
-  tabCalendar.classList.add("active");
-  tabUpcoming.classList.remove("active");
+function setActiveTab(view: AppView) {
+  currentView = view;
+  (Object.keys(tabs) as AppView[]).forEach((key) => {
+    tabs[key].classList.toggle("active", key === view);
+  });
   renderCurrentView();
-});
+}
 
-tabUpcoming.addEventListener("click", () => {
-  currentView = "upcoming";
-  tabUpcoming.classList.add("active");
-  tabCalendar.classList.remove("active");
-  renderCurrentView();
-});
+tabCalendar.addEventListener("click", () => setActiveTab("calendar"));
+tabUpcoming.addEventListener("click", () => setActiveTab("upcoming"));
+tabMemo.addEventListener("click", () => setActiveTab("memo"));
 
 // --- Header Actions ---
 document.getElementById("add-event-btn")!.addEventListener("click", () => {
-  openCreateForm();
+  if (currentView === "memo") {
+    openCreateMemoForm();
+  } else {
+    openCreateForm();
+  }
 });
 document
   .getElementById("import-export-btn")!

@@ -4,6 +4,8 @@ import type {
   SolarDate,
   UpcomingEventOccurrence,
   LunarDateContext,
+  QuickMemo,
+  GroupedMemos,
 } from "../core/models/types";
 import {
   calculateOccurrencesForYear,
@@ -15,9 +17,15 @@ import {
   generateExportPayload,
   validateImportPayload,
   validateEventCreationParams,
+  addMemo,
+  updateMemo,
+  removeMemo,
+  importMemos,
+  validateMemoCreationParams,
+  groupMemosByTitle,
 } from "../lib/index";
 import type { StorageAdapter } from "../adapters/storage/local-storage-adapter";
-import type { EventFormData } from "./types";
+import type { EventFormData, MemoFormData } from "./types";
 
 export type StateListener = () => void;
 
@@ -28,6 +36,7 @@ export type StateListener = () => void;
  */
 export class AppState {
   private events: LunarEvent[] = [];
+  private memos: QuickMemo[] = [];
   private listeners: StateListener[] = [];
   private adapter: StorageAdapter;
   private _corruptedOnLoad = false;
@@ -35,6 +44,7 @@ export class AppState {
   constructor(adapter: StorageAdapter) {
     this.adapter = adapter;
     this.events = adapter.load();
+    this.memos = adapter.loadMemos();
     // Detect if data was empty due to corruption
     const raw = localStorage.getItem("am-lich-events");
     if (raw && this.events.length === 0) {
@@ -74,6 +84,17 @@ export class AppState {
       this.adapter.save(this.events);
     } catch (err: any) {
       // F3: Surface storage failure to caller for toast handling
+      if (err?.name === "QuotaExceededError" || err?.code === 22) {
+        throw new Error("Failed to save — storage may be full");
+      }
+      throw err;
+    }
+  }
+
+  private persistMemos(): void {
+    try {
+      this.adapter.saveMemos(this.memos);
+    } catch (err: any) {
       if (err?.name === "QuotaExceededError" || err?.code === 22) {
         throw new Error("Failed to save — storage may be full");
       }
@@ -152,9 +173,9 @@ export class AppState {
     return getUpcomingEvents(this.events, referenceSolar, limit);
   }
 
-  /** Export events payload */
+  /** Export events + memos payload */
   exportPayload(): string {
-    const payload = generateExportPayload(this.events);
+    const payload = generateExportPayload(this.events, this.memos);
     return JSON.stringify(payload, null, 2);
   }
 
@@ -168,9 +189,11 @@ export class AppState {
 
     if (replaceAll) {
       this.events = [];
+      this.memos = [];
     }
 
-    const before = this.events.length;
+    const eventsBefore = this.events.length;
+    const memosBefore = this.memos.length;
 
     // F4: For large imports (500+), batch in chunks to avoid UI freeze
     if (payload.events.length > 100) {
@@ -187,15 +210,93 @@ export class AppState {
       this.events = importEvents(this.events, payload.events);
     }
 
-    const after = this.events.length;
+    if (payload.memos && payload.memos.length > 0) {
+      this.memos = importMemos(this.memos, payload.memos);
+    }
+
+    const eventsAfter = this.events.length;
+    const memosAfter = this.memos.length;
 
     this.persist();
+    this.persistMemos();
     this.notify();
 
     return {
-      added: Math.max(0, after - before),
+      added:
+        Math.max(0, eventsAfter - eventsBefore) +
+        Math.max(0, memosAfter - memosBefore),
       updated: 0,
       skipped: 0,
     };
+  }
+
+  // ---- Quick Memo API ----
+
+  getMemos(): QuickMemo[] {
+    return this.memos;
+  }
+
+  getMemosGroupedByTitle(): GroupedMemos[] {
+    return groupMemosByTitle(this.memos);
+  }
+
+  createMemo(form: MemoFormData): void {
+    validateMemoCreationParams(
+      form.title,
+      form.solarYear,
+      form.solarMonth,
+      form.solarDay,
+    );
+
+    const newMemo: QuickMemo = {
+      id: crypto.randomUUID(),
+      title: form.title.trim().slice(0, 100),
+      note: (form.note ?? "").trim().slice(0, 500),
+      solarDate: {
+        year: form.solarYear,
+        month: form.solarMonth,
+        day: form.solarDay,
+      },
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    };
+
+    this.memos = addMemo(this.memos, newMemo);
+    this.persistMemos();
+    this.notify();
+  }
+
+  editMemo(id: string, form: MemoFormData): void {
+    validateMemoCreationParams(
+      form.title,
+      form.solarYear,
+      form.solarMonth,
+      form.solarDay,
+    );
+
+    const existing = this.memos.find((m) => m.id === id);
+    if (!existing) throw new Error(`Memo ${id} not found`);
+
+    const updated: QuickMemo = {
+      ...existing,
+      title: form.title.trim().slice(0, 100),
+      note: (form.note ?? "").trim().slice(0, 500),
+      solarDate: {
+        year: form.solarYear,
+        month: form.solarMonth,
+        day: form.solarDay,
+      },
+      updatedAt: Date.now(),
+    };
+
+    this.memos = updateMemo(this.memos, updated);
+    this.persistMemos();
+    this.notify();
+  }
+
+  deleteMemo(id: string): void {
+    this.memos = removeMemo(this.memos, id);
+    this.persistMemos();
+    this.notify();
   }
 }

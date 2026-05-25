@@ -124,6 +124,14 @@ export {
   validateImportPayload,
 } from "../application/sync/export";
 export { addEvent, updateEvent, removeEvent } from "../application/events/crud";
+export {
+  addMemo,
+  updateMemo,
+  removeMemo,
+  importMemos,
+  validateMemoCreationParams,
+  groupMemosByTitle,
+} from "../application/memos/crud";
 export { validateEventCreationParams } from "../core/rules/leap-month";
 export { LeapMonthRule, RecurrenceRule } from "../core/models/types";
 export type {
@@ -134,4 +142,6 @@ export type {
   ExportPayload,
   LunarDateContext,
   GroupedUpcomingEvents,
+  QuickMemo,
+  GroupedMemos,
 } from "../core/models/types";

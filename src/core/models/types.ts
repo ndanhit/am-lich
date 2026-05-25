@@ -60,9 +60,29 @@ export type ExportPayload = {
   version: number;
   exportedAt: number;
   events: LunarEvent[];
+  memos?: QuickMemo[];
 };
 
 export type GroupedUpcomingEvents = {
   year: number;
   occurrences: UpcomingEventOccurrence[];
+};
+
+/**
+ * Quick memo: a non-recurring solar-date log entry used to track
+ * when a real-world task was last done (e.g. cleaning the AC).
+ */
+export type QuickMemo = {
+  id: string;
+  title: string;
+  note: string;
+  solarDate: SolarDate;
+  createdAt: number;
+  updatedAt: number;
+};
+
+export type GroupedMemos = {
+  title: string;
+  memos: QuickMemo[];
+  lastDate: SolarDate;
 };
