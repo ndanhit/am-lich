@@ -133,6 +133,10 @@ export {
   groupMemosByTitle,
 } from "../application/memos/crud";
 export { validateEventCreationParams } from "../core/rules/leap-month";
+export {
+  VIETNAMESE_HOLIDAYS,
+  isSystemEventId,
+} from "../core/system-events/vietnamese-holidays";
 export { LeapMonthRule, RecurrenceRule } from "../core/models/types";
 export type {
   LunarEvent,
@@ -140,6 +144,7 @@ export type {
   SolarDate,
   UpcomingEventOccurrence,
   ExportPayload,
+  ExportSettings,
   LunarDateContext,
   GroupedUpcomingEvents,
   QuickMemo,

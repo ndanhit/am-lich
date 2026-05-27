@@ -4,7 +4,7 @@ import type {
   GroupedUpcomingEvents,
 } from "../../lib/index";
 import { MONTH_NAMES_SHORT, RECURRENCE_LABELS } from "../types";
-import { formatSolarDate } from "../../lib/index";
+import { formatSolarDate, isSystemEventId } from "../../lib/index";
 import type { AppState } from "../state";
 import { RecurrenceRule } from "../../core/models/types";
 
@@ -86,6 +86,9 @@ export function renderUpcomingList(
         occ.event.recurrence && occ.event.recurrence !== RecurrenceRule.ONCE
           ? `<span class="event-recurrence-badge">${RECURRENCE_LABELS[occ.event.recurrence]}</span>`
           : "";
+      const systemBadge = isSystemEventId(occ.event.id)
+        ? `<span class="event-system-badge">Lễ</span>`
+        : "";
 
       item.innerHTML = `
                 <div class="upcoming-date-badge">
@@ -95,6 +98,7 @@ export function renderUpcomingList(
                 <div class="upcoming-info">
                     <div class="event-name-row">
                         <div class="event-name">${escapeHtml(occ.event.name)}</div>
+                        ${systemBadge}
                         ${recurrenceBadge}
                     </div>
                     <div class="lunar-label">Dương lịch: ${solarStr}</div>

@@ -6,6 +6,7 @@ import {
 } from "../../core/models/types";
 import { convertSolarToLunar } from "../../core/lunar-math/converter";
 import { formatSolarDate, formatLunarDate } from "../../lib/formatters";
+import { isSystemEventId } from "../../lib/index";
 import { RECURRENCE_LABELS } from "../types";
 
 export interface DayDetailState {
@@ -109,6 +110,10 @@ export function renderDayDetailModal(
                                 <div class="event-item">
                                     <div class="event-info">
                                         <span class="event-name">${e.event.name}</span>
+                                        ${isSystemEventId(e.event.id)
+                ? `<span class="event-system-badge">Lễ</span>`
+                : ""
+              }
                                         ${e.event.recurrence &&
                 e.event.recurrence !==
                 RecurrenceRule.ONCE
