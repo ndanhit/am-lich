@@ -13,10 +13,15 @@ export interface StorageAdapter {
   loadMemos(): QuickMemo[];
   /** Replaces all memos in storage. Throws on write failure. */
   saveMemos(memos: QuickMemo[]): void;
+  /** Loads the list of system event IDs that the user has hidden. */
+  loadHiddenSystemEventIds(): string[];
+  /** Persists the list of hidden system event IDs. Throws on write failure. */
+  saveHiddenSystemEventIds(ids: string[]): void;
 }
 
 const STORAGE_KEY = "am-lich-events";
 const MEMOS_STORAGE_KEY = "am-lich-memos";
+const HIDDEN_SYSTEM_EVENTS_KEY = "am-lich-hidden-system-events";
 
 /**
  * LocalStorage implementation of StorageAdapter.
@@ -37,6 +42,16 @@ export class LocalStorageAdapter implements StorageAdapter {
 
   saveMemos(memos: QuickMemo[]): void {
     writeArray(MEMOS_STORAGE_KEY, memos);
+  }
+
+  loadHiddenSystemEventIds(): string[] {
+    return readArray<string>(HIDDEN_SYSTEM_EVENTS_KEY).filter(
+      (id) => typeof id === "string",
+    );
+  }
+
+  saveHiddenSystemEventIds(ids: string[]): void {
+    writeArray(HIDDEN_SYSTEM_EVENTS_KEY, ids);
   }
 }
 

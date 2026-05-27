@@ -340,6 +340,12 @@ function onUpcomingItemClick(occ: UpcomingEventOccurrence) {
       closeDetailPanel(detailContainer);
       backdrop.classList.remove("open");
     },
+    (id, _name) => {
+      state.setSystemEventHidden(id, true);
+      closeDetailPanel(detailContainer);
+      backdrop.classList.remove("open");
+      showToast("Đã ẩn lễ này. Bật lại trong Cài đặt.", "success");
+    },
   );
 }
 

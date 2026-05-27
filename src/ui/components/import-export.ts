@@ -3,6 +3,12 @@ import { SyncAdapter } from "../../adapters/supabase/sync-adapter";
 
 import { showLoginModal } from "./auth-modals";
 
+function escapeHtml(str: string): string {
+  const div = document.createElement("div");
+  div.textContent = str;
+  return div.innerHTML;
+}
+
 const LAST_BACKUP_KEY = "am-lich-last-backup";
 
 function formatBackupTime(ts: string): string {
@@ -28,6 +34,12 @@ export function renderImportExport(
   const authSection = document.createElement("div");
   authSection.className = "auth-section";
   section.appendChild(authSection);
+
+  // --- System events section ---
+  const systemSection = document.createElement("div");
+  systemSection.className = "system-events-section";
+  renderSystemEventsSection(systemSection, state);
+  section.appendChild(systemSection);
 
   const controls = document.createElement("div");
   controls.innerHTML = `
@@ -194,5 +206,59 @@ export function renderImportExport(
     }
 
     fileInput.value = "";
+  });
+}
+
+/** Render the "Vietnamese holidays" toggle section inside settings */
+function renderSystemEventsSection(
+  container: HTMLElement,
+  state: AppState,
+): void {
+  const items = state.getSystemEventsWithVisibility();
+  const allHidden = items.every((it) => it.hidden);
+
+  container.innerHTML = `
+    <h2 style="font-size:var(--font-size-md);font-weight:600;margin-bottom:var(--space-2)">Lễ truyền thống Việt Nam</h2>
+    <p style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-bottom:var(--space-2)">
+      Lễ được hiển thị trên lịch và danh sách sắp tới. Tắt nếu bạn không muốn xem.
+    </p>
+    <div class="system-events-actions">
+      <button class="btn btn-secondary" id="sys-enable-all" ${!allHidden ? "disabled" : ""}>Bật tất cả</button>
+      <button class="btn btn-secondary" id="sys-disable-all" ${allHidden ? "disabled" : ""}>Tắt tất cả</button>
+    </div>
+    <div class="system-events-list">
+      ${items
+        .map(
+          (it) => `
+        <label class="system-event-toggle">
+          <div class="system-event-info">
+            <div class="system-event-name">${escapeHtml(it.event.name)}</div>
+            <div class="system-event-date">${it.event.lunarDate.day}/${it.event.lunarDate.month} âm</div>
+          </div>
+          <input type="checkbox" data-id="${it.event.id}" ${!it.hidden ? "checked" : ""}>
+        </label>
+      `,
+        )
+        .join("")}
+    </div>
+    <hr style="border:none;border-top:1px solid var(--color-border-subtle);margin:var(--space-4) 0">
+  `;
+
+  container.querySelectorAll<HTMLInputElement>('input[type="checkbox"]').forEach((cb) => {
+    cb.addEventListener("change", () => {
+      const id = cb.dataset.id!;
+      state.setSystemEventHidden(id, !cb.checked);
+      renderSystemEventsSection(container, state);
+    });
+  });
+
+  container.querySelector("#sys-enable-all")?.addEventListener("click", () => {
+    state.setAllSystemEventsHidden(false);
+    renderSystemEventsSection(container, state);
+  });
+
+  container.querySelector("#sys-disable-all")?.addEventListener("click", () => {
+    state.setAllSystemEventsHidden(true);
+    renderSystemEventsSection(container, state);
   });
 }

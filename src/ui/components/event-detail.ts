@@ -3,7 +3,7 @@ import {
   UpcomingEventOccurrence,
 } from "../../core/models/types";
 import { RECURRENCE_LABELS } from "../types";
-import { formatSolarDate, formatLunarDate } from "../../lib/index";
+import { formatSolarDate, formatLunarDate, isSystemEventId } from "../../lib/index";
 
 /** Render event detail panel */
 export function renderEventDetail(
@@ -12,6 +12,7 @@ export function renderEventDetail(
   onEdit: (eventId: string) => void,
   onDelete: (eventId: string, eventName: string) => void,
   onClose: () => void,
+  onHideSystem?: (eventId: string, eventName: string) => void,
 ): void {
   if (occurrences.length === 0) {
     closeDetailPanel(container);
@@ -27,6 +28,7 @@ export function renderEventDetail(
   const html = occurrences
     .map((occ) => {
       const ev = occ.event;
+      const isSystem = isSystemEventId(ev.id);
       const daysText =
         occ.daysUntil === 0
           ? "Hôm nay"
@@ -48,11 +50,21 @@ export function renderEventDetail(
           ? `<span class="event-recurrence-badge">${RECURRENCE_LABELS[ev.recurrence]}</span>`
           : "";
 
+      const systemBadge = isSystem
+        ? `<span class="event-system-badge">Lễ</span>`
+        : "";
+
+      const actionsHtml = isSystem
+        ? `<button class="btn btn-secondary hide-system-btn" data-id="${ev.id}" data-name="${escapeHtml(ev.name)}" aria-label="Ẩn lễ ${escapeHtml(ev.name)}">Ẩn lễ này</button>`
+        : `
+                    <button class="btn btn-secondary edit-btn" data-id="${ev.id}" aria-label="Sửa ${escapeHtml(ev.name)}">Sửa</button>
+                    <button class="btn btn-danger delete-btn" data-id="${ev.id}" data-name="${escapeHtml(ev.name)}" aria-label="Xóa ${escapeHtml(ev.name)}">Xóa</button>`;
+
       return `
             <div class="detail-event-item" data-event-id="${ev.id}">
                 <div class="detail-panel-header" style="display:none;">
                     <div class="event-name-row" style="text-align: center; width: 100%;">
-                        <div class="modal-title-text">${escapeHtml(ev.name)}${leapTag}</div>
+                        <div class="modal-title-text">${escapeHtml(ev.name)}${systemBadge}${leapTag}</div>
                     </div>
                 </div>
                 <div class="detail-meta">
@@ -78,8 +90,7 @@ export function renderEventDetail(
                     </div>
                 </div>
                 <div class="detail-actions">
-                    <button class="btn btn-secondary edit-btn" data-id="${ev.id}" aria-label="Sửa ${escapeHtml(ev.name)}">Sửa</button>
-                    <button class="btn btn-danger delete-btn" data-id="${ev.id}" data-name="${escapeHtml(ev.name)}" aria-label="Xóa ${escapeHtml(ev.name)}">Xóa</button>
+                    ${actionsHtml}
                 </div>
             </div>
         `;
@@ -87,6 +98,10 @@ export function renderEventDetail(
     .join(
       '<hr style="border:none;border-top:1px solid var(--color-border-subtle);margin:var(--space-4) 0">',
     );
+
+  const headerSystemBadge = occurrences[0] && isSystemEventId(occurrences[0].event.id)
+    ? `<span class="event-system-badge">Lễ</span>`
+    : "";
 
   panel.innerHTML = `
         <div class="modal-header">
@@ -96,7 +111,7 @@ export function renderEventDetail(
                     <line x1="6" y1="6" x2="18" y2="18"></line>
                 </svg>
             </button>
-            <div class="modal-title-text">${escapeHtml(occurrences[0]?.event.name || "Sự kiện")}</div>
+            <div class="modal-title-text">${escapeHtml(occurrences[0]?.event.name || "Sự kiện")}${headerSystemBadge}</div>
         </div>
         <div class="modal-body">
             ${html}
@@ -122,6 +137,14 @@ export function renderEventDetail(
     btn.addEventListener("click", () => {
       const el = btn as HTMLElement;
       onDelete(el.dataset.id!, el.dataset.name!);
+    });
+  });
+
+  // Wire hide-system buttons
+  panel.querySelectorAll(".hide-system-btn").forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const el = btn as HTMLElement;
+      if (onHideSystem) onHideSystem(el.dataset.id!, el.dataset.name!);
     });
   });
 }

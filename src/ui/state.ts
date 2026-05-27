@@ -23,6 +23,8 @@ import {
   importMemos,
   validateMemoCreationParams,
   groupMemosByTitle,
+  VIETNAMESE_HOLIDAYS,
+  isSystemEventId,
 } from "../lib/index";
 import type { StorageAdapter } from "../adapters/storage/local-storage-adapter";
 import type { EventFormData, MemoFormData } from "./types";
@@ -37,6 +39,7 @@ export type StateListener = () => void;
 export class AppState {
   private events: LunarEvent[] = [];
   private memos: QuickMemo[] = [];
+  private hiddenSystemEventIds: Set<string> = new Set();
   private listeners: StateListener[] = [];
   private adapter: StorageAdapter;
   private _corruptedOnLoad = false;
@@ -45,6 +48,7 @@ export class AppState {
     this.adapter = adapter;
     this.events = adapter.load();
     this.memos = adapter.loadMemos();
+    this.hiddenSystemEventIds = new Set(adapter.loadHiddenSystemEventIds());
     // Detect if data was empty due to corruption
     const raw = localStorage.getItem("am-lich-events");
     if (raw && this.events.length === 0) {
@@ -102,6 +106,27 @@ export class AppState {
     }
   }
 
+  private persistHiddenSystemEvents(): void {
+    try {
+      this.adapter.saveHiddenSystemEventIds(
+        Array.from(this.hiddenSystemEventIds),
+      );
+    } catch (err: any) {
+      if (err?.name === "QuotaExceededError" || err?.code === 22) {
+        throw new Error("Failed to save — storage may be full");
+      }
+      throw err;
+    }
+  }
+
+  /** Merged view: user events + visible built-in Vietnamese holidays */
+  getAllEventsForDisplay(): LunarEvent[] {
+    const visibleHolidays = VIETNAMESE_HOLIDAYS.filter(
+      (e) => !this.hiddenSystemEventIds.has(e.id),
+    );
+    return this.events.concat(visibleHolidays);
+  }
+
   /** Create a new event */
   createEvent(form: EventFormData): void {
     // Validate via Core Engine
@@ -129,6 +154,9 @@ export class AppState {
 
   /** Update an existing event */
   editEvent(id: string, form: EventFormData): void {
+    if (isSystemEventId(id)) {
+      throw new Error("Không thể sửa lễ truyền thống");
+    }
     validateEventCreationParams(
       { day: form.lunarDay, month: form.lunarMonth },
       form.leapMonthRule,
@@ -155,28 +183,71 @@ export class AppState {
 
   /** Delete an event */
   deleteEvent(id: string): void {
+    if (isSystemEventId(id)) {
+      throw new Error("Không thể xóa lễ truyền thống. Hãy ẩn thay vì xóa.");
+    }
     this.events = removeEvent(this.events, id);
     this.persist();
     this.notify();
   }
 
-  /** Get occurrences for a specific year */
+  /** Get occurrences for a specific year (merged user + visible holidays) */
   getOccurrencesForYear(year: number): UpcomingEventOccurrence[] {
-    return calculateOccurrencesForYear(this.events, year);
+    return calculateOccurrencesForYear(this.getAllEventsForDisplay(), year);
   }
 
-  /** Get upcoming events from a reference date */
+  /** Get upcoming events from a reference date (merged user + visible holidays) */
   getUpcoming(
     referenceSolar: SolarDate,
     limit: number,
   ): UpcomingEventOccurrence[] {
-    return getUpcomingEvents(this.events, referenceSolar, limit);
+    return getUpcomingEvents(this.getAllEventsForDisplay(), referenceSolar, limit);
   }
 
-  /** Export events + memos payload */
+  /** Export user events + memos + settings payload */
   exportPayload(): string {
-    const payload = generateExportPayload(this.events, this.memos);
+    const payload = generateExportPayload(
+      this.events,
+      this.memos,
+      Array.from(this.hiddenSystemEventIds),
+    );
     return JSON.stringify(payload, null, 2);
+  }
+
+  // ---- System Events API ----
+
+  /**
+   * Returns the full list of built-in holidays along with their hidden state,
+   * for rendering the settings toggle list.
+   */
+  getSystemEventsWithVisibility(): Array<{ event: LunarEvent; hidden: boolean }> {
+    return VIETNAMESE_HOLIDAYS.map((event) => ({
+      event,
+      hidden: this.hiddenSystemEventIds.has(event.id),
+    }));
+  }
+
+  setSystemEventHidden(id: string, hidden: boolean): void {
+    if (!isSystemEventId(id)) {
+      throw new Error(`${id} is not a system event`);
+    }
+    if (hidden) {
+      this.hiddenSystemEventIds.add(id);
+    } else {
+      this.hiddenSystemEventIds.delete(id);
+    }
+    this.persistHiddenSystemEvents();
+    this.notify();
+  }
+
+  setAllSystemEventsHidden(hidden: boolean): void {
+    if (hidden) {
+      this.hiddenSystemEventIds = new Set(VIETNAMESE_HOLIDAYS.map((e) => e.id));
+    } else {
+      this.hiddenSystemEventIds = new Set();
+    }
+    this.persistHiddenSystemEvents();
+    this.notify();
   }
 
   /** Import events from JSON string (F4: async-friendly for large imports) */
@@ -190,6 +261,7 @@ export class AppState {
     if (replaceAll) {
       this.events = [];
       this.memos = [];
+      this.hiddenSystemEventIds = new Set();
     }
 
     const eventsBefore = this.events.length;
@@ -214,11 +286,18 @@ export class AppState {
       this.memos = importMemos(this.memos, payload.memos);
     }
 
+    if (payload.settings?.hiddenSystemEventIds) {
+      for (const id of payload.settings.hiddenSystemEventIds) {
+        this.hiddenSystemEventIds.add(id);
+      }
+    }
+
     const eventsAfter = this.events.length;
     const memosAfter = this.memos.length;
 
     this.persist();
     this.persistMemos();
+    this.persistHiddenSystemEvents();
     this.notify();
 
     return {

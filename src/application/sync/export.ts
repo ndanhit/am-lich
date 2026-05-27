@@ -1,6 +1,7 @@
 import {
   LunarEvent,
   ExportPayload,
+  ExportSettings,
   LeapMonthRule,
   RecurrenceRule,
   QuickMemo,
@@ -105,26 +106,53 @@ export function validateImportPayload(jsonPayload: string): ExportPayload {
     });
   }
 
+  // Optional settings — only present in newer exports
+  let validatedSettings: ExportSettings | undefined;
+  if (raw.settings !== undefined) {
+    if (typeof raw.settings !== "object" || raw.settings === null) {
+      throw new Error("Payload settings must be an object");
+    }
+    if (raw.settings.hiddenSystemEventIds !== undefined) {
+      if (!Array.isArray(raw.settings.hiddenSystemEventIds)) {
+        throw new Error("settings.hiddenSystemEventIds must be an array");
+      }
+      const ids = raw.settings.hiddenSystemEventIds.filter(
+        (id: unknown): id is string => typeof id === "string",
+      );
+      validatedSettings = { hiddenSystemEventIds: ids };
+    } else {
+      validatedSettings = {};
+    }
+  }
+
   return {
     version: 1,
     exportedAt: raw.exportedAt,
     events: validatedEvents,
     ...(validatedMemos !== undefined ? { memos: validatedMemos } : {}),
+    ...(validatedSettings !== undefined ? { settings: validatedSettings } : {}),
   };
 }
 
 /**
  * Generates an offline compliant JSON payload for backup.
- * Memos are optional — when present they round-trip through import.
+ * Memos and settings are optional — when present they round-trip through import.
  */
 export function generateExportPayload(
   events: LunarEvent[],
   memos?: QuickMemo[],
+  hiddenSystemEventIds?: string[],
 ): ExportPayload {
+  const settings: ExportSettings | undefined =
+    hiddenSystemEventIds && hiddenSystemEventIds.length > 0
+      ? { hiddenSystemEventIds: [...hiddenSystemEventIds] }
+      : undefined;
+
   return {
     version: 1,
     exportedAt: Date.now(),
     events,
     ...(memos !== undefined ? { memos } : {}),
+    ...(settings !== undefined ? { settings } : {}),
   };
 }

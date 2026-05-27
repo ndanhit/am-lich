@@ -61,6 +61,11 @@ export type ExportPayload = {
   exportedAt: number;
   events: LunarEvent[];
   memos?: QuickMemo[];
+  settings?: ExportSettings;
+};
+
+export type ExportSettings = {
+  hiddenSystemEventIds?: string[];
 };
 
 export type GroupedUpcomingEvents = {
