@@ -30,11 +30,6 @@ export function renderImportExport(
   const section = document.createElement("div");
   section.className = "import-export-section";
 
-  // Auth section — rendered empty initially to avoid loading flicker
-  const authSection = document.createElement("div");
-  authSection.className = "auth-section";
-  section.appendChild(authSection);
-
   // --- System events section ---
   const systemSection = document.createElement("div");
   systemSection.className = "system-events-section";
@@ -44,6 +39,7 @@ export function renderImportExport(
   const controls = document.createElement("div");
   controls.innerHTML = `
     <h2 style="font-size:var(--font-size-md);font-weight:600;margin-bottom:var(--space-1)">Đồng bộ đám mây</h2>
+    <div id="sync-auth-line" class="sync-auth-line"></div>
     <div id="last-backup-info" style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-bottom:var(--space-2);min-height:1.2em"></div>
     <div style="display:flex;gap:var(--space-2);margin-bottom:var(--space-4)">
       <button class="btn btn-primary" style="flex:1" id="cloud-backup-btn" aria-label="Sao lưu lên đám mây">
@@ -80,25 +76,28 @@ export function renderImportExport(
   };
   updateLastBackupDisplay();
 
-  // --- Auth section update ---
-  const updateAuthSection = () => {
-    SyncAdapter.getSession().then(user => {
-      if (!user) return;
-      authSection.innerHTML = `
-        <div class="auth-box" style="padding:var(--space-3);background:var(--color-surface);border-radius:var(--radius-md);margin-bottom:var(--space-3);border:1px solid var(--color-border)">
-          <p style="margin:0 0 var(--space-1) 0;font-size:var(--font-size-sm);color:var(--color-text-muted)">Đã đăng nhập với</p>
-          <p style="margin:0 0 var(--space-3) 0;font-weight:600;word-break:break-all;color:var(--color-primary)">${user.email}</p>
-          <button class="btn btn-primary btn-block" id="logout-btn">Đăng xuất</button>
-        </div>
-      `;
-      authSection.querySelector("#logout-btn")!.addEventListener("click", async () => {
-        await SyncAdapter.signOut();
-        showToast("Đã đăng xuất", "success");
-        renderImportExport(container, state, showToast, onConfirm, onSuccess, modalContainer);
-      });
+  // --- Auth state inline under "Đồng bộ đám mây" ---
+  const updateSyncAuthLine = () => {
+    const line = section.querySelector("#sync-auth-line") as HTMLElement;
+    if (!line) return;
+    SyncAdapter.getSession().then((user) => {
+      if (user) {
+        line.innerHTML = `
+          <span class="sync-auth-email">${escapeHtml(user.email ?? "")}</span>
+          <span class="sync-auth-sep">·</span>
+          <button class="sync-auth-logout" id="logout-btn" type="button">Đăng xuất</button>
+        `;
+        line.querySelector("#logout-btn")!.addEventListener("click", async () => {
+          await SyncAdapter.signOut();
+          showToast("Đã đăng xuất", "success");
+          updateSyncAuthLine();
+        });
+      } else {
+        line.innerHTML = `<span class="sync-auth-empty">Chưa đăng nhập</span>`;
+      }
     });
   };
-  updateAuthSection();
+  updateSyncAuthLine();
 
   // --- Named action functions (reused after login) ---
   const backupBtn = section.querySelector("#cloud-backup-btn") as HTMLButtonElement;
@@ -153,7 +152,7 @@ export function renderImportExport(
   const requireLoginThen = (action: () => Promise<void>) => {
     if (modalContainer) {
       showLoginModal(modalContainer, showToast, async () => {
-        updateAuthSection();
+        updateSyncAuthLine();
         await action();
       });
     }
