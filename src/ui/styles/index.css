@@ -1105,6 +1105,31 @@ textarea:focus {
   width: 100%;
 }
 
+/* Prominent call-to-action button for primary form submits */
+.btn-cta {
+  display: block;
+  width: 100%;
+  padding: 14px;
+  background: var(--color-primary);
+  color: #fff;
+  border: none;
+  border-radius: var(--radius-lg);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  margin-top: var(--space-3);
+  transition: background var(--transition-fast);
+}
+
+.btn-cta:hover {
+  background: var(--color-primary-hover);
+}
+
+.btn-cta:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .close-btn {
   position: absolute;
   top: 15px;
@@ -1131,13 +1156,13 @@ textarea:focus {
 
 .modal-title-text {
   text-align: center;
-  font-size: 32px;
-  line-height: 1.1;
+  font-size: 22px;
+  line-height: 1.2;
   font-weight: 600;
   letter-spacing: 0;
   font-family: SF Pro Display, SF Pro Icons, Helvetica Neue, Helvetica, Arial, sans-serif;
-  margin-bottom: 8px;
-  margin-top: 12px;
+  margin-bottom: 4px;
+  margin-top: 4px;
 }
 
 /* --- Modal / Form Overlay --- */
@@ -1215,15 +1240,15 @@ textarea:focus {
 
 /* --- Form --- */
 .form-group {
-  margin-bottom: var(--space-4);
+  margin-bottom: var(--space-3);
 }
 
 .form-group label {
   display: block;
-  font-size: var(--font-size-sm);
-  font-weight: 600;
-  color: var(--color-text-secondary);
-  margin-bottom: var(--space-1);
+  font-size: var(--font-size-xs);
+  font-weight: 500;
+  color: var(--color-text-muted);
+  margin-bottom: 4px;
 }
 
 .form-group input,
@@ -1234,14 +1259,15 @@ textarea:focus {
 }
 
 .form-group .char-count {
+  display: none;
   text-align: right;
   font-size: var(--font-size-xs);
   color: var(--color-text-muted);
   margin-top: var(--space-1);
 }
 
-.form-group .char-count.warning {
-  color: var(--color-warning);
+.form-group .char-count.show {
+  display: block;
 }
 
 .form-error {
