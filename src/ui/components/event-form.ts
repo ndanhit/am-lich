@@ -102,7 +102,7 @@ export function renderEventForm(
                     </div>
                 </div>
 
-                <button type="submit" class="btn btn-primary btn-block" id="submit-btn" aria-label="${isEdit ? "Lưu thay đổi" : "Tạo sự kiện"}">
+                <button type="submit" class="btn-cta" id="submit-btn" aria-label="${isEdit ? "Lưu thay đổi" : "Tạo sự kiện"}">
                     ${isEdit ? "Lưu thay đổi" : "Tạo sự kiện"}
                 </button>
             </form>
@@ -112,16 +112,21 @@ export function renderEventForm(
 
   container.appendChild(overlay);
 
-  // Character counter
+  // Character counter — hidden until ≥ 90% of limit
+  const NAME_MAX = 100;
+  const SHOW_AT = 0.9;
   const nameInput = overlay.querySelector("#event-name") as HTMLInputElement;
   const charCount = overlay.querySelector("#char-current") as HTMLSpanElement;
   const charContainer = overlay.querySelector(".char-count") as HTMLElement;
 
-  nameInput.addEventListener("input", () => {
+  const updateNameCount = (): void => {
     const len = nameInput.value.length;
     charCount.textContent = String(len);
-    charContainer.classList.toggle("warning", len > 90);
-  });
+    charContainer.classList.toggle("show", len >= NAME_MAX * SHOW_AT);
+  };
+
+  nameInput.addEventListener("input", updateNameCount);
+  updateNameCount();
 
   // Close handlers
   overlay.querySelector("#form-close")!.addEventListener("click", () => {

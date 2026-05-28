@@ -64,7 +64,7 @@ export function renderMemoForm(
             <div class="char-count"><span id="memo-note-count">${defaultNote.length}</span>/500</div>
           </div>
 
-          <button type="submit" class="btn btn-primary btn-block" id="memo-submit-btn">
+          <button type="submit" class="btn-cta" id="memo-submit-btn">
             ${isEdit ? "Lưu thay đổi" : "Tạo memo"}
           </button>
         </form>
@@ -84,12 +84,30 @@ export function renderMemoForm(
     "#memo-note-count",
   ) as HTMLSpanElement;
 
+  const TITLE_MAX = 100;
+  const NOTE_MAX = 500;
+  const SHOW_AT = 0.9;
+
+  const updateCount = (
+    span: HTMLSpanElement,
+    len: number,
+    max: number,
+  ): void => {
+    span.textContent = String(len);
+    const wrap = span.closest(".char-count");
+    wrap?.classList.toggle("show", len >= max * SHOW_AT);
+  };
+
   titleInput.addEventListener("input", () => {
-    titleCount.textContent = String(titleInput.value.length);
+    updateCount(titleCount, titleInput.value.length, TITLE_MAX);
   });
   noteInput.addEventListener("input", () => {
-    noteCount.textContent = String(noteInput.value.length);
+    updateCount(noteCount, noteInput.value.length, NOTE_MAX);
   });
+
+  // Sync once for edit mode (pre-filled values may already exceed threshold)
+  updateCount(titleCount, titleInput.value.length, TITLE_MAX);
+  updateCount(noteCount, noteInput.value.length, NOTE_MAX);
 
   overlay.querySelector("#memo-form-close")!.addEventListener("click", () => {
     closeForm(overlay, onCancel);
