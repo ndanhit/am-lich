@@ -105,16 +105,18 @@ export function renderDayDetailModal(
                     <div class="event-list">
                         ${state.events.length > 0
         ? state.events
-          .map(
-            (e) => `
+          .map((e) => {
+            const isSys = isSystemEventId(e.event.id);
+            return `
                                 <div class="event-item">
                                     <div class="event-info">
                                         <span class="event-name">${e.event.name}</span>
-                                        ${isSystemEventId(e.event.id)
+                                        ${isSys
                 ? `<span class="event-system-badge">Lễ</span>`
                 : ""
               }
-                                        ${e.event.recurrence &&
+                                        ${!isSys &&
+                e.event.recurrence &&
                 e.event.recurrence !==
                 RecurrenceRule.ONCE
                 ? `<span class="event-recurrence-badge">${RECURRENCE_LABELS[e.event.recurrence]}</span>`
@@ -122,8 +124,8 @@ export function renderDayDetailModal(
               }
                                     </div>
                                 </div>
-                            `,
-          )
+                            `;
+          })
           .join("")
         : '<p class="no-events">Không có sự kiện nào.</p>'
       }
