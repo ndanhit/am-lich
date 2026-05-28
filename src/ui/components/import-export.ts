@@ -209,56 +209,83 @@ export function renderImportExport(
   });
 }
 
-/** Render the "Vietnamese holidays" toggle section inside settings */
+/** Render the "Vietnamese holidays" collapsible section inside settings */
 function renderSystemEventsSection(
   container: HTMLElement,
   state: AppState,
 ): void {
-  const items = state.getSystemEventsWithVisibility();
-  const allHidden = items.every((it) => it.hidden);
+  let expanded = false;
 
-  container.innerHTML = `
-    <h2 style="font-size:var(--font-size-md);font-weight:600;margin-bottom:var(--space-2)">Lễ truyền thống Việt Nam</h2>
-    <p style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-bottom:var(--space-2)">
-      Lễ được hiển thị trên lịch và danh sách sắp tới. Tắt nếu bạn không muốn xem.
-    </p>
-    <div class="system-events-actions">
-      <button class="btn btn-secondary" id="sys-enable-all" ${!allHidden ? "disabled" : ""}>Bật tất cả</button>
-      <button class="btn btn-secondary" id="sys-disable-all" ${allHidden ? "disabled" : ""}>Tắt tất cả</button>
-    </div>
-    <div class="system-events-list">
-      ${items
-        .map(
-          (it) => `
-        <label class="system-event-toggle">
-          <div class="system-event-info">
-            <div class="system-event-name">${escapeHtml(it.event.name)}</div>
-            <div class="system-event-date">${it.event.lunarDate.day}/${it.event.lunarDate.month} âm</div>
+  function render(): void {
+    const items = state.getSystemEventsWithVisibility();
+    const visibleCount = items.filter((it) => !it.hidden).length;
+    const total = items.length;
+    const allHidden = visibleCount === 0;
+
+    container.innerHTML = `
+      <div class="settings-section-collapsible" data-expanded="${expanded}">
+        <button class="settings-section-header" aria-expanded="${expanded}">
+          <div class="settings-section-meta">
+            <div class="settings-section-title">Lễ truyền thống Việt Nam</div>
+            <div class="settings-section-sub">${visibleCount}/${total} đang bật</div>
           </div>
-          <input type="checkbox" data-id="${it.event.id}" ${!it.hidden ? "checked" : ""}>
-        </label>
-      `,
-        )
-        .join("")}
-    </div>
-    <hr style="border:none;border-top:1px solid var(--color-border-subtle);margin:var(--space-4) 0">
-  `;
+          <span class="settings-section-chevron" aria-hidden="true">›</span>
+        </button>
+        <div class="settings-section-body" ${expanded ? "" : "hidden"}>
+          <p style="font-size:var(--font-size-sm);color:var(--color-text-muted);margin-bottom:var(--space-2)">
+            Lễ được hiển thị trên lịch và danh sách sắp tới. Tắt nếu bạn không muốn xem.
+          </p>
+          <div class="system-events-actions">
+            <button class="btn btn-secondary" id="sys-enable-all" ${!allHidden ? "disabled" : ""}>Bật tất cả</button>
+            <button class="btn btn-secondary" id="sys-disable-all" ${allHidden ? "disabled" : ""}>Tắt tất cả</button>
+          </div>
+          <div class="system-events-list">
+            ${items
+              .map(
+                (it) => `
+              <label class="system-event-toggle">
+                <div class="system-event-info">
+                  <div class="system-event-name">${escapeHtml(it.event.name)}</div>
+                  <div class="system-event-date">${it.event.lunarDate.day}/${it.event.lunarDate.month} âm</div>
+                </div>
+                <input type="checkbox" data-id="${it.event.id}" ${!it.hidden ? "checked" : ""}>
+              </label>
+            `,
+              )
+              .join("")}
+          </div>
+        </div>
+      </div>
+      <hr style="border:none;border-top:1px solid var(--color-border-subtle);margin:var(--space-4) 0">
+    `;
 
-  container.querySelectorAll<HTMLInputElement>('input[type="checkbox"]').forEach((cb) => {
-    cb.addEventListener("change", () => {
-      const id = cb.dataset.id!;
-      state.setSystemEventHidden(id, !cb.checked);
-      renderSystemEventsSection(container, state);
+    container
+      .querySelector(".settings-section-header")!
+      .addEventListener("click", () => {
+        expanded = !expanded;
+        render();
+      });
+
+    container
+      .querySelectorAll<HTMLInputElement>('input[type="checkbox"]')
+      .forEach((cb) => {
+        cb.addEventListener("change", () => {
+          const id = cb.dataset.id!;
+          state.setSystemEventHidden(id, !cb.checked);
+          render();
+        });
+      });
+
+    container.querySelector("#sys-enable-all")?.addEventListener("click", () => {
+      state.setAllSystemEventsHidden(false);
+      render();
     });
-  });
 
-  container.querySelector("#sys-enable-all")?.addEventListener("click", () => {
-    state.setAllSystemEventsHidden(false);
-    renderSystemEventsSection(container, state);
-  });
+    container.querySelector("#sys-disable-all")?.addEventListener("click", () => {
+      state.setAllSystemEventsHidden(true);
+      render();
+    });
+  }
 
-  container.querySelector("#sys-disable-all")?.addEventListener("click", () => {
-    state.setAllSystemEventsHidden(true);
-    renderSystemEventsSection(container, state);
-  });
+  render();
 }
