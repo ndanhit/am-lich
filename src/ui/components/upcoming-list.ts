@@ -25,22 +25,43 @@ export function renderUpcomingList(
   const section = document.createElement("div");
   section.className = "upcoming-list";
 
+  const headerRow = document.createElement("div");
+  headerRow.className = "upcoming-header-row";
   const h2 = document.createElement("h2");
   h2.textContent = "Sự kiện sắp tới";
-  section.appendChild(h2);
+  headerRow.appendChild(h2);
+
+  const holidayVisibility = state.getSystemEventsWithVisibility();
+  const anyHolidayVisible = holidayVisibility.some((it) => !it.hidden);
+  const toggleLabel = document.createElement("label");
+  toggleLabel.className = "upcoming-filter-toggle";
+  toggleLabel.innerHTML = `
+    <input type="checkbox" id="upcoming-holiday-toggle" ${anyHolidayVisible ? "checked" : ""}>
+    <span>Hiện lễ truyền thống</span>
+  `;
+  headerRow.appendChild(toggleLabel);
+  section.appendChild(headerRow);
+
+  toggleLabel
+    .querySelector<HTMLInputElement>("#upcoming-holiday-toggle")!
+    .addEventListener("change", (e) => {
+      const checked = (e.target as HTMLInputElement).checked;
+      state.setAllSystemEventsHidden(!checked);
+    });
 
   const today = getToday();
   const occurrences = state.getUpcoming(today, 30); // Increased limit slightly for better year spread
 
   if (occurrences.length === 0) {
-    section.innerHTML += `
-            <div class="empty-state">
-                <div class="empty-state-icon">
-                    <img src="assets/images/ico-events.svg" alt="" style="width: 48px; height: 48px; opacity: 0.25;">
-                </div>
-                <p>Chưa có sự kiện sắp tới</p>
-            </div>
-        `;
+    const empty = document.createElement("div");
+    empty.className = "empty-state";
+    empty.innerHTML = `
+      <div class="empty-state-icon">
+        <img src="assets/images/ico-events.svg" alt="" style="width: 48px; height: 48px; opacity: 0.25;">
+      </div>
+      <p>Chưa có sự kiện sắp tới</p>
+    `;
+    section.appendChild(empty);
     container.appendChild(section);
     return;
   }
@@ -82,11 +103,12 @@ export function renderUpcomingList(
 
       const solarStr = formatSolarDate(occ.solarDate);
       const lunarYearStr = occ.event.lunarYear ? `/${occ.event.lunarYear}` : "";
+      const isSystem = isSystemEventId(occ.event.id);
       const recurrenceBadge =
-        occ.event.recurrence && occ.event.recurrence !== RecurrenceRule.ONCE
+        !isSystem && occ.event.recurrence && occ.event.recurrence !== RecurrenceRule.ONCE
           ? `<span class="event-recurrence-badge">${RECURRENCE_LABELS[occ.event.recurrence]}</span>`
           : "";
-      const systemBadge = isSystemEventId(occ.event.id)
+      const systemBadge = isSystem
         ? `<span class="event-system-badge">Lễ</span>`
         : "";
 

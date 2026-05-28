@@ -46,7 +46,7 @@ export function renderEventDetail(
       const solarStr = formatSolarDate(occ.solarDate);
 
       const recurrenceBadge =
-        ev.recurrence && ev.recurrence !== RecurrenceRule.ONCE
+        !isSystem && ev.recurrence && ev.recurrence !== RecurrenceRule.ONCE
           ? `<span class="event-recurrence-badge">${RECURRENCE_LABELS[ev.recurrence]}</span>`
           : "";
 
