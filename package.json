@@ -9,6 +9,7 @@
     "dev": "npm run build:ui && npx serve . -l 3456",
     "test": "vitest run",
     "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "lint": "eslint src/**/*.ts",
     "format": "prettier --write \"src/**/*.ts\""
   },
@@ -26,6 +27,7 @@
   "homepage": "https://github.com/ndanhit/am-lich#readme",
   "devDependencies": {
     "@types/node": "^25.3.0",
+    "@vitest/coverage-v8": "^4.1.7",
     "esbuild": "^0.27.3",
     "eslint": "^10.0.1",
     "prettier": "^3.8.1",
