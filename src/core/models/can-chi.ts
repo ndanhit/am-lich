@@ -50,11 +50,39 @@ const ANIMALS: Record<string, string> = {
   猪: "Lợn",
 };
 
-// Map for NaYin (Five Elements / Fate) in Vietnamese
+// Map for NaYin (Five Elements / Fate) in Vietnamese — full 30 entries of the
+// 60-year cycle. lunar-javascript returns simplified Chinese.
 const NAYIN: Record<string, string> = {
+  海中金: "Hải Trung Kim",
   炉中火: "Lô Trung Hỏa",
+  大林木: "Đại Lâm Mộc",
   路旁土: "Lộ Bàng Thổ",
-  // ... add others as needed, for now we map the common ones for tests
+  剑锋金: "Kiếm Phong Kim",
+  山头火: "Sơn Đầu Hỏa",
+  涧下水: "Giản Hạ Thủy",
+  城头土: "Thành Đầu Thổ",
+  白蜡金: "Bạch Lạp Kim",
+  杨柳木: "Dương Liễu Mộc",
+  泉中水: "Tuyền Trung Thủy",
+  屋上土: "Ốc Thượng Thổ",
+  霹雳火: "Tích Lịch Hỏa",
+  松柏木: "Tùng Bách Mộc",
+  长流水: "Trường Lưu Thủy",
+  沙中金: "Sa Trung Kim",
+  山下火: "Sơn Hạ Hỏa",
+  平地木: "Bình Địa Mộc",
+  壁上土: "Bích Thượng Thổ",
+  金箔金: "Kim Bạc Kim",
+  覆灯火: "Phú Đăng Hỏa",
+  天河水: "Thiên Hà Thủy",
+  大驿土: "Đại Dịch Thổ",
+  钗钏金: "Thoa Xuyến Kim",
+  桑柘木: "Tang Đố Mộc",
+  大溪水: "Đại Khê Thủy",
+  沙中土: "Sa Trung Thổ",
+  天上火: "Thiên Thượng Hỏa",
+  石榴木: "Thạch Lựu Mộc",
+  大海水: "Đại Hải Thủy",
 };
 
 /**
