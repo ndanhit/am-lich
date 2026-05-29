@@ -17,6 +17,27 @@ import { translateGanZhiToVietnamese } from "../models/can-chi";
 const lunarYearCache = new Map<number, any>();
 
 /**
+ * Combine the clashing zodiac animal and clashing year description into a
+ * single Vietnamese-friendly string, e.g. "Gà (Kỷ Dậu)". lunar-javascript
+ * returns the description as "(GanZhi)Animal" — we extract just the GanZhi
+ * from inside the parens so the animal isn't duplicated in the output.
+ */
+function buildIncompatibleAges(
+  chongShengXiao: string,
+  chongDesc: string,
+): string[] {
+  const animal = translateGanZhiToVietnamese(chongShengXiao);
+  const ganZhiMatch = chongDesc?.match(/\(([^)]+)\)/);
+  const ganZhi = ganZhiMatch
+    ? translateGanZhiToVietnamese(ganZhiMatch[1])
+    : "";
+  if (animal && ganZhi) return [`${animal} (${ganZhi})`];
+  if (animal) return [animal];
+  if (ganZhi) return [`(${ganZhi})`];
+  return [];
+}
+
+/**
  * Validates if the given day and month are structurally possible
  * in the specific lunar year permutations (e.g. month has 29 or 30 days).
  */
@@ -139,10 +160,10 @@ export function convertSolarToLunar(
       auspiciousHours: (lunar.getTimes() as any[])
         .filter((t) => t.getTianShenLuck() === "吉")
         .map((t) => translateGanZhiToVietnamese(t.getZhi())),
-      incompatibleAges: [
-        translateGanZhiToVietnamese(lunar.getChongShengXiao()),
+      incompatibleAges: buildIncompatibleAges(
+        lunar.getChongShengXiao(),
         lunar.getChongDesc(),
-      ].filter(Boolean),
+      ),
     };
 
     solarToLunarCache.set(cacheKey, result);
