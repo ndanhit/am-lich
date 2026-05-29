@@ -11,6 +11,7 @@ import { renderImportExport } from "../components/import-export";
 import { renderDayDetailModal } from "../components/day-detail-modal";
 import { renderMemoForm } from "../components/memo-form";
 import { renderMemoList } from "../components/memo-list";
+import { renderDateConverterModal } from "../components/date-converter-modal";
 import type { CalendarCell } from "../types";
 import type { AppView } from "../types";
 import type {
@@ -50,6 +51,12 @@ app.innerHTML = `
     <header class="app-header">
         <h1>Âm Lịch</h1>
         <div class="app-header-actions">
+            <button class="icon-btn" id="converter-btn" aria-label="Tra cứu ngày">
+                <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+                    <circle cx="11" cy="11" r="7"></circle>
+                    <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+                </svg>
+            </button>
             <button class="icon-btn" id="import-export-btn" aria-label="Cài đặt">
                 <img src="assets/images/ico-setting.svg" alt="" class="icon-img">
             </button>
@@ -513,6 +520,9 @@ document.getElementById("add-event-btn")!.addEventListener("click", () => {
 document
   .getElementById("import-export-btn")!
   .addEventListener("click", openImportExport);
+document.getElementById("converter-btn")!.addEventListener("click", () => {
+  renderDateConverterModal(modalContainer, () => {});
+});
 backdrop.addEventListener("click", () => {
   closeDetailPanel(detailContainer);
   backdrop.classList.remove("open");
