@@ -1598,7 +1598,9 @@ textarea:focus {
   background: var(--color-accent);
   color: white;
   padding: var(--space-3) var(--space-5);
+  border: none;
   border-radius: var(--radius-full);
+  font-family: inherit;
   font-size: var(--font-size-sm);
   font-weight: 600;
   box-shadow: var(--shadow-lg);
@@ -1617,10 +1619,15 @@ textarea:focus {
   pointer-events: auto;
 }
 
-.today-fab:hover {
-  background: var(--color-accent-soft);
-  color: var(--color-accent);
-  transform: scale(1.05);
+/* Hover styles only on devices with real hover (desktop mouse/trackpad).
+   On touch devices, hover state would stick after first tap and require
+   a second tap to fire click. */
+@media (hover: hover) and (pointer: fine) {
+  .today-fab:hover {
+    background: var(--color-accent-soft);
+    color: var(--color-accent);
+    transform: scale(1.05);
+  }
 }
 
 .today-fab:active {
