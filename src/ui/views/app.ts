@@ -85,7 +85,7 @@ app.innerHTML = `
     <div id="backdrop" class="backdrop"></div>
     <div id="toast" class="toast"></div>
     <div id="confirm" class="confirm-dialog"></div>
-    <div id="today-fab" class="today-fab" aria-label="Hôm nay">Hôm nay</div>
+    <button type="button" id="today-fab" class="today-fab" aria-label="Hôm nay">Hôm nay</button>
 `;
 
 const viewContainer = document.getElementById("view-container")!;
