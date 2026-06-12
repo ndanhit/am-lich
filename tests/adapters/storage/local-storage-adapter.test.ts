@@ -1,6 +1,10 @@
 import { describe, it, expect, beforeEach, vi } from "vitest";
 import { LocalStorageAdapter } from "../../../src/adapters/storage/local-storage-adapter";
-import type { LunarEvent, QuickMemo } from "../../../src/core/models/types";
+import type {
+  LunarEvent,
+  QuickMemo,
+  Person,
+} from "../../../src/core/models/types";
 import {
   LeapMonthRule,
   RecurrenceRule,
@@ -117,6 +121,46 @@ describe("LocalStorageAdapter — memos", () => {
   it("loadMemos returns [] on non-array payload", () => {
     mem.setItem("am-lich-memos", JSON.stringify("oops"));
     expect(new LocalStorageAdapter().loadMemos()).toEqual([]);
+  });
+});
+
+function person(overrides: Partial<Person> = {}): Person {
+  return {
+    id: "p1",
+    name: "Nguyễn Văn A",
+    gender: "male",
+    birthDate: { year: 1950, month: 1, day: 1 },
+    deathDate: null,
+    parentId: null,
+    spouseId: null,
+    notes: "",
+    createdAt: 1,
+    updatedAt: 1,
+    ...overrides,
+  };
+}
+
+describe("LocalStorageAdapter — people (gia phả)", () => {
+  it("loadPeople returns [] when key missing", () => {
+    expect(new LocalStorageAdapter().loadPeople()).toEqual([]);
+  });
+
+  it("savePeople + loadPeople roundtrip", () => {
+    const a = new LocalStorageAdapter();
+    const ps = [person({ id: "a" }), person({ id: "b" })];
+    a.savePeople(ps);
+    expect(a.loadPeople()).toEqual(ps);
+  });
+
+  it("loadPeople returns [] on non-array payload", () => {
+    mem.setItem("am-lich-people", JSON.stringify("oops"));
+    expect(new LocalStorageAdapter().loadPeople()).toEqual([]);
+  });
+
+  it("savePeople throws friendly error on quota exceeded", () => {
+    const a = new LocalStorageAdapter();
+    (mem as any).failNextSet = true;
+    expect(() => a.savePeople([person()])).toThrow(/storage may be full/);
   });
 });
 

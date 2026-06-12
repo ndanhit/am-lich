@@ -5,8 +5,11 @@ import {
   LeapMonthRule,
   RecurrenceRule,
   QuickMemo,
+  Person,
+  SolarDate,
 } from "../../core/models/types";
 import { validateEventCreationParams } from "../../core/rules/leap-month";
+import { isValidGender } from "../people/crud";
 
 /**
  * Validates a JSON string as a compatible ExportPayload structure.
@@ -106,6 +109,43 @@ export function validateImportPayload(jsonPayload: string): ExportPayload {
     });
   }
 
+  // Optional people (gia phả) field — older exports won't have it
+  let validatedPeople: Person[] | undefined;
+  if (raw.people !== undefined) {
+    if (!Array.isArray(raw.people)) {
+      throw new Error("Payload people must be an array");
+    }
+    validatedPeople = raw.people.map((p: any) => {
+      if (!p.id || typeof p.id !== "string")
+        throw new Error("Invalid person ID");
+      if (!p.name || typeof p.name !== "string")
+        throw new Error("Invalid person name");
+      if (!isValidGender(p.gender)) throw new Error("Invalid person gender");
+      const birthDate = parseOptionalSolarDate(p.birthDate, "birthDate");
+      const deathDate = parseOptionalSolarDate(p.deathDate, "deathDate");
+      if (p.parentId !== null && typeof p.parentId !== "string")
+        throw new Error("Invalid person parentId");
+      if (p.spouseId !== null && typeof p.spouseId !== "string")
+        throw new Error("Invalid person spouseId");
+      if (typeof p.notes !== "string") throw new Error("Invalid person notes");
+      if (typeof p.createdAt !== "number" || typeof p.updatedAt !== "number") {
+        throw new Error("Invalid person timestamps");
+      }
+      return {
+        id: p.id,
+        name: p.name,
+        gender: p.gender,
+        birthDate,
+        deathDate,
+        parentId: p.parentId,
+        spouseId: p.spouseId,
+        notes: p.notes,
+        createdAt: p.createdAt,
+        updatedAt: p.updatedAt,
+      };
+    });
+  }
+
   // Optional settings — only present in newer exports
   let validatedSettings: ExportSettings | undefined;
   if (raw.settings !== undefined) {
@@ -130,8 +170,29 @@ export function validateImportPayload(jsonPayload: string): ExportPayload {
     exportedAt: raw.exportedAt,
     events: validatedEvents,
     ...(validatedMemos !== undefined ? { memos: validatedMemos } : {}),
+    ...(validatedPeople !== undefined ? { people: validatedPeople } : {}),
     ...(validatedSettings !== undefined ? { settings: validatedSettings } : {}),
   };
+}
+
+/**
+ * Parse an optional SolarDate from import payload. Accepts null/undefined
+ * (returns null) or a well-formed { year, month, day }. Throws otherwise.
+ */
+function parseOptionalSolarDate(
+  value: any,
+  label: string,
+): SolarDate | null {
+  if (value === null || value === undefined) return null;
+  if (
+    typeof value !== "object" ||
+    typeof value.year !== "number" ||
+    typeof value.month !== "number" ||
+    typeof value.day !== "number"
+  ) {
+    throw new Error(`Invalid person ${label}`);
+  }
+  return { year: value.year, month: value.month, day: value.day };
 }
 
 /**
@@ -142,6 +203,7 @@ export function generateExportPayload(
   events: LunarEvent[],
   memos?: QuickMemo[],
   hiddenSystemEventIds?: string[],
+  people?: Person[],
 ): ExportPayload {
   const settings: ExportSettings | undefined =
     hiddenSystemEventIds && hiddenSystemEventIds.length > 0
@@ -153,6 +215,7 @@ export function generateExportPayload(
     exportedAt: Date.now(),
     events,
     ...(memos !== undefined ? { memos } : {}),
+    ...(people !== undefined ? { people } : {}),
     ...(settings !== undefined ? { settings } : {}),
   };
 }

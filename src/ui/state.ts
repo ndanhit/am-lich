@@ -6,6 +6,8 @@ import type {
   LunarDateContext,
   QuickMemo,
   GroupedMemos,
+  Person,
+  FamilyTreeNode,
 } from "../core/models/types";
 import {
   calculateOccurrencesForYear,
@@ -23,11 +25,17 @@ import {
   importMemos,
   validateMemoCreationParams,
   groupMemosByTitle,
+  addPerson,
+  updatePerson,
+  removePerson,
+  importPeople,
+  validatePersonCreationParams,
+  buildFamilyTree,
   VIETNAMESE_HOLIDAYS,
   isSystemEventId,
 } from "../lib/index";
 import type { StorageAdapter } from "../adapters/storage/local-storage-adapter";
-import type { EventFormData, MemoFormData } from "./types";
+import type { EventFormData, MemoFormData, PersonFormData } from "./types";
 
 export type StateListener = () => void;
 
@@ -39,6 +47,7 @@ export type StateListener = () => void;
 export class AppState {
   private events: LunarEvent[] = [];
   private memos: QuickMemo[] = [];
+  private people: Person[] = [];
   private hiddenSystemEventIds: Set<string> = new Set();
   private listeners: StateListener[] = [];
   private adapter: StorageAdapter;
@@ -48,6 +57,7 @@ export class AppState {
     this.adapter = adapter;
     this.events = adapter.load();
     this.memos = adapter.loadMemos();
+    this.people = adapter.loadPeople();
     this.hiddenSystemEventIds = new Set(adapter.loadHiddenSystemEventIds());
     // Detect if data was empty due to corruption
     const raw = localStorage.getItem("am-lich-events");
@@ -98,6 +108,17 @@ export class AppState {
   private persistMemos(): void {
     try {
       this.adapter.saveMemos(this.memos);
+    } catch (err: any) {
+      if (err?.name === "QuotaExceededError" || err?.code === 22) {
+        throw new Error("Failed to save — storage may be full");
+      }
+      throw err;
+    }
+  }
+
+  private persistPeople(): void {
+    try {
+      this.adapter.savePeople(this.people);
     } catch (err: any) {
       if (err?.name === "QuotaExceededError" || err?.code === 22) {
         throw new Error("Failed to save — storage may be full");
@@ -210,6 +231,7 @@ export class AppState {
       this.events,
       this.memos,
       Array.from(this.hiddenSystemEventIds),
+      this.people,
     );
     return JSON.stringify(payload, null, 2);
   }
@@ -261,11 +283,13 @@ export class AppState {
     if (replaceAll) {
       this.events = [];
       this.memos = [];
+      this.people = [];
       this.hiddenSystemEventIds = new Set();
     }
 
     const eventsBefore = this.events.length;
     const memosBefore = this.memos.length;
+    const peopleBefore = this.people.length;
 
     // F4: For large imports (500+), batch in chunks to avoid UI freeze
     if (payload.events.length > 100) {
@@ -286,6 +310,10 @@ export class AppState {
       this.memos = importMemos(this.memos, payload.memos);
     }
 
+    if (payload.people && payload.people.length > 0) {
+      this.people = importPeople(this.people, payload.people);
+    }
+
     if (payload.settings?.hiddenSystemEventIds) {
       for (const id of payload.settings.hiddenSystemEventIds) {
         this.hiddenSystemEventIds.add(id);
@@ -294,16 +322,19 @@ export class AppState {
 
     const eventsAfter = this.events.length;
     const memosAfter = this.memos.length;
+    const peopleAfter = this.people.length;
 
     this.persist();
     this.persistMemos();
+    this.persistPeople();
     this.persistHiddenSystemEvents();
     this.notify();
 
     return {
       added:
         Math.max(0, eventsAfter - eventsBefore) +
-        Math.max(0, memosAfter - memosBefore),
+        Math.max(0, memosAfter - memosBefore) +
+        Math.max(0, peopleAfter - peopleBefore),
       updated: 0,
       skipped: 0,
     };
@@ -376,6 +407,77 @@ export class AppState {
   deleteMemo(id: string): void {
     this.memos = removeMemo(this.memos, id);
     this.persistMemos();
+    this.notify();
+  }
+
+  // ---- Family Tree (Gia phả) API ----
+
+  getPeople(): Person[] {
+    return this.people;
+  }
+
+  getFamilyTree(): FamilyTreeNode[] {
+    return buildFamilyTree(this.people);
+  }
+
+  private toSolarDate(
+    date: PersonFormData["birthDate"],
+  ): SolarDate | null {
+    if (!date) return null;
+    return { year: date.year, month: date.month, day: date.day };
+  }
+
+  createPerson(form: PersonFormData): void {
+    const birthDate = this.toSolarDate(form.birthDate);
+    const deathDate = this.toSolarDate(form.deathDate);
+    validatePersonCreationParams(form.name, birthDate, deathDate);
+
+    const newPerson: Person = {
+      id: crypto.randomUUID(),
+      name: form.name.trim().slice(0, 100),
+      gender: form.gender,
+      birthDate,
+      deathDate,
+      parentId: form.parentId,
+      spouseId: form.spouseId,
+      notes: (form.notes ?? "").trim().slice(0, 500),
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    };
+
+    this.people = addPerson(this.people, newPerson);
+    this.persistPeople();
+    this.notify();
+  }
+
+  editPerson(id: string, form: PersonFormData): void {
+    const birthDate = this.toSolarDate(form.birthDate);
+    const deathDate = this.toSolarDate(form.deathDate);
+    validatePersonCreationParams(form.name, birthDate, deathDate);
+
+    const existing = this.people.find((p) => p.id === id);
+    if (!existing) throw new Error(`Person ${id} not found`);
+
+    const updated: Person = {
+      ...existing,
+      name: form.name.trim().slice(0, 100),
+      gender: form.gender,
+      birthDate,
+      deathDate,
+      parentId: form.parentId,
+      spouseId: form.spouseId,
+      notes: (form.notes ?? "").trim().slice(0, 500),
+      updatedAt: Date.now(),
+    };
+
+    this.people = updatePerson(this.people, updated);
+    this.persistPeople();
+    this.notify();
+  }
+
+  deletePerson(id: string): void {
+    this.people = removePerson(this.people, id);
+    this.persistPeople();
     this.notify();
   }
 }

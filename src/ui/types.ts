@@ -5,6 +5,7 @@ import type {
   LunarDateContext,
 } from "../lib/index";
 import { LeapMonthRule, RecurrenceRule } from "../lib/index";
+import type { Gender } from "../lib/index";
 
 /** A single cell in the monthly calendar grid */
 export type CalendarCell = {
@@ -45,8 +46,26 @@ export type MemoFormData = {
   solarDay: number;
 };
 
+/** DTO for the create/edit family-tree person form */
+export type PersonFormData = {
+  name: string;
+  gender: Gender;
+  birthDate: { year: number; month: number; day: number } | null;
+  deathDate: { year: number; month: number; day: number } | null;
+  parentId: string | null;
+  spouseId: string | null;
+  notes: string;
+};
+
 /** Active view in the app */
-export type AppView = "calendar" | "upcoming" | "memo";
+export type AppView = "calendar" | "upcoming" | "memo" | "family";
+
+/** Human-readable labels for gender values */
+export const GENDER_LABELS: Record<Gender, string> = {
+  male: "Nam",
+  female: "Nữ",
+  other: "Khác",
+};
 
 /** Human-readable labels for recurrence rules */
 export const RECURRENCE_LABELS: Record<RecurrenceRule, string> = {

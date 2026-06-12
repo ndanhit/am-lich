@@ -1,4 +1,4 @@
-import type { LunarEvent, QuickMemo } from "../../lib/index";
+import type { LunarEvent, QuickMemo, Person } from "../../lib/index";
 
 /**
  * Storage adapter interface — abstracts persistence.
@@ -17,11 +17,16 @@ export interface StorageAdapter {
   loadHiddenSystemEventIds(): string[];
   /** Persists the list of hidden system event IDs. Throws on write failure. */
   saveHiddenSystemEventIds(ids: string[]): void;
+  /** Loads all stored family-tree people. Returns [] if none or on failure. */
+  loadPeople(): Person[];
+  /** Replaces all people in storage. Throws on write failure. */
+  savePeople(people: Person[]): void;
 }
 
 const STORAGE_KEY = "am-lich-events";
 const MEMOS_STORAGE_KEY = "am-lich-memos";
 const HIDDEN_SYSTEM_EVENTS_KEY = "am-lich-hidden-system-events";
+const PEOPLE_STORAGE_KEY = "am-lich-people";
 
 /**
  * LocalStorage implementation of StorageAdapter.
@@ -52,6 +57,14 @@ export class LocalStorageAdapter implements StorageAdapter {
 
   saveHiddenSystemEventIds(ids: string[]): void {
     writeArray(HIDDEN_SYSTEM_EVENTS_KEY, ids);
+  }
+
+  loadPeople(): Person[] {
+    return readArray<Person>(PEOPLE_STORAGE_KEY);
+  }
+
+  savePeople(people: Person[]): void {
+    writeArray(PEOPLE_STORAGE_KEY, people);
   }
 }
 

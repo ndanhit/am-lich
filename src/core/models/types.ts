@@ -61,6 +61,7 @@ export type ExportPayload = {
   exportedAt: number;
   events: LunarEvent[];
   memos?: QuickMemo[];
+  people?: Person[];
   settings?: ExportSettings;
 };
 
@@ -90,4 +91,33 @@ export type GroupedMemos = {
   title: string;
   memos: QuickMemo[];
   lastDate: SolarDate;
+};
+
+/** Giới tính của thành viên trong gia phả */
+export type Gender = "male" | "female" | "other";
+
+/**
+ * A member of the family tree (gia phả).
+ * Quan hệ huyết thống thể hiện qua một parentId (đời cha/mẹ trực hệ)
+ * cộng spouseId (vợ/chồng). Danh sách Person phẳng — gốc cây là các
+ * Person có parentId === null (cho phép nhiều dòng họ rời rạc).
+ */
+export type Person = {
+  id: string;
+  name: string;
+  gender: Gender;
+  birthDate: SolarDate | null;
+  deathDate: SolarDate | null;
+  parentId: string | null;
+  spouseId: string | null;
+  notes: string;
+  createdAt: number;
+  updatedAt: number;
+};
+
+/** Một nút trong cây gia phả đã dựng từ danh sách Person phẳng */
+export type FamilyTreeNode = {
+  person: Person;
+  children: FamilyTreeNode[];
+  depth: number;
 };
