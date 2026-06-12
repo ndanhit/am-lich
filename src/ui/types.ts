@@ -67,6 +67,13 @@ export const GENDER_LABELS: Record<Gender, string> = {
   other: "Khác",
 };
 
+/** Unicode icons for gender values, shown before a person's name */
+export const GENDER_ICONS: Record<Gender, string> = {
+  male: "♂",
+  female: "♀",
+  other: "⚥",
+};
+
 /** Human-readable labels for recurrence rules */
 export const RECURRENCE_LABELS: Record<RecurrenceRule, string> = {
   [RecurrenceRule.YEARLY]: "Hàng năm",

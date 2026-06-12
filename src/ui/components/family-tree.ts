@@ -1,6 +1,6 @@
 import type { Person, FamilyTreeNode, SolarDate } from "../../lib/index";
 import { formatSolarDate, formatLunarDate, convertSolarToLunar } from "../../lib/index";
-import { GENDER_LABELS } from "../types";
+import { GENDER_LABELS, GENDER_ICONS } from "../types";
 import type { AppState } from "../state";
 
 /** Render the family-tree (gia phả) view as a top-down genealogy chart. */
@@ -102,8 +102,8 @@ function renderNode(
   box.className = `tree-node-box gender-${person.gender}`;
   box.innerHTML = `
     <div class="tree-name">
+      <span class="tree-gender-icon gender-${person.gender}" title="${GENDER_LABELS[person.gender]}" aria-label="${GENDER_LABELS[person.gender]}">${GENDER_ICONS[person.gender]}</span>
       ${escapeHtml(person.name)}
-      <span class="tree-gender">${GENDER_LABELS[person.gender]}</span>
     </div>
     ${spouseHtml}
     ${birthHtml}

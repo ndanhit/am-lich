@@ -25,6 +25,7 @@ export function renderPersonForm(
   const defaultNotes = isEdit ? editPerson.notes : "";
   const birthValue = isEdit ? solarToInputValue(editPerson.birthDate) : "";
   const deathValue = isEdit ? solarToInputValue(editPerson.deathDate) : "";
+  const isDeceased = isEdit && editPerson.deathDate !== null;
   const defaultParentId = isEdit
     ? editPerson.parentId
     : (presetParentId ?? null);
@@ -89,6 +90,13 @@ export function renderPersonForm(
           </div>
 
           <div class="form-group">
+            <label class="checkbox-row">
+              <input type="checkbox" id="person-deceased" ${isDeceased ? "checked" : ""}>
+              <span>Đã mất</span>
+            </label>
+          </div>
+
+          <div class="form-group" id="person-death-group" style="display: ${isDeceased ? "block" : "none"}">
             <label for="person-death">Ngày mất (dương lịch)</label>
             <input type="date" id="person-death" value="${deathValue}" min="1901-01-01" max="2099-12-31">
             <div class="form-error" id="person-death-error"></div>
@@ -147,6 +155,18 @@ export function renderPersonForm(
   const notesInput = overlay.querySelector(
     "#person-notes",
   ) as HTMLTextAreaElement;
+  const deceasedCheckbox = overlay.querySelector(
+    "#person-deceased",
+  ) as HTMLInputElement;
+  const deathGroup = overlay.querySelector(
+    "#person-death-group",
+  ) as HTMLElement;
+
+  // Toggle the death-date field visibility based on the "Đã mất" checkbox.
+  deceasedCheckbox.addEventListener("change", () => {
+    deathGroup.style.display = deceasedCheckbox.checked ? "block" : "none";
+    if (!deceasedCheckbox.checked) deathInput.value = "";
+  });
 
   overlay.querySelector("#person-form-close")!.addEventListener("click", () => {
     closeForm(overlay, onCancel);
@@ -180,11 +200,26 @@ export function renderPersonForm(
       overlay.querySelector('input[name="gender"]:checked') as HTMLInputElement
     ).value as Gender;
 
+    // Death date only applies when "Đã mất" is toggled on.
+    let deathDate = null;
+    if (deceasedCheckbox.checked) {
+      deathDate = parseInputDate(deathInput.value);
+      if (!deathDate) {
+        showError(
+          overlay,
+          "person-death-error",
+          "person-death",
+          "Vui lòng nhập ngày mất",
+        );
+        return;
+      }
+    }
+
     const formData: PersonFormData = {
       name,
       gender,
       birthDate: parseInputDate(birthInput.value),
-      deathDate: parseInputDate(deathInput.value),
+      deathDate,
       parentId: parentSelect.value || null,
       spouseId: spouseSelect.value || null,
       notes: notesInput.value,
