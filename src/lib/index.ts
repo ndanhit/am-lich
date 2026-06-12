@@ -143,6 +143,8 @@ export {
 export {
   buildFamilyTree,
   getDescendantIds,
+  countDescendants,
+  collectCollapsibleIds,
 } from "../application/people/tree";
 export {
   attachChild,

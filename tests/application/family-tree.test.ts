@@ -2,6 +2,8 @@ import { describe, it, expect } from "vitest";
 import {
   buildFamilyTree,
   getDescendantIds,
+  countDescendants,
+  collectCollapsibleIds,
 } from "../../src/application/people/tree";
 import type { Person, SolarDate } from "../../src/core/models/types";
 
@@ -162,6 +164,43 @@ describe("getDescendantIds", () => {
     // Should terminate; descendants of a include b (and back to a, deduped out).
     const ids = getDescendantIds([a, b], "a");
     expect(ids.has("b")).toBe(true);
+  });
+});
+
+describe("countDescendants", () => {
+  it("returns 0 for a leaf", () => {
+    const roots = buildFamilyTree([person({ id: "a" })]);
+    expect(countDescendants(roots[0])).toBe(0);
+  });
+
+  it("counts children and grandchildren", () => {
+    const g = person({ id: "g" });
+    const d1 = person({ id: "d1", parentId: "g" });
+    const d2 = person({ id: "d2", parentId: "g" });
+    const k = person({ id: "k", parentId: "d1" });
+    const roots = buildFamilyTree([g, d1, d2, k]);
+    expect(countDescendants(roots[0])).toBe(3);
+  });
+});
+
+describe("collectCollapsibleIds", () => {
+  const g = person({ id: "g" }); // depth 0
+  const d = person({ id: "d", parentId: "g" }); // depth 1
+  const k = person({ id: "k", parentId: "d" }); // depth 2
+  const leaf = person({ id: "leaf", parentId: "k" }); // depth 3
+  const roots = buildFamilyTree([g, d, k, leaf]);
+
+  it("returns all nodes that have children when minDepth=0", () => {
+    expect(collectCollapsibleIds(roots, 0).sort()).toEqual(["d", "g", "k"]);
+  });
+
+  it("filters to nodes at depth >= minDepth (excludes leaves)", () => {
+    // depth>=2 with children → only k (leaf has no children).
+    expect(collectCollapsibleIds(roots, 2)).toEqual(["k"]);
+  });
+
+  it("returns [] when no node is deep enough", () => {
+    expect(collectCollapsibleIds(roots, 5)).toEqual([]);
   });
 });
 

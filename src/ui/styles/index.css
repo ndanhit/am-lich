@@ -1702,11 +1702,11 @@ textarea:focus {
   margin: 0;
 }
 
-/* Zoom toolbar */
-.tree-zoom-controls {
+/* Controls toolbar (collapse/expand + zoom) */
+.tree-controls {
   display: flex;
   align-items: center;
-  gap: var(--space-1);
+  gap: 2px;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg, 12px);
@@ -1714,31 +1714,36 @@ textarea:focus {
   padding: 2px;
 }
 
-.tree-zoom-controls .zoom-btn {
-  width: 32px;
+.tree-controls .tree-ctrl-btn {
   height: 32px;
+  min-width: 32px;
+  padding: 0 6px;
   border: none;
   background: transparent;
   border-radius: var(--radius-sm);
-  font-size: 18px;
+  font-size: 16px;
   font-weight: 700;
   line-height: 1;
   color: var(--color-text);
   cursor: pointer;
 }
 
-.tree-zoom-controls .zoom-btn:hover {
+.tree-controls .tree-ctrl-btn:hover {
   background: var(--color-surface-hover, #f3f4f6);
 }
 
-.tree-zoom-controls .zoom-level {
-  min-width: 48px;
-  border: none;
-  background: transparent;
+.tree-controls .tree-zoom-label {
+  min-width: 46px;
   font-size: var(--font-size-sm);
   font-weight: 600;
   color: var(--color-text-secondary);
-  cursor: pointer;
+}
+
+.tree-controls .tree-ctrl-sep {
+  width: 1px;
+  height: 20px;
+  background: var(--color-border);
+  margin: 0 2px;
 }
 
 /* Horizontal + vertical scroll for wide/zoomed trees */
@@ -1747,11 +1752,47 @@ textarea:focus {
   padding-bottom: var(--space-3);
   -webkit-overflow-scrolling: touch;
   touch-action: pan-x pan-y;
+  cursor: grab;
 }
 
+.tree-scroll.dragging {
+  cursor: grabbing;
+  user-select: none;
+}
+
+/* max-content + auto margins → centered when small, pannable when wide */
 .tree {
-  transform-origin: top center;
-  transition: transform 0.15s ease;
+  width: max-content;
+  margin: 0 auto;
+}
+
+/* Collapsed node: hide its descendants subtree */
+.tree-node.collapsed > ul {
+  display: none;
+}
+
+/* Expand/collapse toggle sitting on the parent→children connector */
+.tree-toggle {
+  position: relative;
+  z-index: 2;
+  margin-top: 4px;
+  min-width: 22px;
+  height: 22px;
+  padding: 0 6px;
+  border: 1px solid var(--color-border);
+  border-radius: 11px;
+  background: var(--color-surface);
+  color: var(--color-text-secondary);
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1;
+  cursor: pointer;
+  box-shadow: var(--shadow-md);
+}
+
+.tree-toggle:hover {
+  color: var(--color-text);
+  border-color: var(--color-text-secondary);
 }
 
 /* Top-down genealogy chart built from nested <ul>/<li> with connector lines */

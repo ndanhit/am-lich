@@ -116,3 +116,31 @@ export function getDescendantIds(people: Person[], id: string): Set<string> {
   }
   return result;
 }
+
+/** Count all descendants (children, grandchildren, ...) under a tree node. */
+export function countDescendants(node: FamilyTreeNode): number {
+  let total = 0;
+  for (const child of node.children) {
+    total += 1 + countDescendants(child);
+  }
+  return total;
+}
+
+/**
+ * Collect ids of nodes that have children and sit at depth >= minDepth.
+ * Used to drive expand/collapse (auto-collapse deep generations; collapse-all).
+ */
+export function collectCollapsibleIds(
+  roots: FamilyTreeNode[],
+  minDepth: number,
+): string[] {
+  const ids: string[] = [];
+  const visit = (node: FamilyTreeNode): void => {
+    if (node.children.length > 0 && node.depth >= minDepth) {
+      ids.push(node.person.id);
+    }
+    node.children.forEach(visit);
+  };
+  roots.forEach(visit);
+  return ids;
+}
