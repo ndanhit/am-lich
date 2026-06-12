@@ -27,10 +27,13 @@ import {
   groupMemosByTitle,
   addPerson,
   updatePerson,
-  removePerson,
   importPeople,
   validatePersonCreationParams,
   buildFamilyTree,
+  attachChild,
+  attachSpouse,
+  attachParent,
+  removePersonCascade,
   VIETNAMESE_HOLIDAYS,
   isSystemEventId,
 } from "../lib/index";
@@ -427,45 +430,72 @@ export class AppState {
     return { year: date.year, month: date.month, day: date.day };
   }
 
-  createPerson(form: PersonFormData): void {
+  /** Build a fresh Person from form data (id/timestamps + default relations). */
+  private buildPerson(form: PersonFormData): Person {
     const birthDate = this.toSolarDate(form.birthDate);
-    const deathDate = this.toSolarDate(form.deathDate);
+    const deathDate = form.isDeceased ? this.toSolarDate(form.deathDate) : null;
     validatePersonCreationParams(form.name, birthDate, deathDate);
-
-    const newPerson: Person = {
+    const now = Date.now();
+    return {
       id: crypto.randomUUID(),
       name: form.name.trim().slice(0, 100),
       gender: form.gender,
       birthDate,
+      isDeceased: form.isDeceased,
       deathDate,
-      parentId: form.parentId,
-      spouseId: form.spouseId,
+      isMarriedIn: false,
+      parentId: null,
+      spouseId: null,
       notes: (form.notes ?? "").trim().slice(0, 500),
-      createdAt: Date.now(),
-      updatedAt: Date.now(),
+      createdAt: now,
+      updatedAt: now,
     };
+  }
 
-    this.people = addPerson(this.people, newPerson);
+  /** Add the first/root blood person (only meaningful when the tree is empty). */
+  addRootPerson(form: PersonFormData): void {
+    this.people = addPerson(this.people, this.buildPerson(form));
+    this.persistPeople();
+    this.notify();
+  }
+
+  /** Add a blood child under an existing person. */
+  addChild(parentId: string, form: PersonFormData): void {
+    this.people = attachChild(this.people, parentId, this.buildPerson(form));
+    this.persistPeople();
+    this.notify();
+  }
+
+  /** Add a married-in spouse to a blood person. */
+  addSpouse(personId: string, form: PersonFormData): void {
+    this.people = attachSpouse(this.people, personId, this.buildPerson(form));
+    this.persistPeople();
+    this.notify();
+  }
+
+  /** Add a blood parent above an existing person (which becomes a child). */
+  addParent(childId: string, form: PersonFormData): void {
+    this.people = attachParent(this.people, childId, this.buildPerson(form));
     this.persistPeople();
     this.notify();
   }
 
   editPerson(id: string, form: PersonFormData): void {
     const birthDate = this.toSolarDate(form.birthDate);
-    const deathDate = this.toSolarDate(form.deathDate);
+    const deathDate = form.isDeceased ? this.toSolarDate(form.deathDate) : null;
     validatePersonCreationParams(form.name, birthDate, deathDate);
 
     const existing = this.people.find((p) => p.id === id);
     if (!existing) throw new Error(`Person ${id} not found`);
 
+    // Only personal info changes here; relationship fields are preserved.
     const updated: Person = {
       ...existing,
       name: form.name.trim().slice(0, 100),
       gender: form.gender,
       birthDate,
+      isDeceased: form.isDeceased,
       deathDate,
-      parentId: form.parentId,
-      spouseId: form.spouseId,
       notes: (form.notes ?? "").trim().slice(0, 500),
       updatedAt: Date.now(),
     };
@@ -476,7 +506,7 @@ export class AppState {
   }
 
   deletePerson(id: string): void {
-    this.people = removePerson(this.people, id);
+    this.people = removePersonCascade(this.people, id);
     this.persistPeople();
     this.notify();
   }

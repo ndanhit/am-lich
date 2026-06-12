@@ -107,7 +107,10 @@ export type Person = {
   name: string;
   gender: Gender;
   birthDate: SolarDate | null;
+  isDeceased: boolean;
   deathDate: SolarDate | null;
+  /** false = nhánh chính (huyết thống); true = lấy vào (vợ/chồng) */
+  isMarriedIn: boolean;
   parentId: string | null;
   spouseId: string | null;
   notes: string;

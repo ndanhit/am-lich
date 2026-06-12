@@ -131,12 +131,20 @@ export function validateImportPayload(jsonPayload: string): ExportPayload {
       if (typeof p.createdAt !== "number" || typeof p.updatedAt !== "number") {
         throw new Error("Invalid person timestamps");
       }
+      // Backward-compat: older exports infer deceased status from deathDate,
+      // and default married-in flag to false (blood-line) when absent.
+      const isDeceased =
+        typeof p.isDeceased === "boolean" ? p.isDeceased : deathDate !== null;
+      const isMarriedIn =
+        typeof p.isMarriedIn === "boolean" ? p.isMarriedIn : false;
       return {
         id: p.id,
         name: p.name,
         gender: p.gender,
         birthDate,
+        isDeceased,
         deathDate,
+        isMarriedIn,
         parentId: p.parentId,
         spouseId: p.spouseId,
         notes: p.notes,

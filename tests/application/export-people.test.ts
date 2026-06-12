@@ -11,7 +11,9 @@ function person(overrides: Partial<Person> = {}): Person {
     name: "Nguyễn Văn A",
     gender: "male",
     birthDate: { year: 1950, month: 3, day: 12 },
+    isDeceased: false,
     deathDate: null,
+    isMarriedIn: false,
     parentId: null,
     spouseId: null,
     notes: "Ghi chú",
@@ -71,6 +73,35 @@ describe("validateImportPayload with people", () => {
     const parsed = validateImportPayload(json);
     expect(parsed.people![0].birthDate).toBeNull();
     expect(parsed.people![0].deathDate).toBeNull();
+  });
+
+  it("round-trips isDeceased=true with no death date", () => {
+    const json = payloadJson([
+      person({ isDeceased: true, deathDate: null }),
+    ]);
+    const parsed = validateImportPayload(json);
+    expect(parsed.people![0].isDeceased).toBe(true);
+    expect(parsed.people![0].deathDate).toBeNull();
+  });
+
+  it("round-trips isMarriedIn and defaults to false when missing", () => {
+    const married = payloadJson([person({ isMarriedIn: true })]);
+    expect(validateImportPayload(married).people![0].isMarriedIn).toBe(true);
+
+    const legacy = payloadJson([{ ...person(), isMarriedIn: undefined }]);
+    expect(validateImportPayload(legacy).people![0].isMarriedIn).toBe(false);
+  });
+
+  it("infers isDeceased from deathDate when flag is missing (old export)", () => {
+    const withDeath = payloadJson([
+      { ...person({ deathDate: { year: 2000, month: 1, day: 1 } }), isDeceased: undefined },
+    ]);
+    expect(validateImportPayload(withDeath).people![0].isDeceased).toBe(true);
+
+    const withoutDeath = payloadJson([
+      { ...person({ deathDate: null }), isDeceased: undefined },
+    ]);
+    expect(validateImportPayload(withoutDeath).people![0].isDeceased).toBe(false);
   });
 
   it("is backward-compatible when people field is absent", () => {

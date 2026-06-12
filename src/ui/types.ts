@@ -5,7 +5,7 @@ import type {
   LunarDateContext,
 } from "../lib/index";
 import { LeapMonthRule, RecurrenceRule } from "../lib/index";
-import type { Gender } from "../lib/index";
+import type { Gender, Person } from "../lib/index";
 
 /** A single cell in the monthly calendar grid */
 export type CalendarCell = {
@@ -51,11 +51,22 @@ export type PersonFormData = {
   name: string;
   gender: Gender;
   birthDate: { year: number; month: number; day: number } | null;
+  isDeceased: boolean;
   deathDate: { year: number; month: number; day: number } | null;
-  parentId: string | null;
-  spouseId: string | null;
   notes: string;
 };
+
+/**
+ * Context describing what the person form is doing — drives the title, the
+ * relationship being created, and any gender lock. Relationships are derived
+ * from the action, not chosen in the form.
+ */
+export type PersonFormContext =
+  | { mode: "edit"; person: Person }
+  | { mode: "addRoot" }
+  | { mode: "addChild"; targetName: string }
+  | { mode: "addSpouse"; targetName: string; lockedGender: Gender }
+  | { mode: "addParent"; targetName: string };
 
 /** Active view in the app */
 export type AppView = "calendar" | "upcoming" | "memo" | "family";
@@ -65,13 +76,6 @@ export const GENDER_LABELS: Record<Gender, string> = {
   male: "Nam",
   female: "Nữ",
   other: "Khác",
-};
-
-/** Unicode icons for gender values, shown before a person's name */
-export const GENDER_ICONS: Record<Gender, string> = {
-  male: "♂",
-  female: "♀",
-  other: "⚥",
 };
 
 /** Human-readable labels for recurrence rules */

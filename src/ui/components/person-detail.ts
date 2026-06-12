@@ -9,16 +9,23 @@ import { closeDetailPanel } from "./event-detail";
 
 export { closeDetailPanel };
 
+/** Callbacks for the person detail panel actions. */
+export type PersonDetailCallbacks = {
+  onEdit: (person: Person) => void;
+  onAddChild: (person: Person) => void;
+  onAddSpouse: (person: Person) => void;
+  onAddParent: (person: Person) => void;
+  onCreateGio: (person: Person) => void;
+  onDelete: (person: Person) => void;
+  onClose: () => void;
+};
+
 /** Render the family-tree person detail panel (bottom sheet). */
 export function renderPersonDetail(
   container: HTMLElement,
   person: Person,
   spouse: Person | null,
-  onEdit: (person: Person) => void,
-  onAddChild: (person: Person) => void,
-  onCreateGio: (person: Person) => void,
-  onDelete: (person: Person) => void,
-  onClose: () => void,
+  cb: PersonDetailCallbacks,
 ): void {
   container.innerHTML = "";
 
@@ -30,8 +37,14 @@ export function renderPersonDetail(
   if (person.birthDate) {
     metaRows.push(metaRow("Ngày sinh", formatDateWithLunar(person.birthDate)));
   }
-  if (person.deathDate) {
-    metaRows.push(metaRow("Ngày mất", formatDateWithLunar(person.deathDate)));
+  const deceased = person.isDeceased || person.deathDate !== null;
+  if (deceased) {
+    metaRows.push(
+      metaRow(
+        "Ngày mất",
+        person.deathDate ? formatDateWithLunar(person.deathDate) : "Không rõ",
+      ),
+    );
   } else {
     metaRows.push(metaRow("Tình trạng", "Còn sống"));
   }
@@ -42,6 +55,20 @@ export function renderPersonDetail(
     metaRows.push(metaRow("Ghi chú", escapeHtml(person.notes)));
   }
 
+  // Conditional relationship actions.
+  const canAddSpouse =
+    !person.isMarriedIn &&
+    (person.gender === "male" || person.gender === "female") &&
+    person.spouseId == null;
+  const spouseLabel = person.gender === "male" ? "Thêm vợ" : "Thêm chồng";
+  const canAddParent = !person.isMarriedIn && person.parentId == null;
+
+  const spouseBtn = canAddSpouse
+    ? `<button class="btn btn-secondary add-spouse-btn">${spouseLabel}</button>`
+    : "";
+  const parentBtn = canAddParent
+    ? `<button class="btn btn-secondary add-parent-btn">Thêm cha/mẹ</button>`
+    : "";
   const gioBtn = person.deathDate
     ? `<button class="btn btn-secondary gio-btn">Tạo nhắc giỗ</button>`
     : "";
@@ -61,8 +88,10 @@ export function renderPersonDetail(
         ${metaRows.join("")}
       </div>
       <div class="detail-actions detail-actions-wrap">
-        <button class="btn btn-secondary edit-btn">Sửa</button>
         <button class="btn btn-secondary add-child-btn">Thêm con</button>
+        ${spouseBtn}
+        ${parentBtn}
+        <button class="btn btn-secondary edit-btn">Sửa</button>
         ${gioBtn}
         <button class="btn btn-danger delete-btn">Xóa</button>
       </div>
@@ -73,17 +102,25 @@ export function renderPersonDetail(
 
   panel
     .querySelector(".detail-panel-close")!
-    .addEventListener("click", onClose);
-  panel.querySelector(".edit-btn")!.addEventListener("click", () => onEdit(person));
+    .addEventListener("click", cb.onClose);
+  panel
+    .querySelector(".edit-btn")!
+    .addEventListener("click", () => cb.onEdit(person));
   panel
     .querySelector(".add-child-btn")!
-    .addEventListener("click", () => onAddChild(person));
+    .addEventListener("click", () => cb.onAddChild(person));
+  panel
+    .querySelector(".add-spouse-btn")
+    ?.addEventListener("click", () => cb.onAddSpouse(person));
+  panel
+    .querySelector(".add-parent-btn")
+    ?.addEventListener("click", () => cb.onAddParent(person));
   panel
     .querySelector(".gio-btn")
-    ?.addEventListener("click", () => onCreateGio(person));
+    ?.addEventListener("click", () => cb.onCreateGio(person));
   panel
     .querySelector(".delete-btn")!
-    .addEventListener("click", () => onDelete(person));
+    .addEventListener("click", () => cb.onDelete(person));
 }
 
 function metaRow(label: string, value: string): string {

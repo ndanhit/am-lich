@@ -1,5 +1,5 @@
 import type { Person, FamilyTreeNode } from "../../lib/index";
-import { GENDER_LABELS, GENDER_ICONS } from "../types";
+import { GENDER_LABELS } from "../types";
 import type { AppState } from "../state";
 
 const MIN_ZOOM = 0.5;
@@ -44,11 +44,6 @@ export function renderFamilyTree(
 
   const peopleById = new Map(state.getPeople().map((p) => [p.id, p]));
 
-  // Determine which people are rendered attached to a partner (so they are not
-  // also drawn as a standalone root). Only "married-in" spouses (parentId null)
-  // are attached; the blood-line member stays as the structural node.
-  const attachedSpouseIds = computeAttachedSpouses(state.getPeople(), peopleById);
-
   // Header row: title + zoom controls.
   const header = document.createElement("div");
   header.className = "family-tree-header";
@@ -62,7 +57,7 @@ export function renderFamilyTree(
   `;
   section.appendChild(header);
 
-  const cb: NodeCallbacks = { onSelect, attachedSpouseIds, peopleById };
+  const cb: NodeCallbacks = { onSelect, peopleById };
 
   const scroll = document.createElement("div");
   scroll.className = "tree-scroll";
@@ -70,7 +65,6 @@ export function renderFamilyTree(
   const tree = document.createElement("ul");
   tree.className = "tree";
   for (const root of roots) {
-    if (attachedSpouseIds.has(root.person.id)) continue;
     tree.appendChild(renderNode(root, cb));
   }
   scroll.appendChild(tree);
@@ -131,36 +125,8 @@ export function renderFamilyTree(
 
 type NodeCallbacks = {
   onSelect: (person: Person) => void;
-  attachedSpouseIds: Set<string>;
   peopleById: Map<string, Person>;
 };
-
-/**
- * Pick which spouse is drawn attached (to the right) of their partner. Only a
- * spouse with parentId === null is attachable; the partner reached first in
- * iteration claims it. The guard prevents two spouses from each claiming the
- * other (which would drop both from the tree).
- */
-function computeAttachedSpouses(
-  people: Person[],
-  peopleById: Map<string, Person>,
-): Set<string> {
-  const attached = new Set<string>();
-  for (const p of people) {
-    if (attached.has(p.id)) continue;
-    if (p.spouseId == null) continue;
-    const spouse = peopleById.get(p.spouseId);
-    if (
-      spouse &&
-      spouse.id !== p.id &&
-      spouse.parentId == null &&
-      !attached.has(spouse.id)
-    ) {
-      attached.add(spouse.id);
-    }
-  }
-  return attached;
-}
 
 function touchDistance(touches: TouchList): number {
   const dx = touches[0].clientX - touches[1].clientX;
@@ -176,10 +142,10 @@ function renderNode(node: FamilyTreeNode, cb: NodeCallbacks): HTMLElement {
   couple.className = "tree-couple";
   couple.appendChild(makeBox(person, cb));
 
-  // Attach married-in spouse to the right of this person.
+  // Attach the married-in spouse to the right of this blood node.
   const spouse =
     person.spouseId != null ? cb.peopleById.get(person.spouseId) : undefined;
-  if (spouse && spouse.parentId == null && spouse.id !== person.id) {
+  if (spouse && spouse.isMarriedIn && spouse.id !== person.id) {
     const link = document.createElement("span");
     link.className = "tree-couple-link";
     link.textContent = "⚭";
@@ -205,11 +171,11 @@ function makeBox(person: Person, cb: NodeCallbacks): HTMLElement {
   const box = document.createElement("button");
   box.type = "button";
   box.className = `tree-node-box gender-${person.gender}`;
-  box.setAttribute("aria-label", `Chi tiết ${person.name}`);
-  box.innerHTML = `
-    <span class="tree-name-text">${escapeHtml(person.name)}</span>
-    <span class="tree-gender-icon gender-${person.gender}" title="${GENDER_LABELS[person.gender]}" aria-hidden="true">${GENDER_ICONS[person.gender]}</span>
-  `;
+  box.setAttribute(
+    "aria-label",
+    `Chi tiết ${person.name} (${GENDER_LABELS[person.gender]})`,
+  );
+  box.innerHTML = `<span class="tree-name-text">${escapeHtml(person.name)}</span>`;
   box.addEventListener("click", () => cb.onSelect(person));
   return box;
 }
