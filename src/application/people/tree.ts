@@ -28,7 +28,11 @@ function compareByBirth(a: Person, b: Person): number {
  * - Cycles in the data (A.parent=B, B.parent=A) are broken using a visited
  *   set so traversal always terminates.
  */
-export function buildFamilyTree(people: Person[]): FamilyTreeNode[] {
+export function buildFamilyTree(allPeople: Person[]): FamilyTreeNode[] {
+  // Only blood-line people form the structural tree; married-in spouses are
+  // rendered attached to their partner, never as roots/children.
+  const people = allPeople.filter((p) => !p.isMarriedIn);
+
   const nodeMap = new Map<string, FamilyTreeNode>();
   for (const person of people) {
     nodeMap.set(person.id, { person, children: [], depth: 0 });

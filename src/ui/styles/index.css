@@ -1895,33 +1895,11 @@ textarea:focus {
   color: var(--color-text);
 }
 
-/* Outline gender icon, placed after the name */
-.tree-gender-icon {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 18px;
-  height: 18px;
-  border-radius: 50%;
-  font-size: 12px;
-  font-weight: 700;
-  line-height: 1;
-  flex-shrink: 0;
-  background: transparent;
-  border: 1.5px solid currentColor;
-  color: var(--color-primary, #5b52e6);
-}
-
-.tree-gender-icon.gender-male {
-  color: var(--color-primary, #5b52e6);
-}
-
-.tree-gender-icon.gender-female {
-  color: #e25a82;
-}
-
-.tree-gender-icon.gender-other {
-  color: var(--color-text-secondary, #888);
+/* Read-only field value (e.g. locked gender when adding a spouse) */
+.form-static {
+  padding: var(--space-2) 0;
+  font-weight: 600;
+  color: var(--color-text);
 }
 
 /* Checkbox toggle row in forms (e.g. "Đã mất") */

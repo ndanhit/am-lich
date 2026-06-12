@@ -231,45 +231,52 @@ function renderMemoView() {
 }
 
 function renderFamilyView() {
-  renderFamilyTree(viewContainer, state, onSelectPerson, openCreatePersonForm);
+  renderFamilyTree(viewContainer, state, onSelectPerson, openCreateRootForm);
+}
+
+function personById(id: string | null): Person | null {
+  if (id == null) return null;
+  return state.getPeople().find((p) => p.id === id) ?? null;
 }
 
 function onSelectPerson(person: Person) {
   backdrop.classList.add("open");
   pushOverlayState();
 
-  const spouse =
-    person.spouseId != null
-      ? (state.getPeople().find((p) => p.id === person.spouseId) ?? null)
-      : null;
+  const spouse = personById(person.spouseId);
 
   const close = () => {
     closeDetailPanel(detailContainer);
     backdrop.classList.remove("open");
   };
 
-  renderPersonDetail(
-    detailContainer,
-    person,
-    spouse,
-    (p) => {
+  renderPersonDetail(detailContainer, person, spouse, {
+    onEdit: (p) => {
       close();
       openEditPersonForm(p);
     },
-    (p) => {
+    onAddChild: (p) => {
       close();
       openAddChildForm(p);
     },
-    (p) => {
+    onAddSpouse: (p) => {
+      close();
+      openAddSpouseForm(p);
+    },
+    onAddParent: (p) => {
+      close();
+      openAddParentForm(p);
+    },
+    onCreateGio: (p) => {
       close();
       onCreateGio(p);
     },
-    (p) => {
+    onDelete: (p) => {
       close();
       onPersonDeleteRequest(p);
     },
-    close,
-  );
+    onClose: close,
+  });
 }
 
 // Today FAB Click (US2)
@@ -493,12 +500,12 @@ async function onMemoDeleteRequest(memo: QuickMemo) {
 }
 
 // --- Family Tree (Gia phả) Forms ---
-function openCreatePersonForm(presetParentId?: string | null) {
+function openCreateRootForm() {
   pushOverlayState();
   renderPersonForm(
     modalContainer,
-    state,
-    null,
+    { mode: "addRoot" },
+    (data) => state.addRootPerson(data),
     () => {
       renderCurrentView();
       showToast("Đã thêm thành viên", "success");
@@ -506,20 +513,69 @@ function openCreatePersonForm(presetParentId?: string | null) {
     () => {
       /* cancel */
     },
-    presetParentId,
   );
 }
 
-function openAddChildForm(parent: Person) {
-  openCreatePersonForm(parent.id);
+function openAddChildForm(person: Person) {
+  // A child belongs to the blood-line node. If the selected person is a
+  // married-in spouse, the child is attached to their blood partner.
+  const bloodParent = person.isMarriedIn
+    ? (personById(person.spouseId) ?? person)
+    : person;
+  pushOverlayState();
+  renderPersonForm(
+    modalContainer,
+    { mode: "addChild", targetName: bloodParent.name },
+    (data) => state.addChild(bloodParent.id, data),
+    () => {
+      renderCurrentView();
+      showToast("Đã thêm con", "success");
+    },
+    () => {
+      /* cancel */
+    },
+  );
+}
+
+function openAddSpouseForm(person: Person) {
+  const lockedGender = person.gender === "male" ? "female" : "male";
+  pushOverlayState();
+  renderPersonForm(
+    modalContainer,
+    { mode: "addSpouse", targetName: person.name, lockedGender },
+    (data) => state.addSpouse(person.id, data),
+    () => {
+      renderCurrentView();
+      showToast("Đã thêm vợ/chồng", "success");
+    },
+    () => {
+      /* cancel */
+    },
+  );
+}
+
+function openAddParentForm(person: Person) {
+  pushOverlayState();
+  renderPersonForm(
+    modalContainer,
+    { mode: "addParent", targetName: person.name },
+    (data) => state.addParent(person.id, data),
+    () => {
+      renderCurrentView();
+      showToast("Đã thêm cha/mẹ", "success");
+    },
+    () => {
+      /* cancel */
+    },
+  );
 }
 
 function openEditPersonForm(person: Person) {
   pushOverlayState();
   renderPersonForm(
     modalContainer,
-    state,
-    person,
+    { mode: "edit", person },
+    (data) => state.editPerson(person.id, data),
     () => {
       renderCurrentView();
       showToast("Đã cập nhật thành viên", "success");
@@ -531,12 +587,10 @@ function openEditPersonForm(person: Person) {
 }
 
 async function onPersonDeleteRequest(person: Person) {
-  if (
-    await showConfirm(
-      "Xóa thành viên",
-      `Bạn có chắc chắn muốn xóa "${person.name}" khỏi gia phả? Con cháu sẽ trở thành gốc cây.`,
-    )
-  ) {
+  const message = person.isMarriedIn
+    ? `Bạn có chắc chắn muốn xóa "${person.name}" khỏi gia phả?`
+    : `Bạn có chắc chắn muốn xóa "${person.name}"? Toàn bộ con cháu và vợ/chồng kèm theo cũng sẽ bị xóa.`;
+  if (await showConfirm("Xóa thành viên", message)) {
     state.deletePerson(person.id);
     renderCurrentView();
     showToast("Đã xóa thành viên", "success");
@@ -648,7 +702,13 @@ document.getElementById("add-event-btn")!.addEventListener("click", () => {
   if (currentView === "memo") {
     openCreateMemoForm();
   } else if (currentView === "family") {
-    openCreatePersonForm();
+    // Only the first (root) person can be added freely; afterwards every
+    // addition must start from an existing node's detail modal.
+    if (state.getPeople().length === 0) {
+      openCreateRootForm();
+    } else {
+      showToast("Chọn một người trên cây để thêm quan hệ", "warning");
+    }
   } else {
     openCreateForm();
   }

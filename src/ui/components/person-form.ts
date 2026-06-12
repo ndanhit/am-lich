@@ -1,49 +1,54 @@
-import type { Person, Gender } from "../../lib/index";
-import { getDescendantIds } from "../../lib/index";
-import type { PersonFormData } from "../types";
+import type { Gender } from "../../lib/index";
+import type { PersonFormData, PersonFormContext } from "../types";
 import { GENDER_LABELS } from "../types";
-import type { AppState } from "../state";
 
 /**
- * Render the family-tree person creation/edit form as a modal overlay.
- * Birth/death dates are optional (may be left blank). The parent dropdown
- * excludes the person itself and its descendants to prevent cycles.
+ * Render the family-tree person form. Only personal info is captured here —
+ * relationships are implied by `context` (the action that opened the form).
+ * `submit` performs the actual mutation and may throw to surface inline errors.
  */
 export function renderPersonForm(
   container: HTMLElement,
-  state: AppState,
-  editPerson: Person | null,
+  context: PersonFormContext,
+  submit: (data: PersonFormData) => void,
   onSaved: () => void,
   onCancel: () => void,
-  presetParentId?: string | null,
 ): void {
+  const editPerson = context.mode === "edit" ? context.person : null;
   const isEdit = editPerson !== null;
-  const title = isEdit ? "Sửa thành viên" : "Thành viên mới";
 
-  const defaultName = isEdit ? editPerson.name : "";
-  const defaultGender: Gender = isEdit ? editPerson.gender : "male";
-  const defaultNotes = isEdit ? editPerson.notes : "";
-  const birthValue = isEdit ? solarToInputValue(editPerson.birthDate) : "";
-  const deathValue = isEdit ? solarToInputValue(editPerson.deathDate) : "";
-  const isDeceased = isEdit && editPerson.deathDate !== null;
-  const defaultParentId = isEdit
-    ? editPerson.parentId
-    : (presetParentId ?? null);
-  const defaultSpouseId = isEdit ? editPerson.spouseId : null;
+  const title = formTitle(context);
+  const cta = isEdit ? "Lưu thay đổi" : "Thêm";
 
-  // Build candidate lists for parent/spouse dropdowns.
-  const people = state.getPeople();
-  const excluded = new Set<string>();
-  if (isEdit) {
-    excluded.add(editPerson.id);
-    for (const id of getDescendantIds(people, editPerson.id)) {
-      excluded.add(id);
-    }
-  }
-  const parentCandidates = people.filter((p) => !excluded.has(p.id));
-  const spouseCandidates = people.filter(
-    (p) => !isEdit || p.id !== editPerson.id,
-  );
+  // Gender lock: addSpouse fixes the opposite gender; editing a married-in
+  // person keeps their gender stable.
+  let lockedGender: Gender | null = null;
+  if (context.mode === "addSpouse") lockedGender = context.lockedGender;
+  else if (editPerson && editPerson.isMarriedIn) lockedGender = editPerson.gender;
+
+  const defaultName = editPerson ? editPerson.name : "";
+  const defaultGender: Gender =
+    lockedGender ?? (editPerson ? editPerson.gender : "male");
+  const defaultNotes = editPerson ? editPerson.notes : "";
+  const birthValue = editPerson ? solarToInputValue(editPerson.birthDate) : "";
+  const deathValue = editPerson ? solarToInputValue(editPerson.deathDate) : "";
+  const isDeceased =
+    isEdit && (editPerson!.isDeceased || editPerson!.deathDate !== null);
+
+  const genderField = lockedGender
+    ? `<input type="hidden" name="gender" value="${lockedGender}">
+       <div class="form-static">${GENDER_LABELS[lockedGender]}</div>`
+    : `<div class="recurrence-options">
+        ${(Object.keys(GENDER_LABELS) as Gender[])
+          .map(
+            (g) => `
+          <label class="recurrence-option">
+            <input type="radio" name="gender" value="${g}" ${g === defaultGender ? "checked" : ""}>
+            ${GENDER_LABELS[g]}
+          </label>`,
+          )
+          .join("")}
+      </div>`;
 
   const overlay = document.createElement("div");
   overlay.className = "modal-overlay open";
@@ -56,7 +61,7 @@ export function renderPersonForm(
             <line x1="6" y1="6" x2="18" y2="18"></line>
           </svg>
         </button>
-        <div class="modal-title-text">${title}</div>
+        <div class="modal-title-text">${escapeText(title)}</div>
       </div>
       <div class="modal-body">
         <form id="person-form" novalidate>
@@ -69,18 +74,7 @@ export function renderPersonForm(
 
           <div class="form-group">
             <label>Giới tính</label>
-            <div class="recurrence-options">
-              ${(Object.keys(GENDER_LABELS) as Gender[])
-                .map(
-                  (g) => `
-                <label class="recurrence-option">
-                  <input type="radio" name="gender" value="${g}" ${g === defaultGender ? "checked" : ""}>
-                  ${GENDER_LABELS[g]}
-                </label>
-              `,
-                )
-                .join("")}
-            </div>
+            ${genderField}
           </div>
 
           <div class="form-group">
@@ -97,35 +91,9 @@ export function renderPersonForm(
           </div>
 
           <div class="form-group" id="person-death-group" style="display: ${isDeceased ? "block" : "none"}">
-            <label for="person-death">Ngày mất (dương lịch)</label>
+            <label for="person-death">Ngày mất (dương lịch, không bắt buộc)</label>
             <input type="date" id="person-death" value="${deathValue}" min="1901-01-01" max="2099-12-31">
             <div class="form-error" id="person-death-error"></div>
-          </div>
-
-          <div class="form-group">
-            <label for="person-parent">Cha/Mẹ</label>
-            <select id="person-parent">
-              <option value="">— Không (đời đầu) —</option>
-              ${parentCandidates
-                .map(
-                  (p) =>
-                    `<option value="${escapeAttr(p.id)}" ${p.id === defaultParentId ? "selected" : ""}>${escapeText(p.name)}</option>`,
-                )
-                .join("")}
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label for="person-spouse">Vợ/Chồng</label>
-            <select id="person-spouse">
-              <option value="">— Không —</option>
-              ${spouseCandidates
-                .map(
-                  (p) =>
-                    `<option value="${escapeAttr(p.id)}" ${p.id === defaultSpouseId ? "selected" : ""}>${escapeText(p.name)}</option>`,
-                )
-                .join("")}
-            </select>
           </div>
 
           <div class="form-group">
@@ -133,9 +101,7 @@ export function renderPersonForm(
             <textarea id="person-notes" maxlength="500" rows="3" placeholder="vd: quê quán, nghề nghiệp...">${escapeText(defaultNotes)}</textarea>
           </div>
 
-          <button type="submit" class="btn-cta" id="person-submit-btn">
-            ${isEdit ? "Lưu thay đổi" : "Thêm thành viên"}
-          </button>
+          <button type="submit" class="btn-cta" id="person-submit-btn">${cta}</button>
         </form>
       </div>
     </div>
@@ -146,12 +112,6 @@ export function renderPersonForm(
   const nameInput = overlay.querySelector("#person-name") as HTMLInputElement;
   const birthInput = overlay.querySelector("#person-birth") as HTMLInputElement;
   const deathInput = overlay.querySelector("#person-death") as HTMLInputElement;
-  const parentSelect = overlay.querySelector(
-    "#person-parent",
-  ) as HTMLSelectElement;
-  const spouseSelect = overlay.querySelector(
-    "#person-spouse",
-  ) as HTMLSelectElement;
   const notesInput = overlay.querySelector(
     "#person-notes",
   ) as HTMLTextAreaElement;
@@ -162,7 +122,6 @@ export function renderPersonForm(
     "#person-death-group",
   ) as HTMLElement;
 
-  // Toggle the death-date field visibility based on the "Đã mất" checkbox.
   deceasedCheckbox.addEventListener("change", () => {
     deathGroup.style.display = deceasedCheckbox.checked ? "block" : "none";
     if (!deceasedCheckbox.checked) deathInput.value = "";
@@ -197,40 +156,23 @@ export function renderPersonForm(
     }
 
     const gender = (
-      overlay.querySelector('input[name="gender"]:checked') as HTMLInputElement
+      overlay.querySelector('[name="gender"]:checked, input[type="hidden"][name="gender"]') as HTMLInputElement
     ).value as Gender;
 
-    // Death date only applies when "Đã mất" is toggled on.
-    let deathDate = null;
-    if (deceasedCheckbox.checked) {
-      deathDate = parseInputDate(deathInput.value);
-      if (!deathDate) {
-        showError(
-          overlay,
-          "person-death-error",
-          "person-death",
-          "Vui lòng nhập ngày mất",
-        );
-        return;
-      }
-    }
+    const deceased = deceasedCheckbox.checked;
+    const deathDate = deceased ? parseInputDate(deathInput.value) : null;
 
     const formData: PersonFormData = {
       name,
       gender,
       birthDate: parseInputDate(birthInput.value),
+      isDeceased: deceased,
       deathDate,
-      parentId: parentSelect.value || null,
-      spouseId: spouseSelect.value || null,
       notes: notesInput.value,
     };
 
     try {
-      if (isEdit) {
-        state.editPerson(editPerson.id, formData);
-      } else {
-        state.createPerson(formData);
-      }
+      submit(formData);
       closeForm(overlay, onSaved);
     } catch (err: any) {
       const msg = err.message || "Dữ liệu không hợp lệ";
@@ -245,6 +187,21 @@ export function renderPersonForm(
   });
 
   setTimeout(() => nameInput.focus(), 100);
+}
+
+function formTitle(context: PersonFormContext): string {
+  switch (context.mode) {
+    case "edit":
+      return `Sửa ${context.person.name}`;
+    case "addRoot":
+      return "Thành viên đầu tiên";
+    case "addChild":
+      return `Thêm con cho ${context.targetName}`;
+    case "addSpouse":
+      return `Thêm ${context.lockedGender === "female" ? "vợ" : "chồng"} cho ${context.targetName}`;
+    case "addParent":
+      return `Thêm cha/mẹ cho ${context.targetName}`;
+  }
 }
 
 function parseInputDate(

@@ -11,7 +11,9 @@ function person(overrides: Partial<Person> = {}): Person {
     name: "Person",
     gender: "male",
     birthDate: null,
+    isDeceased: false,
     deathDate: null,
+    isMarriedIn: false,
     parentId: null,
     spouseId: null,
     notes: "",
@@ -28,6 +30,14 @@ function birth(year: number): SolarDate {
 describe("buildFamilyTree", () => {
   it("returns [] for empty input", () => {
     expect(buildFamilyTree([])).toEqual([]);
+  });
+
+  it("excludes married-in spouses from the structural tree", () => {
+    const head = person({ id: "head" });
+    const wife = person({ id: "wife", isMarriedIn: true, spouseId: "head" });
+    const roots = buildFamilyTree([head, wife]);
+    expect(roots).toHaveLength(1);
+    expect(roots[0].person.id).toBe("head");
   });
 
   it("treats parentId=null people as roots", () => {

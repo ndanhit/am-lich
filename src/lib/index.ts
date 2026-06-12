@@ -144,6 +144,12 @@ export {
   buildFamilyTree,
   getDescendantIds,
 } from "../application/people/tree";
+export {
+  attachChild,
+  attachSpouse,
+  attachParent,
+  removePersonCascade,
+} from "../application/people/relations";
 export { validateEventCreationParams } from "../core/rules/leap-month";
 export {
   VIETNAMESE_HOLIDAYS,
