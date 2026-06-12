@@ -16,6 +16,7 @@ export function renderEventForm(
   onSaved: () => void,
   onCancel: () => void,
   initialDate?: SolarDate,
+  presetName?: string,
 ): void {
   const isEdit = editEvent !== null;
   const title = isEdit ? "Sửa sự kiện" : "Sự kiện mới";
@@ -61,8 +62,8 @@ export function renderEventForm(
                     <div class="form-group">
                         <label for="event-name">Tên sự kiện</label>
                         <input type="text" id="event-name" maxlength="100" placeholder="Giỗ tổ Hùng Vương,..."
-                               value="${isEdit ? escapeAttr(editEvent.name) : ""}" required>
-                    <div class="char-count"><span id="char-current">${isEdit ? editEvent.name.length : 0}</span>/100</div>
+                               value="${isEdit ? escapeAttr(editEvent.name) : presetName ? escapeAttr(presetName) : ""}" required>
+                    <div class="char-count"><span id="char-current">${isEdit ? editEvent.name.length : presetName ? presetName.length : 0}</span>/100</div>
                     <div class="form-error" id="name-error"></div>
                 </div>
                 <div class="form-group">

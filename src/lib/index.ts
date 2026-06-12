@@ -132,6 +132,18 @@ export {
   validateMemoCreationParams,
   groupMemosByTitle,
 } from "../application/memos/crud";
+export {
+  addPerson,
+  updatePerson,
+  removePerson,
+  importPeople,
+  validatePersonCreationParams,
+  isValidGender,
+} from "../application/people/crud";
+export {
+  buildFamilyTree,
+  getDescendantIds,
+} from "../application/people/tree";
 export { validateEventCreationParams } from "../core/rules/leap-month";
 export {
   VIETNAMESE_HOLIDAYS,
@@ -149,4 +161,7 @@ export type {
   GroupedUpcomingEvents,
   QuickMemo,
   GroupedMemos,
+  Person,
+  Gender,
+  FamilyTreeNode,
 } from "../core/models/types";

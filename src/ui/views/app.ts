@@ -11,7 +11,10 @@ import { renderImportExport } from "../components/import-export";
 import { renderDayDetailModal } from "../components/day-detail-modal";
 import { renderMemoForm } from "../components/memo-form";
 import { renderMemoList } from "../components/memo-list";
+import { renderFamilyTree } from "../components/family-tree";
+import { renderPersonForm } from "../components/person-form";
 import { renderDateConverterModal } from "../components/date-converter-modal";
+import { convertSolarToLunar } from "../../lib/index";
 import type { CalendarCell } from "../types";
 import type { AppView } from "../types";
 import type {
@@ -19,6 +22,7 @@ import type {
   LunarEvent,
   SolarDate,
   QuickMemo,
+  Person,
 } from "../../lib/index";
 
 // --- Year Boundary Constants (F1) ---
@@ -77,6 +81,10 @@ app.innerHTML = `
         <button class="tab-btn" id="tab-memo" aria-label="Memo">
             <img src="assets/images/ico-events.svg" alt="" class="tab-icon">
             <span>Memo</span>
+        </button>
+        <button class="tab-btn" id="tab-family" aria-label="Gia phả">
+            <img src="assets/images/ico-events.svg" alt="" class="tab-icon">
+            <span>Gia phả</span>
         </button>
     </nav>
     <main id="view-container"></main>
@@ -180,6 +188,8 @@ function renderCurrentView() {
     renderCalendarView();
   } else if (currentView === "upcoming") {
     renderUpcomingView();
+  } else if (currentView === "family") {
+    renderFamilyView();
   } else {
     renderMemoView();
   }
@@ -188,10 +198,10 @@ function renderCurrentView() {
 function updateAddButtonLabel() {
   const btn = document.getElementById("add-event-btn");
   if (!btn) return;
-  btn.setAttribute(
-    "aria-label",
-    currentView === "memo" ? "Thêm memo" : "Thêm sự kiện",
-  );
+  let label = "Thêm sự kiện";
+  if (currentView === "memo") label = "Thêm memo";
+  else if (currentView === "family") label = "Thêm thành viên";
+  btn.setAttribute("aria-label", label);
 }
 
 function updateTodayFab() {
@@ -216,6 +226,18 @@ function renderMemoView() {
     openEditMemoForm,
     onMemoDeleteRequest,
     openCreateMemoForm,
+  );
+}
+
+function renderFamilyView() {
+  renderFamilyTree(
+    viewContainer,
+    state,
+    openEditPersonForm,
+    onPersonDeleteRequest,
+    openCreatePersonForm,
+    openAddChildForm,
+    onCreateGio,
   );
 }
 
@@ -439,6 +461,84 @@ async function onMemoDeleteRequest(memo: QuickMemo) {
   }
 }
 
+// --- Family Tree (Gia phả) Forms ---
+function openCreatePersonForm(presetParentId?: string | null) {
+  pushOverlayState();
+  renderPersonForm(
+    modalContainer,
+    state,
+    null,
+    () => {
+      renderCurrentView();
+      showToast("Đã thêm thành viên", "success");
+    },
+    () => {
+      /* cancel */
+    },
+    presetParentId,
+  );
+}
+
+function openAddChildForm(parent: Person) {
+  openCreatePersonForm(parent.id);
+}
+
+function openEditPersonForm(person: Person) {
+  pushOverlayState();
+  renderPersonForm(
+    modalContainer,
+    state,
+    person,
+    () => {
+      renderCurrentView();
+      showToast("Đã cập nhật thành viên", "success");
+    },
+    () => {
+      /* cancel */
+    },
+  );
+}
+
+async function onPersonDeleteRequest(person: Person) {
+  if (
+    await showConfirm(
+      "Xóa thành viên",
+      `Bạn có chắc chắn muốn xóa "${person.name}" khỏi gia phả? Con cháu sẽ trở thành gốc cây.`,
+    )
+  ) {
+    state.deletePerson(person.id);
+    renderCurrentView();
+    showToast("Đã xóa thành viên", "success");
+  }
+}
+
+function onCreateGio(person: Person) {
+  if (!person.deathDate) return;
+  const lunar = convertSolarToLunar(
+    person.deathDate.year,
+    person.deathDate.month,
+    person.deathDate.day,
+  );
+  if (!lunar) {
+    showToast("Không thể quy đổi ngày mất sang âm lịch", "warning");
+    return;
+  }
+  pushOverlayState();
+  renderEventForm(
+    modalContainer,
+    state,
+    null,
+    () => {
+      showToast("Đã tạo nhắc giỗ", "success");
+    },
+    () => {
+      /* cancel */
+    },
+    person.deathDate,
+    `Giỗ ${person.name}`,
+  );
+}
+
 // --- Import/Export Modal ---
 function openImportExport() {
   pushOverlayState();
@@ -491,10 +591,12 @@ function openImportExport() {
 const tabCalendar = document.getElementById("tab-calendar")!;
 const tabUpcoming = document.getElementById("tab-upcoming")!;
 const tabMemo = document.getElementById("tab-memo")!;
+const tabFamily = document.getElementById("tab-family")!;
 const tabs: Record<AppView, HTMLElement> = {
   calendar: tabCalendar,
   upcoming: tabUpcoming,
   memo: tabMemo,
+  family: tabFamily,
 };
 
 function setActiveTab(view: AppView) {
@@ -508,11 +610,14 @@ function setActiveTab(view: AppView) {
 tabCalendar.addEventListener("click", () => setActiveTab("calendar"));
 tabUpcoming.addEventListener("click", () => setActiveTab("upcoming"));
 tabMemo.addEventListener("click", () => setActiveTab("memo"));
+tabFamily.addEventListener("click", () => setActiveTab("family"));
 
 // --- Header Actions ---
 document.getElementById("add-event-btn")!.addEventListener("click", () => {
   if (currentView === "memo") {
     openCreateMemoForm();
+  } else if (currentView === "family") {
+    openCreatePersonForm();
   } else {
     openCreateForm();
   }
