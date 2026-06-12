@@ -12,6 +12,17 @@ export type SolarDate = {
   day: number;
 };
 
+/**
+ * A partially-known solar date: year is always present, month/day may be null
+ * (unknown). Invariant: a day requires a month; a month requires a year.
+ * Used for family-tree birth/death dates where only the year is often known.
+ */
+export type PartialDate = {
+  year: number;
+  month: number | null;
+  day: number | null;
+};
+
 export type LunarDateContext = {
   lunarDay: number;
   lunarMonth: number;
@@ -106,9 +117,9 @@ export type Person = {
   id: string;
   name: string;
   gender: Gender;
-  birthDate: SolarDate | null;
+  birthDate: PartialDate | null;
   isDeceased: boolean;
-  deathDate: SolarDate | null;
+  deathDate: PartialDate | null;
   /** false = nhánh chính (huyết thống); true = lấy vào (vợ/chồng) */
   isMarriedIn: boolean;
   parentId: string | null;

@@ -99,6 +99,44 @@ describe("buildFamilyTree", () => {
     const roots = buildFamilyTree([a, b]);
     expect(roots.map((n) => n.person.id)).toEqual(["b", "a"]);
   });
+
+  it("sorts siblings by partial birth dates (year, then month, then day)", () => {
+    const parent = person({ id: "p" });
+    const sameYearLater = person({
+      id: "y2",
+      parentId: "p",
+      birthDate: { year: 1950, month: 9, day: 1 },
+    });
+    const sameYearEarlier = person({
+      id: "y1",
+      parentId: "p",
+      birthDate: { year: 1950, month: 2, day: 1 },
+    });
+    const yearOnly = person({
+      id: "yo",
+      parentId: "p",
+      birthDate: { year: 1950, month: null, day: null },
+    });
+    const earlierYear = person({
+      id: "older",
+      parentId: "p",
+      birthDate: { year: 1948, month: null, day: null },
+    });
+    const roots = buildFamilyTree([
+      parent,
+      sameYearLater,
+      yearOnly,
+      sameYearEarlier,
+      earlierYear,
+    ]);
+    // 1948 first; then within 1950: Feb, Sep, then unknown-month last.
+    expect(roots[0].children.map((c) => c.person.id)).toEqual([
+      "older",
+      "y1",
+      "y2",
+      "yo",
+    ]);
+  });
 });
 
 describe("getDescendantIds", () => {

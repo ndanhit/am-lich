@@ -183,6 +183,45 @@ describe("validatePersonCreationParams", () => {
       ),
     ).not.toThrow();
   });
+
+  it("accepts a year-only partial date", () => {
+    expect(() =>
+      validatePersonCreationParams("A", { year: 1950, month: null, day: null }, null),
+    ).not.toThrow();
+  });
+
+  it("accepts a year+month partial date", () => {
+    expect(() =>
+      validatePersonCreationParams("A", { year: 1950, month: 3, day: null }, null),
+    ).not.toThrow();
+  });
+
+  it("rejects a day without a month", () => {
+    expect(() =>
+      validatePersonCreationParams("A", { year: 1950, month: null, day: 5 }, null),
+    ).toThrow(/Tháng sinh/);
+  });
+
+  it("rejects death before birth when only years are known", () => {
+    expect(() =>
+      validatePersonCreationParams(
+        "A",
+        { year: 1950, month: null, day: null },
+        { year: 1940, month: null, day: null },
+      ),
+    ).toThrow(/Ngày mất không thể trước ngày sinh/);
+  });
+
+  it("allows partial dates whose comparable parts are unknown", () => {
+    // Same year, death month unknown → cannot prove it's earlier.
+    expect(() =>
+      validatePersonCreationParams(
+        "A",
+        { year: 1950, month: 6, day: null },
+        { year: 1950, month: null, day: null },
+      ),
+    ).not.toThrow();
+  });
 });
 
 describe("isValidGender", () => {

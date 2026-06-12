@@ -6,7 +6,7 @@ import {
   RecurrenceRule,
   QuickMemo,
   Person,
-  SolarDate,
+  PartialDate,
 } from "../../core/models/types";
 import { validateEventCreationParams } from "../../core/rules/leap-month";
 import { isValidGender } from "../people/crud";
@@ -121,8 +121,8 @@ export function validateImportPayload(jsonPayload: string): ExportPayload {
       if (!p.name || typeof p.name !== "string")
         throw new Error("Invalid person name");
       if (!isValidGender(p.gender)) throw new Error("Invalid person gender");
-      const birthDate = parseOptionalSolarDate(p.birthDate, "birthDate");
-      const deathDate = parseOptionalSolarDate(p.deathDate, "deathDate");
+      const birthDate = parsePartialDate(p.birthDate, "birthDate");
+      const deathDate = parsePartialDate(p.deathDate, "deathDate");
       if (p.parentId !== null && typeof p.parentId !== "string")
         throw new Error("Invalid person parentId");
       if (p.spouseId !== null && typeof p.spouseId !== "string")
@@ -184,23 +184,18 @@ export function validateImportPayload(jsonPayload: string): ExportPayload {
 }
 
 /**
- * Parse an optional SolarDate from import payload. Accepts null/undefined
- * (returns null) or a well-formed { year, month, day }. Throws otherwise.
+ * Parse an optional PartialDate from import payload. Accepts null/undefined
+ * (returns null), or an object with numeric `year` and numeric-or-null
+ * `month`/`day`. Full {year,month,day} from older exports parses unchanged.
  */
-function parseOptionalSolarDate(
-  value: any,
-  label: string,
-): SolarDate | null {
+function parsePartialDate(value: any, label: string): PartialDate | null {
   if (value === null || value === undefined) return null;
-  if (
-    typeof value !== "object" ||
-    typeof value.year !== "number" ||
-    typeof value.month !== "number" ||
-    typeof value.day !== "number"
-  ) {
+  if (typeof value !== "object" || typeof value.year !== "number") {
     throw new Error(`Invalid person ${label}`);
   }
-  return { year: value.year, month: value.month, day: value.day };
+  const month = typeof value.month === "number" ? value.month : null;
+  const day = typeof value.day === "number" ? value.day : null;
+  return { year: value.year, month, day };
 }
 
 /**

@@ -170,4 +170,5 @@ export type {
   Person,
   Gender,
   FamilyTreeNode,
+  PartialDate,
 } from "../core/models/types";

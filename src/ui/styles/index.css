@@ -1895,6 +1895,18 @@ textarea:focus {
   color: var(--color-text);
 }
 
+/* Năm / Tháng / Ngày picker (progressive disclosure) */
+.date-picker {
+  display: flex;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.date-picker .date-select {
+  flex: 1 1 0;
+  min-width: 90px;
+}
+
 /* Read-only field value (e.g. locked gender when adding a spouse) */
 .form-static {
   padding: var(--space-2) 0;

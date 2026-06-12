@@ -5,7 +5,7 @@ import type {
   LunarDateContext,
 } from "../lib/index";
 import { LeapMonthRule, RecurrenceRule } from "../lib/index";
-import type { Gender, Person } from "../lib/index";
+import type { Gender, Person, PartialDate } from "../lib/index";
 
 /** A single cell in the monthly calendar grid */
 export type CalendarCell = {
@@ -50,9 +50,9 @@ export type MemoFormData = {
 export type PersonFormData = {
   name: string;
   gender: Gender;
-  birthDate: { year: number; month: number; day: number } | null;
+  birthDate: PartialDate | null;
   isDeceased: boolean;
-  deathDate: { year: number; month: number; day: number } | null;
+  deathDate: PartialDate | null;
   notes: string;
 };
 

@@ -598,12 +598,13 @@ async function onPersonDeleteRequest(person: Person) {
 }
 
 function onCreateGio(person: Person) {
-  if (!person.deathDate) return;
-  const lunar = convertSolarToLunar(
-    person.deathDate.year,
-    person.deathDate.month,
-    person.deathDate.day,
-  );
+  const d = person.deathDate;
+  if (!d || d.month == null || d.day == null) {
+    showToast("Cần đủ ngày/tháng/năm mất để tạo nhắc giỗ", "warning");
+    return;
+  }
+  const deathSolar: SolarDate = { year: d.year, month: d.month, day: d.day };
+  const lunar = convertSolarToLunar(deathSolar.year, deathSolar.month, deathSolar.day);
   if (!lunar) {
     showToast("Không thể quy đổi ngày mất sang âm lịch", "warning");
     return;
@@ -619,7 +620,7 @@ function onCreateGio(person: Person) {
     () => {
       /* cancel */
     },
-    person.deathDate,
+    deathSolar,
     `Giỗ ${person.name}`,
   );
 }
