@@ -1924,6 +1924,10 @@ textarea:focus {
   transform: translateY(-1px);
 }
 
+.tree-node-box.deceased {
+  background: var(--color-surface-active, #ececed);
+}
+
 .tree-node-box.gender-female {
   border-top-color: #e25a82;
 }
