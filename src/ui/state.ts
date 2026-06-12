@@ -2,6 +2,7 @@ import { LeapMonthRule, RecurrenceRule } from "../core/models/types";
 import type {
   LunarEvent,
   SolarDate,
+  PartialDate,
   UpcomingEventOccurrence,
   LunarDateContext,
   QuickMemo,
@@ -423,17 +424,17 @@ export class AppState {
     return buildFamilyTree(this.people);
   }
 
-  private toSolarDate(
+  private toPartialDate(
     date: PersonFormData["birthDate"],
-  ): SolarDate | null {
+  ): PartialDate | null {
     if (!date) return null;
     return { year: date.year, month: date.month, day: date.day };
   }
 
   /** Build a fresh Person from form data (id/timestamps + default relations). */
   private buildPerson(form: PersonFormData): Person {
-    const birthDate = this.toSolarDate(form.birthDate);
-    const deathDate = form.isDeceased ? this.toSolarDate(form.deathDate) : null;
+    const birthDate = this.toPartialDate(form.birthDate);
+    const deathDate = form.isDeceased ? this.toPartialDate(form.deathDate) : null;
     validatePersonCreationParams(form.name, birthDate, deathDate);
     const now = Date.now();
     return {
@@ -481,8 +482,8 @@ export class AppState {
   }
 
   editPerson(id: string, form: PersonFormData): void {
-    const birthDate = this.toSolarDate(form.birthDate);
-    const deathDate = form.isDeceased ? this.toSolarDate(form.deathDate) : null;
+    const birthDate = this.toPartialDate(form.birthDate);
+    const deathDate = form.isDeceased ? this.toPartialDate(form.deathDate) : null;
     validatePersonCreationParams(form.name, birthDate, deathDate);
 
     const existing = this.people.find((p) => p.id === id);

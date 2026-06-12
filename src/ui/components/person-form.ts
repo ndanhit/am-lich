@@ -1,6 +1,9 @@
-import type { Gender } from "../../lib/index";
+import type { Gender, PartialDate } from "../../lib/index";
 import type { PersonFormData, PersonFormContext } from "../types";
 import { GENDER_LABELS } from "../types";
+
+const MIN_YEAR = 1901;
+const MAX_YEAR = 2099;
 
 /**
  * Render the family-tree person form. Only personal info is captured here —
@@ -30,8 +33,6 @@ export function renderPersonForm(
   const defaultGender: Gender =
     lockedGender ?? (editPerson ? editPerson.gender : "male");
   const defaultNotes = editPerson ? editPerson.notes : "";
-  const birthValue = editPerson ? solarToInputValue(editPerson.birthDate) : "";
-  const deathValue = editPerson ? solarToInputValue(editPerson.deathDate) : "";
   const isDeceased =
     isEdit && (editPerson!.isDeceased || editPerson!.deathDate !== null);
 
@@ -78,8 +79,8 @@ export function renderPersonForm(
           </div>
 
           <div class="form-group">
-            <label for="person-birth">Ngày sinh (dương lịch)</label>
-            <input type="date" id="person-birth" value="${birthValue}" min="1901-01-01" max="2099-12-31">
+            <label>Ngày sinh (dương lịch, không bắt buộc)</label>
+            ${datePickerHtml("birth")}
             <div class="form-error" id="person-birth-error"></div>
           </div>
 
@@ -91,8 +92,8 @@ export function renderPersonForm(
           </div>
 
           <div class="form-group" id="person-death-group" style="display: ${isDeceased ? "block" : "none"}">
-            <label for="person-death">Ngày mất (dương lịch, không bắt buộc)</label>
-            <input type="date" id="person-death" value="${deathValue}" min="1901-01-01" max="2099-12-31">
+            <label>Ngày mất (dương lịch, không bắt buộc)</label>
+            ${datePickerHtml("death")}
             <div class="form-error" id="person-death-error"></div>
           </div>
 
@@ -110,8 +111,6 @@ export function renderPersonForm(
   container.appendChild(overlay);
 
   const nameInput = overlay.querySelector("#person-name") as HTMLInputElement;
-  const birthInput = overlay.querySelector("#person-birth") as HTMLInputElement;
-  const deathInput = overlay.querySelector("#person-death") as HTMLInputElement;
   const notesInput = overlay.querySelector(
     "#person-notes",
   ) as HTMLTextAreaElement;
@@ -122,9 +121,20 @@ export function renderPersonForm(
     "#person-death-group",
   ) as HTMLElement;
 
+  // Progressive Năm → Tháng → Ngày pickers for birth and death.
+  const getBirth = setupDatePicker(
+    overlay,
+    "birth",
+    editPerson ? editPerson.birthDate : null,
+  );
+  const getDeath = setupDatePicker(
+    overlay,
+    "death",
+    editPerson ? editPerson.deathDate : null,
+  );
+
   deceasedCheckbox.addEventListener("change", () => {
     deathGroup.style.display = deceasedCheckbox.checked ? "block" : "none";
-    if (!deceasedCheckbox.checked) deathInput.value = "";
   });
 
   overlay.querySelector("#person-form-close")!.addEventListener("click", () => {
@@ -160,14 +170,13 @@ export function renderPersonForm(
     ).value as Gender;
 
     const deceased = deceasedCheckbox.checked;
-    const deathDate = deceased ? parseInputDate(deathInput.value) : null;
 
     const formData: PersonFormData = {
       name,
       gender,
-      birthDate: parseInputDate(birthInput.value),
+      birthDate: getBirth(),
       isDeceased: deceased,
-      deathDate,
+      deathDate: deceased ? getDeath() : null,
       notes: notesInput.value,
     };
 
@@ -204,19 +213,92 @@ function formTitle(context: PersonFormContext): string {
   }
 }
 
-function parseInputDate(
-  value: string,
-): { year: number; month: number; day: number } | null {
-  if (!value) return null;
-  const [y, m, d] = value.split("-").map(Number);
-  return { year: y, month: m, day: d };
+/** Markup for a Năm/Tháng/Ngày picker; month & day start hidden. */
+function datePickerHtml(prefix: string): string {
+  const years: string[] = [];
+  for (let y = MAX_YEAR; y >= MIN_YEAR; y--) {
+    years.push(`<option value="${y}">${y}</option>`);
+  }
+  const months = Array.from(
+    { length: 12 },
+    (_, i) => `<option value="${i + 1}">Tháng ${i + 1}</option>`,
+  ).join("");
+  return `
+    <div class="date-picker">
+      <select id="${prefix}-year" class="date-select" aria-label="Năm">
+        <option value="">Năm</option>${years.join("")}
+      </select>
+      <select id="${prefix}-month" class="date-select" aria-label="Tháng" style="display:none">
+        <option value="">Tháng</option>${months}
+      </select>
+      <select id="${prefix}-day" class="date-select" aria-label="Ngày" style="display:none">
+        <option value="">Ngày</option>
+      </select>
+    </div>`;
 }
 
-function solarToInputValue(
-  date: { year: number; month: number; day: number } | null,
-): string {
-  if (!date) return "";
-  return `${date.year}-${String(date.month).padStart(2, "0")}-${String(date.day).padStart(2, "0")}`;
+/**
+ * Wire a Năm → Tháng → Ngày picker with progressive disclosure. Returns a
+ * getter producing the chosen PartialDate (or null if no year is selected).
+ */
+function setupDatePicker(
+  overlay: HTMLElement,
+  prefix: string,
+  initial: PartialDate | null,
+): () => PartialDate | null {
+  const yearSel = overlay.querySelector(`#${prefix}-year`) as HTMLSelectElement;
+  const monthSel = overlay.querySelector(
+    `#${prefix}-month`,
+  ) as HTMLSelectElement;
+  const daySel = overlay.querySelector(`#${prefix}-day`) as HTMLSelectElement;
+
+  const populateDays = (preserve: number | null): void => {
+    const year = Number(yearSel.value);
+    const month = Number(monthSel.value);
+    const count =
+      year && month ? new Date(year, month, 0).getDate() : 31;
+    let html = `<option value="">Ngày</option>`;
+    for (let d = 1; d <= count; d++) html += `<option value="${d}">${d}</option>`;
+    daySel.innerHTML = html;
+    if (preserve != null && preserve <= count) daySel.value = String(preserve);
+  };
+
+  const refresh = (): void => {
+    monthSel.style.display = yearSel.value ? "" : "none";
+    if (!yearSel.value) {
+      monthSel.value = "";
+    }
+    daySel.style.display = yearSel.value && monthSel.value ? "" : "none";
+    if (!monthSel.value) daySel.value = "";
+  };
+
+  yearSel.addEventListener("change", () => {
+    if (monthSel.value) populateDays(Number(daySel.value) || null);
+    refresh();
+  });
+  monthSel.addEventListener("change", () => {
+    populateDays(null);
+    refresh();
+  });
+
+  // Initialize from existing value.
+  if (initial) {
+    yearSel.value = String(initial.year);
+    if (initial.month != null) {
+      monthSel.value = String(initial.month);
+      populateDays(initial.day);
+    }
+  }
+  refresh();
+
+  return () => {
+    if (!yearSel.value) return null;
+    return {
+      year: Number(yearSel.value),
+      month: monthSel.value ? Number(monthSel.value) : null,
+      day: daySel.value ? Number(daySel.value) : null,
+    };
+  };
 }
 
 function closeForm(overlay: HTMLElement, callback: () => void): void {

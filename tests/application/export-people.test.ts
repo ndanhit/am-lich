@@ -121,9 +121,30 @@ describe("validateImportPayload with people", () => {
     expect(() => validateImportPayload(json)).toThrow(/gender/);
   });
 
-  it("rejects malformed birthDate shape", () => {
-    const json = payloadJson([{ ...person(), birthDate: { year: 2000 } }]);
+  it("rejects birthDate without a numeric year", () => {
+    const json = payloadJson([{ ...person(), birthDate: { month: 3 } }]);
     expect(() => validateImportPayload(json)).toThrow(/birthDate/);
+  });
+
+  it("accepts a year-only partial birthDate", () => {
+    const json = payloadJson([{ ...person(), birthDate: { year: 1950 } }]);
+    const parsed = validateImportPayload(json);
+    expect(parsed.people![0].birthDate).toEqual({
+      year: 1950,
+      month: null,
+      day: null,
+    });
+  });
+
+  it("round-trips a year+month partial date (day null)", () => {
+    const json = payloadJson([
+      person({ birthDate: { year: 1950, month: 3, day: null } }),
+    ]);
+    expect(validateImportPayload(json).people![0].birthDate).toEqual({
+      year: 1950,
+      month: 3,
+      day: null,
+    });
   });
 
   it("rejects missing name", () => {

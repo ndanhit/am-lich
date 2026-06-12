@@ -1,6 +1,7 @@
 import { describe, it, expect } from "vitest";
 import {
   formatSolarDate,
+  formatPartialDate,
   formatLunarDate,
 } from "../../src/lib/formatters";
 import type { LunarDateContext } from "../../src/core/models/types";
@@ -18,6 +19,26 @@ describe("formatSolarDate", () => {
 
   it("handles single-digit month and day independently", () => {
     expect(formatSolarDate({ year: 2026, month: 7, day: 9 })).toBe("09/07/2026");
+  });
+});
+
+describe("formatPartialDate", () => {
+  it("shows year only when month is null", () => {
+    expect(formatPartialDate({ year: 1950, month: null, day: null })).toBe(
+      "1950",
+    );
+  });
+
+  it("shows MM/yyyy when day is null", () => {
+    expect(formatPartialDate({ year: 1950, month: 3, day: null })).toBe(
+      "03/1950",
+    );
+  });
+
+  it("shows dd/MM/yyyy when complete", () => {
+    expect(formatPartialDate({ year: 1950, month: 3, day: 7 })).toBe(
+      "07/03/1950",
+    );
   });
 });
 

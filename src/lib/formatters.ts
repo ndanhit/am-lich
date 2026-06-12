@@ -1,4 +1,8 @@
-import type { SolarDate, LunarDateContext } from "../core/models/types";
+import type {
+  SolarDate,
+  PartialDate,
+  LunarDateContext,
+} from "../core/models/types";
 
 /**
  * Formats a Solar date into dd/MM/yyyy string.
@@ -7,6 +11,19 @@ export function formatSolarDate(date: SolarDate): string {
   const day = String(date.day).padStart(2, "0");
   const month = String(date.month).padStart(2, "0");
   return `${day}/${month}/${date.year}`;
+}
+
+/**
+ * Formats a partially-known solar date, dropping unknown parts:
+ * "dd/MM/yyyy" (full), "MM/yyyy" (year+month), or "yyyy" (year only).
+ */
+export function formatPartialDate(date: PartialDate): string {
+  const year = String(date.year);
+  if (date.month == null) return year;
+  const month = String(date.month).padStart(2, "0");
+  if (date.day == null) return `${month}/${year}`;
+  const day = String(date.day).padStart(2, "0");
+  return `${day}/${month}/${year}`;
 }
 
 /**

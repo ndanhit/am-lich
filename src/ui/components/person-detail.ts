@@ -1,6 +1,7 @@
-import type { Person, SolarDate } from "../../lib/index";
+import type { Person, PartialDate } from "../../lib/index";
 import {
   formatSolarDate,
+  formatPartialDate,
   formatLunarDate,
   convertSolarToLunar,
 } from "../../lib/index";
@@ -69,7 +70,7 @@ export function renderPersonDetail(
   const parentBtn = canAddParent
     ? `<button class="btn btn-secondary add-parent-btn">Thêm cha/mẹ</button>`
     : "";
-  const gioBtn = person.deathDate
+  const gioBtn = isCompleteDate(person.deathDate)
     ? `<button class="btn btn-secondary gio-btn">Tạo nhắc giỗ</button>`
     : "";
 
@@ -132,13 +133,25 @@ function metaRow(label: string, value: string): string {
 }
 
 /**
- * Format a solar date with its lunar equivalent when available.
- * Dates outside the converter's supported range fall back to solar only.
+ * Format a partial date, appending the lunar date only when the date is
+ * complete (year+month+day) and convertible.
  */
-function formatDateWithLunar(date: SolarDate): string {
-  const solar = formatSolarDate(date);
+function formatDateWithLunar(date: PartialDate): string {
+  if (date.month == null || date.day == null) {
+    return formatPartialDate(date);
+  }
+  const solar = formatSolarDate({
+    year: date.year,
+    month: date.month,
+    day: date.day,
+  });
   const lunar = convertSolarToLunar(date.year, date.month, date.day);
   return lunar ? `${solar} (${formatLunarDate(lunar)})` : solar;
+}
+
+/** Whether a partial date has all of year/month/day (needed for lunar/giỗ). */
+function isCompleteDate(date: PartialDate | null): boolean {
+  return date != null && date.month != null && date.day != null;
 }
 
 function escapeHtml(str: string): string {

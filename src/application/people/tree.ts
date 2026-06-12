@@ -1,16 +1,19 @@
 import type { Person, FamilyTreeNode } from "../../core/models/types";
 
 /**
- * Compare two people by birthDate ascending (older first). People without a
- * birthDate are sorted last (treated as "unknown / newest").
+ * Compare two people by birthDate ascending (older first) for sibling ordering.
+ * People without a birth year sort last; within the same year, an unknown
+ * month/day sorts after a known one.
  */
 function compareByBirth(a: Person, b: Person): number {
   const da = a.birthDate;
   const db = b.birthDate;
   if (da && db) {
     if (da.year !== db.year) return da.year - db.year;
-    if (da.month !== db.month) return da.month - db.month;
-    return da.day - db.day;
+    const ma = da.month ?? 13;
+    const mb = db.month ?? 13;
+    if (ma !== mb) return ma - mb;
+    return (da.day ?? 32) - (db.day ?? 32);
   }
   if (da && !db) return -1;
   if (!da && db) return 1;
