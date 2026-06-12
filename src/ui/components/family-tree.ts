@@ -1,30 +1,30 @@
-import type { Person, FamilyTreeNode, SolarDate } from "../../lib/index";
-import { formatSolarDate, formatLunarDate, convertSolarToLunar } from "../../lib/index";
+import type { Person, FamilyTreeNode } from "../../lib/index";
 import { GENDER_LABELS, GENDER_ICONS } from "../types";
 import type { AppState } from "../state";
+
+const MIN_ZOOM = 0.5;
+const MAX_ZOOM = 2;
+// Persisted across re-renders (component rebuilds DOM whenever state changes).
+let zoomLevel = 1;
 
 /** Render the family-tree (gia phả) view as a top-down genealogy chart. */
 export function renderFamilyTree(
   container: HTMLElement,
   state: AppState,
-  onEdit: (person: Person) => void,
-  onDelete: (person: Person) => void,
+  onSelect: (person: Person) => void,
   onCreate: () => void,
-  onAddChild: (parent: Person) => void,
-  onCreateGio: (person: Person) => void,
 ): void {
   container.innerHTML = "";
 
   const section = document.createElement("div");
   section.className = "family-tree";
 
-  const h2 = document.createElement("h2");
-  h2.textContent = "Gia phả";
-  section.appendChild(h2);
-
   const roots = state.getFamilyTree();
 
   if (roots.length === 0) {
+    const h2 = document.createElement("h2");
+    h2.textContent = "Gia phả";
+    section.appendChild(h2);
     const empty = document.createElement("div");
     empty.className = "empty-state";
     empty.innerHTML = `
@@ -42,116 +42,157 @@ export function renderFamilyTree(
     return;
   }
 
-  // Lookup for resolving spouse names inline.
   const peopleById = new Map(state.getPeople().map((p) => [p.id, p]));
 
-  const cb: NodeCallbacks = { onEdit, onDelete, onAddChild, onCreateGio };
+  // Determine which people are rendered attached to a partner (so they are not
+  // also drawn as a standalone root). Only "married-in" spouses (parentId null)
+  // are attached; the blood-line member stays as the structural node.
+  const attachedSpouseIds = computeAttachedSpouses(state.getPeople(), peopleById);
 
-  // Horizontal scroll wrapper — wide trees overflow on small screens.
+  // Header row: title + zoom controls.
+  const header = document.createElement("div");
+  header.className = "family-tree-header";
+  header.innerHTML = `
+    <h2>Gia phả</h2>
+    <div class="tree-zoom-controls">
+      <button class="zoom-btn" id="zoom-out" aria-label="Thu nhỏ" title="Thu nhỏ">−</button>
+      <button class="zoom-level" id="zoom-reset" aria-label="Đặt lại 100%" title="Đặt lại">100%</button>
+      <button class="zoom-btn" id="zoom-in" aria-label="Phóng to" title="Phóng to">+</button>
+    </div>
+  `;
+  section.appendChild(header);
+
+  const cb: NodeCallbacks = { onSelect, attachedSpouseIds, peopleById };
+
   const scroll = document.createElement("div");
   scroll.className = "tree-scroll";
 
   const tree = document.createElement("ul");
   tree.className = "tree";
   for (const root of roots) {
-    tree.appendChild(renderNode(root, peopleById, cb));
+    if (attachedSpouseIds.has(root.person.id)) continue;
+    tree.appendChild(renderNode(root, cb));
   }
   scroll.appendChild(tree);
   section.appendChild(scroll);
   container.appendChild(section);
+
+  // --- Zoom wiring ---
+  const label = header.querySelector("#zoom-reset") as HTMLElement;
+  const applyZoom = () => {
+    tree.style.transform = `scale(${zoomLevel})`;
+    tree.style.transformOrigin = "top center";
+    label.textContent = `${Math.round(zoomLevel * 100)}%`;
+  };
+  const setZoom = (next: number) => {
+    zoomLevel = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, next));
+    applyZoom();
+  };
+  header
+    .querySelector("#zoom-in")!
+    .addEventListener("click", () => setZoom(zoomLevel + 0.1));
+  header
+    .querySelector("#zoom-out")!
+    .addEventListener("click", () => setZoom(zoomLevel - 0.1));
+  header
+    .querySelector("#zoom-reset")!
+    .addEventListener("click", () => setZoom(1));
+
+  // Pinch-to-zoom on touch devices.
+  let pinchStartDist = 0;
+  let pinchStartZoom = 1;
+  scroll.addEventListener(
+    "touchstart",
+    (e) => {
+      if (e.touches.length === 2) {
+        pinchStartDist = touchDistance(e.touches);
+        pinchStartZoom = zoomLevel;
+      }
+    },
+    { passive: true },
+  );
+  scroll.addEventListener(
+    "touchmove",
+    (e) => {
+      if (e.touches.length === 2 && pinchStartDist > 0) {
+        e.preventDefault();
+        const ratio = touchDistance(e.touches) / pinchStartDist;
+        setZoom(pinchStartZoom * ratio);
+      }
+    },
+    { passive: false },
+  );
+  scroll.addEventListener("touchend", (e) => {
+    if (e.touches.length < 2) pinchStartDist = 0;
+  });
+
+  applyZoom();
 }
 
 type NodeCallbacks = {
-  onEdit: (person: Person) => void;
-  onDelete: (person: Person) => void;
-  onAddChild: (parent: Person) => void;
-  onCreateGio: (person: Person) => void;
+  onSelect: (person: Person) => void;
+  attachedSpouseIds: Set<string>;
+  peopleById: Map<string, Person>;
 };
 
-function renderNode(
-  node: FamilyTreeNode,
+/**
+ * Pick which spouse is drawn attached (to the right) of their partner. Only a
+ * spouse with parentId === null is attachable; the partner reached first in
+ * iteration claims it. The guard prevents two spouses from each claiming the
+ * other (which would drop both from the tree).
+ */
+function computeAttachedSpouses(
+  people: Person[],
   peopleById: Map<string, Person>,
-  cb: NodeCallbacks,
-): HTMLElement {
+): Set<string> {
+  const attached = new Set<string>();
+  for (const p of people) {
+    if (attached.has(p.id)) continue;
+    if (p.spouseId == null) continue;
+    const spouse = peopleById.get(p.spouseId);
+    if (
+      spouse &&
+      spouse.id !== p.id &&
+      spouse.parentId == null &&
+      !attached.has(spouse.id)
+    ) {
+      attached.add(spouse.id);
+    }
+  }
+  return attached;
+}
+
+function touchDistance(touches: TouchList): number {
+  const dx = touches[0].clientX - touches[1].clientX;
+  const dy = touches[0].clientY - touches[1].clientY;
+  return Math.hypot(dx, dy);
+}
+
+function renderNode(node: FamilyTreeNode, cb: NodeCallbacks): HTMLElement {
   const { person } = node;
   const li = document.createElement("li");
 
+  const couple = document.createElement("div");
+  couple.className = "tree-couple";
+  couple.appendChild(makeBox(person, cb));
+
+  // Attach married-in spouse to the right of this person.
   const spouse =
-    person.spouseId != null ? peopleById.get(person.spouseId) : undefined;
-  const spouseHtml = spouse
-    ? `<div class="tree-spouse">⚭ ${escapeHtml(spouse.name)}</div>`
-    : "";
+    person.spouseId != null ? cb.peopleById.get(person.spouseId) : undefined;
+  if (spouse && spouse.parentId == null && spouse.id !== person.id) {
+    const link = document.createElement("span");
+    link.className = "tree-couple-link";
+    link.textContent = "⚭";
+    couple.appendChild(link);
+    couple.appendChild(makeBox(spouse, cb));
+  }
 
-  const birthHtml = person.birthDate
-    ? `<div class="tree-date">★ ${formatDateWithLunar(person.birthDate)}</div>`
-    : "";
-  const deathHtml = person.deathDate
-    ? `<div class="tree-date">✝ ${formatDateWithLunar(person.deathDate)}</div>`
-    : "";
-
-  const gioBtn = person.deathDate
-    ? `<button class="icon-btn" data-action="gio" aria-label="Tạo nhắc giỗ" title="Tạo nhắc giỗ">
-         <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-           <path d="M12 2C8 6 8 10 12 14c4-4 4-8 0-12z"></path>
-           <path d="M6 14a6 6 0 0 0 12 0c0-2-1-4-3-6"></path>
-         </svg>
-       </button>`
-    : "";
-
-  const box = document.createElement("div");
-  box.className = `tree-node-box gender-${person.gender}`;
-  box.innerHTML = `
-    <div class="tree-name">
-      <span class="tree-gender-icon gender-${person.gender}" title="${GENDER_LABELS[person.gender]}" aria-label="${GENDER_LABELS[person.gender]}">${GENDER_ICONS[person.gender]}</span>
-      ${escapeHtml(person.name)}
-    </div>
-    ${spouseHtml}
-    ${birthHtml}
-    ${deathHtml}
-    <div class="tree-card-actions">
-      <button class="icon-btn" data-action="add-child" aria-label="Thêm con" title="Thêm con">
-        <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-          <line x1="12" y1="5" x2="12" y2="19"></line>
-          <line x1="5" y1="12" x2="19" y2="12"></line>
-        </svg>
-      </button>
-      ${gioBtn}
-      <button class="icon-btn" data-action="edit" aria-label="Sửa thành viên" title="Sửa">
-        <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-          <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-          <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-        </svg>
-      </button>
-      <button class="icon-btn" data-action="delete" aria-label="Xóa thành viên" title="Xóa">
-        <svg viewBox="0 0 24 24" width="15" height="15" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
-          <polyline points="3 6 5 6 21 6"></polyline>
-          <path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"></path>
-          <path d="M10 11v6"></path>
-          <path d="M14 11v6"></path>
-        </svg>
-      </button>
-    </div>
-  `;
-
-  box
-    .querySelector('[data-action="edit"]')
-    ?.addEventListener("click", () => cb.onEdit(person));
-  box
-    .querySelector('[data-action="delete"]')
-    ?.addEventListener("click", () => cb.onDelete(person));
-  box
-    .querySelector('[data-action="add-child"]')
-    ?.addEventListener("click", () => cb.onAddChild(person));
-  box
-    .querySelector('[data-action="gio"]')
-    ?.addEventListener("click", () => cb.onCreateGio(person));
-
-  li.appendChild(box);
+  li.appendChild(couple);
 
   if (node.children.length > 0) {
     const childrenList = document.createElement("ul");
     for (const child of node.children) {
-      childrenList.appendChild(renderNode(child, peopleById, cb));
+      childrenList.appendChild(renderNode(child, cb));
     }
     li.appendChild(childrenList);
   }
@@ -159,14 +200,18 @@ function renderNode(
   return li;
 }
 
-/**
- * Format a solar date with its lunar equivalent when available.
- * Dates outside the converter's supported range fall back to solar only.
- */
-function formatDateWithLunar(date: SolarDate): string {
-  const solar = formatSolarDate(date);
-  const lunar = convertSolarToLunar(date.year, date.month, date.day);
-  return lunar ? `${solar} (${formatLunarDate(lunar)})` : solar;
+/** A compact, clickable node box: name + gender icon (outline) after the name. */
+function makeBox(person: Person, cb: NodeCallbacks): HTMLElement {
+  const box = document.createElement("button");
+  box.type = "button";
+  box.className = `tree-node-box gender-${person.gender}`;
+  box.setAttribute("aria-label", `Chi tiết ${person.name}`);
+  box.innerHTML = `
+    <span class="tree-name-text">${escapeHtml(person.name)}</span>
+    <span class="tree-gender-icon gender-${person.gender}" title="${GENDER_LABELS[person.gender]}" aria-hidden="true">${GENDER_ICONS[person.gender]}</span>
+  `;
+  box.addEventListener("click", () => cb.onSelect(person));
+  return box;
 }
 
 function escapeHtml(str: string): string {

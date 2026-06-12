@@ -13,6 +13,7 @@ import { renderMemoForm } from "../components/memo-form";
 import { renderMemoList } from "../components/memo-list";
 import { renderFamilyTree } from "../components/family-tree";
 import { renderPersonForm } from "../components/person-form";
+import { renderPersonDetail } from "../components/person-detail";
 import { renderDateConverterModal } from "../components/date-converter-modal";
 import { convertSolarToLunar } from "../../lib/index";
 import type { CalendarCell } from "../types";
@@ -230,14 +231,44 @@ function renderMemoView() {
 }
 
 function renderFamilyView() {
-  renderFamilyTree(
-    viewContainer,
-    state,
-    openEditPersonForm,
-    onPersonDeleteRequest,
-    openCreatePersonForm,
-    openAddChildForm,
-    onCreateGio,
+  renderFamilyTree(viewContainer, state, onSelectPerson, openCreatePersonForm);
+}
+
+function onSelectPerson(person: Person) {
+  backdrop.classList.add("open");
+  pushOverlayState();
+
+  const spouse =
+    person.spouseId != null
+      ? (state.getPeople().find((p) => p.id === person.spouseId) ?? null)
+      : null;
+
+  const close = () => {
+    closeDetailPanel(detailContainer);
+    backdrop.classList.remove("open");
+  };
+
+  renderPersonDetail(
+    detailContainer,
+    person,
+    spouse,
+    (p) => {
+      close();
+      openEditPersonForm(p);
+    },
+    (p) => {
+      close();
+      openAddChildForm(p);
+    },
+    (p) => {
+      close();
+      onCreateGio(p);
+    },
+    (p) => {
+      close();
+      onPersonDeleteRequest(p);
+    },
+    close,
   );
 }
 
