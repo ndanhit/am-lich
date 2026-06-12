@@ -43,14 +43,20 @@ export function renderPersonDetail(
     metaRows.push(
       metaRow(
         "Ngày mất",
-        person.deathDate ? formatDateWithLunar(person.deathDate) : "Không rõ",
+        person.deathDate
+          ? formatDateWithLunar(person.deathDate)
+          : "Chưa cập nhật",
       ),
     );
-  } else {
-    metaRows.push(metaRow("Tình trạng", "Còn sống"));
   }
   if (spouse) {
-    metaRows.push(metaRow("Vợ/Chồng", escapeHtml(spouse.name)));
+    const spouseLabel =
+      person.gender === "male"
+        ? "Vợ"
+        : person.gender === "female"
+          ? "Chồng"
+          : "Vợ/Chồng";
+    metaRows.push(metaRow(spouseLabel, escapeHtml(spouse.name)));
   }
   if (person.notes.trim()) {
     metaRows.push(metaRow("Ghi chú", escapeHtml(person.notes)));
