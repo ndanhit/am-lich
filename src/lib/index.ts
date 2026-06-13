@@ -160,6 +160,11 @@ export {
 } from "../application/people/relations";
 export { computeBranchInsights } from "../application/people/insights";
 export type { BranchInsights } from "../application/people/insights";
+export { searchPeople, normalizeText } from "../application/people/search";
+export type {
+  SearchFilters,
+  PersonStatusFilter,
+} from "../application/people/search";
 export {
   addFamily,
   updateFamily,
