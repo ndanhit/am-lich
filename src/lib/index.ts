@@ -167,6 +167,7 @@ export type {
 } from "../application/people/search";
 export { buildGioEvents, getUpcomingGio } from "../application/people/gio";
 export type { GioOccurrence } from "../application/people/gio";
+export { generationOf, kinshipTerm } from "../application/people/kinship";
 export {
   addFamily,
   updateFamily,

@@ -17,6 +17,7 @@ export type PersonDetailCallbacks = {
   onAddSpouse: (person: Person) => void;
   onAddParent: (person: Person) => void;
   onReorderChildren: (person: Person) => void;
+  onKinship: (person: Person) => void;
   onCreateGio: (person: Person) => void;
   onDelete: (person: Person) => void;
   onClose: () => void;
@@ -28,6 +29,7 @@ export function renderPersonDetail(
   person: Person,
   spouse: Person | null,
   insights: BranchInsights,
+  generation: number,
   cb: PersonDetailCallbacks,
 ): void {
   container.innerHTML = "";
@@ -37,6 +39,9 @@ export function renderPersonDetail(
 
   const metaRows: string[] = [];
   metaRows.push(metaRow("Giới tính", GENDER_LABELS[person.gender]));
+  if (generation > 0) {
+    metaRows.push(metaRow("Vai vế", `Đời thứ ${generation}`));
+  }
   if (person.aliasName?.trim()) {
     metaRows.push(metaRow("Tên thường gọi", escapeHtml(person.aliasName)));
   }
@@ -121,6 +126,7 @@ export function renderPersonDetail(
         ${spouseBtn}
         ${parentBtn}
         ${reorderBtn}
+        <button class="btn btn-secondary kinship-btn">Cách xưng hô</button>
         <button class="btn btn-secondary edit-btn">Sửa</button>
         ${gioBtn}
         <button class="btn btn-danger delete-btn">Xóa</button>
@@ -148,6 +154,9 @@ export function renderPersonDetail(
   panel
     .querySelector(".reorder-btn")
     ?.addEventListener("click", () => cb.onReorderChildren(person));
+  panel
+    .querySelector(".kinship-btn")!
+    .addEventListener("click", () => cb.onKinship(person));
   panel
     .querySelector(".gio-btn")
     ?.addEventListener("click", () => cb.onCreateGio(person));

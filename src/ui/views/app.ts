@@ -19,6 +19,8 @@ import { renderPersonDetail } from "../components/person-detail";
 import { renderReorderChildren } from "../components/reorder-children";
 import { renderSearchPeople } from "../components/search-people";
 import { renderGioList } from "../components/gio-list";
+import { renderKinshipView } from "../components/kinship-view";
+import { generationOf } from "../../lib/index";
 import { renderDateConverterModal } from "../components/date-converter-modal";
 import { convertSolarToLunar, computeBranchInsights } from "../../lib/index";
 import type { CalendarCell } from "../types";
@@ -269,6 +271,13 @@ function openGioList() {
   renderGioList(modalContainer, state, (person) => onSelectPerson(person));
 }
 
+function openKinship(from: Person) {
+  pushOverlayState();
+  renderKinshipView(modalContainer, state, from, (person) =>
+    onSelectPerson(person),
+  );
+}
+
 function openCreateFamilyForm() {
   pushOverlayState();
   renderFamilyForm(
@@ -325,13 +334,14 @@ function onSelectPerson(person: Person) {
 
   const spouse = personById(person.spouseId);
   const insights = computeBranchInsights(state.getPeople(), person.id);
+  const generation = generationOf(state.getPeople(), person.id);
 
   const close = () => {
     closeDetailPanel(detailContainer);
     backdrop.classList.remove("open");
   };
 
-  renderPersonDetail(detailContainer, person, spouse, insights, {
+  renderPersonDetail(detailContainer, person, spouse, insights, generation, {
     onEdit: (p) => {
       close();
       openEditPersonForm(p);
@@ -351,6 +361,10 @@ function onSelectPerson(person: Person) {
     onReorderChildren: (p) => {
       close();
       openReorderChildren(p);
+    },
+    onKinship: (p) => {
+      close();
+      openKinship(p);
     },
     onCreateGio: (p) => {
       close();
