@@ -107,3 +107,62 @@ create policy invited_read on public.lich_shared_families
         and s.status = 'accepted'
     )
   );
+
+-- --- PR-D: đề xuất chỉnh sửa + duyệt ----------------------------------------
+create table if not exists public.lich_family_suggestions (
+  id             uuid primary key default gen_random_uuid(),
+  family_id      uuid not null references public.lich_shared_families(family_id) on delete cascade,
+  owner_id       uuid not null references auth.users(id) on delete cascade,
+  suggester_name text not null default '',
+  kind           text not null,
+  payload        jsonb not null,
+  status         text not null default 'pending',
+  created_at     timestamptz not null default now()
+);
+
+alter table public.lich_family_suggestions enable row level security;
+
+-- Chủ quản lý (xem/duyệt/xoá) đề xuất gửi tới gia phả của mình.
+drop policy if exists suggestions_owner on public.lich_family_suggestions;
+create policy suggestions_owner on public.lich_family_suggestions
+  for all using (owner_id = auth.uid()) with check (owner_id = auth.uid());
+
+-- Gửi đề xuất: qua RPC security-definer. Cho phép nếu biết token, là chủ, hoặc
+-- là người được mời đã accepted.
+create or replace function public.submit_family_suggestion(
+  p_family_id uuid, p_name text, p_kind text, p_payload jsonb, p_token text default null
+) returns void
+language plpgsql
+security definer
+set search_path = public
+as $$
+declare
+  fam public.lich_shared_families;
+  allowed boolean := false;
+begin
+  select * into fam from public.lich_shared_families where family_id = p_family_id;
+  if not found then
+    raise exception 'family_not_found';
+  end if;
+  if p_token is not null and p_token = fam.share_token then
+    allowed := true;
+  elsif fam.owner_id = auth.uid() then
+    allowed := true;
+  elsif exists (
+    select 1 from public.lich_family_shares s
+    where s.family_id = p_family_id
+      and lower(s.invitee_email) = lower(auth.jwt() ->> 'email')
+      and s.status = 'accepted'
+  ) then
+    allowed := true;
+  end if;
+  if not allowed then
+    raise exception 'not_allowed';
+  end if;
+  insert into public.lich_family_suggestions(family_id, owner_id, suggester_name, kind, payload)
+  values (p_family_id, fam.owner_id, coalesce(p_name, ''), p_kind, p_payload);
+end;
+$$;
+
+grant execute on function public.submit_family_suggestion(uuid, text, text, jsonb, text)
+  to anon, authenticated;

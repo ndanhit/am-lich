@@ -1,6 +1,21 @@
-import type { FamilyTree, Person, SharedSnapshot } from "../../lib/index";
+import type {
+  FamilyTree,
+  Person,
+  SharedSnapshot,
+  SuggestionKind,
+  SuggestionPayload,
+} from "../../lib/index";
 import { buildFamilySnapshot } from "../../lib/index";
 import { supabase } from "./client";
+
+export type SuggestionRow = {
+  id: string;
+  familyId: string;
+  suggesterName: string;
+  kind: SuggestionKind;
+  payload: SuggestionPayload;
+  createdAt: string;
+};
 
 const TABLE = "lich_shared_families";
 
@@ -126,6 +141,54 @@ export class FamilyShareAdapter {
       .maybeSingle();
     if (error) throw new Error(error.message);
     return data ? (data.payload as SharedSnapshot) : null;
+  }
+
+  // --- Đề xuất chỉnh sửa (PR-D) ----------------------------------------------
+
+  static async submitSuggestion(
+    familyId: string,
+    suggesterName: string,
+    kind: SuggestionKind,
+    payload: SuggestionPayload,
+    token?: string,
+  ): Promise<void> {
+    const { error } = await supabase.rpc("submit_family_suggestion", {
+      p_family_id: familyId,
+      p_name: suggesterName,
+      p_kind: kind,
+      p_payload: payload,
+      p_token: token ?? null,
+    });
+    if (error) throw new Error(`Gửi đề xuất thất bại: ${error.message}`);
+  }
+
+  /** Pending suggestions for families owned by the current user. */
+  static async listSuggestions(): Promise<SuggestionRow[]> {
+    const { data, error } = await supabase
+      .from("lich_family_suggestions")
+      .select("id, family_id, suggester_name, kind, payload, created_at")
+      .eq("status", "pending")
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    return (data ?? []).map((r: any) => ({
+      id: r.id,
+      familyId: r.family_id,
+      suggesterName: r.suggester_name,
+      kind: r.kind,
+      payload: r.payload,
+      createdAt: r.created_at,
+    }));
+  }
+
+  static async setSuggestionStatus(
+    id: string,
+    status: "approved" | "rejected",
+  ): Promise<void> {
+    const { error } = await supabase
+      .from("lich_family_suggestions")
+      .update({ status })
+      .eq("id", id);
+    if (error) throw new Error(error.message);
   }
 
   static async unpublishFamily(familyId: string): Promise<void> {

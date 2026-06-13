@@ -50,6 +50,7 @@ import {
   VIETNAMESE_HOLIDAYS,
   isSystemEventId,
 } from "../lib/index";
+import type { SuggestionKind } from "../lib/index";
 import type { StorageAdapter } from "../adapters/storage/local-storage-adapter";
 import type {
   EventFormData,
@@ -692,5 +693,26 @@ export class AppState {
     this.people = reorderSiblings(this.people, parentId, orderedIds);
     this.persistPeople();
     this.notify();
+  }
+
+  /**
+   * Apply an approved suggestion to a specific tree (owner side). Sets the
+   * current tree so new people get the right treeId, then reuses the normal
+   * add/edit logic. Throws if the family/target isn't present locally.
+   */
+  applySuggestion(
+    familyId: string,
+    kind: SuggestionKind,
+    targetId: string,
+    form: PersonFormData,
+  ): void {
+    if (!this.families.some((f) => f.id === familyId)) {
+      throw new Error("Gia phả này không có trên thiết bị hiện tại");
+    }
+    this.currentTreeId = familyId;
+    if (kind === "add_child") this.addChild(targetId, form);
+    else if (kind === "add_spouse") this.addSpouse(targetId, form);
+    else if (kind === "add_parent") this.addParent(targetId, form);
+    else this.editPerson(targetId, form);
   }
 }

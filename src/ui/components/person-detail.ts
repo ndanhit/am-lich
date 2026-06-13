@@ -21,6 +21,8 @@ export type PersonDetailCallbacks = {
   onCreateGio: (person: Person) => void;
   onDelete: (person: Person) => void;
   onClose: () => void;
+  /** Read-only viewers: propose an edit (suggestion). */
+  onSuggest?: (person: Person) => void;
 };
 
 /** Render the family-tree person detail panel (bottom sheet). */
@@ -125,7 +127,8 @@ export function renderPersonDetail(
       <div class="detail-actions detail-actions-wrap">
         ${
           readOnly
-            ? `<button class="btn btn-secondary kinship-btn">Cách xưng hô</button>`
+            ? `<button class="btn btn-secondary kinship-btn">Cách xưng hô</button>
+        ${cb.onSuggest ? `<button class="btn btn-secondary suggest-btn">Đề xuất chỉnh sửa</button>` : ""}`
             : `<button class="btn btn-secondary add-child-btn">Thêm con</button>
         ${spouseBtn}
         ${parentBtn}
@@ -162,6 +165,9 @@ export function renderPersonDetail(
   panel
     .querySelector(".kinship-btn")!
     .addEventListener("click", () => cb.onKinship(person));
+  panel
+    .querySelector(".suggest-btn")
+    ?.addEventListener("click", () => cb.onSuggest?.(person));
   panel
     .querySelector(".gio-btn")
     ?.addEventListener("click", () => cb.onCreateGio(person));

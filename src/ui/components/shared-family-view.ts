@@ -6,7 +6,7 @@ import type {
   QuickMemo,
   FamilyTree,
 } from "../../lib/index";
-import { computeBranchInsights, generationOf } from "../../lib/index";
+import { computeBranchInsights, generationOf, buildPhaKy } from "../../lib/index";
 import type { StorageAdapter } from "../../adapters/storage/local-storage-adapter";
 import { FamilyShareAdapter } from "../../adapters/supabase/family-share-adapter";
 import { AppState } from "../state";
@@ -15,6 +15,10 @@ import { renderPersonDetail, closeDetailPanel } from "./person-detail";
 import { renderSearchPeople } from "./search-people";
 import { renderGioList } from "./gio-list";
 import { renderKinshipView } from "./kinship-view";
+import { renderPersonForm } from "./person-form";
+import { renderPhaKyView } from "./phaky-view";
+import type { PersonFormContext, PersonFormData } from "../types";
+import type { SuggestionKind } from "../../lib/index";
 
 /** In-memory StorageAdapter seeded from a shared snapshot (read-only). */
 class SnapshotAdapter implements StorageAdapter {
@@ -49,12 +53,33 @@ export function renderSnapshotViewer(
   app: HTMLElement,
   snapshot: SharedSnapshot,
   onBack: () => void = () => {},
+  token?: string,
 ): void {
   const state = new AppState(new SnapshotAdapter(snapshot));
   state.setCurrentTree(snapshot.family.id);
+  const familyId = snapshot.family.id;
+
+  const people = snapshot.people;
+  const totalMembers = people.length;
+  const deceasedCount = people.filter((p) => p.isDeceased).length;
+  const phaky = buildPhaKy(people);
+  const generations = phaky.length ? phaky[phaky.length - 1].generation : 0;
+  const fam = snapshot.family;
 
   app.innerHTML = `
-    <div class="shared-banner">Đang xem gia phả được chia sẻ — chỉ đọc</div>
+    <div class="shared-banner no-print">Đang xem gia phả được chia sẻ — chỉ đọc</div>
+    <section class="family-hero" id="shared-hero">
+      <h1 class="family-hero-title">Dòng họ ${escapeHtml(fam.name)}</h1>
+      ${fam.description.trim() ? `<p class="family-hero-desc">${escapeHtml(fam.description)}</p>` : ""}
+      <div class="family-hero-stats">
+        <div class="hero-stat"><span class="hero-stat-num">${generations}</span><span class="hero-stat-label">thế hệ</span></div>
+        <div class="hero-stat"><span class="hero-stat-num">${totalMembers}</span><span class="hero-stat-label">thành viên</span></div>
+        <div class="hero-stat"><span class="hero-stat-num">${deceasedCount}</span><span class="hero-stat-label">đã khuất</span></div>
+      </div>
+      <div class="family-hero-actions no-print">
+        <button class="btn btn-secondary" id="shared-phaky-btn">Phả ký / In</button>
+      </div>
+    </section>
     <main id="shared-view"></main>
     <div id="shared-detail"></div>
     <div id="shared-modal"></div>
@@ -64,6 +89,78 @@ export function renderSnapshotViewer(
   const detail = app.querySelector("#shared-detail") as HTMLElement;
   const modal = app.querySelector("#shared-modal") as HTMLElement;
   const backdrop = app.querySelector("#shared-backdrop") as HTMLElement;
+
+  app
+    .querySelector("#shared-phaky-btn")!
+    .addEventListener("click", () => renderPhaKyView(modal, fam, people));
+
+  const doSuggest = (
+    kind: SuggestionKind,
+    targetId: string,
+    form: PersonFormData,
+  ): void => {
+    let name = localStorage.getItem("am-lich-suggester-name") ?? "";
+    if (!name) {
+      name = (window.prompt("Tên của bạn (người đề xuất):") ?? "").trim();
+      if (name) localStorage.setItem("am-lich-suggester-name", name);
+    }
+    FamilyShareAdapter.submitSuggestion(
+      familyId,
+      name || "Ẩn danh",
+      kind,
+      { kind, targetId, form },
+      token,
+    )
+      .then(() => sharedToast("Đã gửi đề xuất, chờ chủ gia phả duyệt."))
+      .catch((e) => sharedToast(e.message));
+  };
+
+  const openSuggestForm = (context: PersonFormContext, kind: SuggestionKind, targetId: string): void => {
+    renderPersonForm(
+      modal,
+      context,
+      (form) => doSuggest(kind, targetId, form),
+      () => {},
+      () => {},
+    );
+  };
+
+  const openSuggest = (person: Person): void => {
+    const opts: Array<{ label: string; run: () => void }> = [];
+    opts.push({
+      label: "Đề xuất thêm con",
+      run: () =>
+        openSuggestForm({ mode: "addChild", targetName: person.name }, "add_child", person.id),
+    });
+    if (
+      !person.isMarriedIn &&
+      (person.gender === "male" || person.gender === "female") &&
+      person.spouseId == null
+    ) {
+      const lockedGender = person.gender === "male" ? "female" : "male";
+      opts.push({
+        label: person.gender === "male" ? "Đề xuất thêm vợ" : "Đề xuất thêm chồng",
+        run: () =>
+          openSuggestForm(
+            { mode: "addSpouse", targetName: person.name, lockedGender },
+            "add_spouse",
+            person.id,
+          ),
+      });
+    }
+    if (!person.isMarriedIn && person.parentId == null) {
+      opts.push({
+        label: "Đề xuất thêm cha/mẹ",
+        run: () =>
+          openSuggestForm({ mode: "addParent", targetName: person.name }, "add_parent", person.id),
+      });
+    }
+    opts.push({
+      label: "Đề xuất sửa thông tin",
+      run: () => openSuggestForm({ mode: "edit", person }, "edit", person.id),
+    });
+    renderActionSheet(modal, `Đề xuất cho ${person.name}`, opts);
+  };
 
   const openDetail = (person: Person): void => {
     backdrop.classList.add("open");
@@ -90,6 +187,10 @@ export function renderSnapshotViewer(
       onCreateGio: () => {},
       onDelete: () => {},
       onClose: close,
+      onSuggest: (p) => {
+        close();
+        openSuggest(p);
+      },
     });
   };
   backdrop.addEventListener("click", () => {
@@ -144,7 +245,7 @@ export function renderSharedFamilyView(
         err.textContent = "Mật khẩu không đúng.";
         return;
       }
-      renderSnapshotViewer(app, res.snapshot);
+      renderSnapshotViewer(app, res.snapshot, () => {}, route.token);
     };
     app.querySelector("#shared-pass-go")!.addEventListener("click", go);
     input.addEventListener("keydown", (e) => {
@@ -160,10 +261,68 @@ export function renderSharedFamilyView(
       } else if ("passwordRequired" in res) {
         askPassword();
       } else {
-        renderSnapshotViewer(app, res.snapshot);
+        renderSnapshotViewer(app, res.snapshot, () => {}, route.token);
       }
     })
     .catch((e) => showError(e.message));
+}
+
+/** Minimal toast for the standalone shared view (no app shell). */
+function sharedToast(msg: string): void {
+  const el = document.createElement("div");
+  el.className = "toast show";
+  el.textContent = msg;
+  el.style.position = "fixed";
+  el.style.left = "50%";
+  el.style.bottom = "24px";
+  el.style.transform = "translateX(-50%)";
+  el.style.zIndex = "3000";
+  document.body.appendChild(el);
+  setTimeout(() => el.remove(), 3000);
+}
+
+/** A simple choice sheet rendered as a modal. */
+function renderActionSheet(
+  container: HTMLElement,
+  title: string,
+  options: Array<{ label: string; run: () => void }>,
+): void {
+  const overlay = document.createElement("div");
+  overlay.className = "modal-overlay open";
+  overlay.innerHTML = `
+    <div class="modal-content">
+      <div class="modal-header">
+        <button class="close-btn" id="sheet-close" aria-label="Đóng">
+          <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+            <line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line>
+          </svg>
+        </button>
+        <div class="modal-title-text">${escapeHtml(title)}</div>
+      </div>
+      <div class="modal-body">
+        <div class="detail-actions detail-actions-wrap" id="sheet-opts"></div>
+      </div>
+    </div>`;
+  container.appendChild(overlay);
+  const close = (): void => {
+    overlay.classList.remove("open");
+    setTimeout(() => overlay.remove(), 300);
+  };
+  const list = overlay.querySelector("#sheet-opts") as HTMLElement;
+  for (const opt of options) {
+    const btn = document.createElement("button");
+    btn.className = "btn btn-secondary";
+    btn.textContent = opt.label;
+    btn.addEventListener("click", () => {
+      close();
+      opt.run();
+    });
+    list.appendChild(btn);
+  }
+  overlay.querySelector("#sheet-close")!.addEventListener("click", close);
+  overlay.addEventListener("click", (e) => {
+    if (e.target === overlay) close();
+  });
 }
 
 function escapeHtml(str: string): string {
