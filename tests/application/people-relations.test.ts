@@ -15,6 +15,7 @@ function person(overrides: Partial<Person> = {}): Person {
     birthDate: null,
     isDeceased: false,
     deathDate: null,
+    treeId: "t1",
     isMarriedIn: false,
     parentId: null,
     spouseId: null,

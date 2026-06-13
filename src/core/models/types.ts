@@ -73,6 +73,7 @@ export type ExportPayload = {
   events: LunarEvent[];
   memos?: QuickMemo[];
   people?: Person[];
+  families?: FamilyTree[];
   settings?: ExportSettings;
 };
 
@@ -115,6 +116,7 @@ export type Gender = "male" | "female" | "other";
  */
 export type Person = {
   id: string;
+  treeId: string;
   name: string;
   gender: Gender;
   birthDate: PartialDate | null;
@@ -125,6 +127,15 @@ export type Person = {
   parentId: string | null;
   spouseId: string | null;
   notes: string;
+  createdAt: number;
+  updatedAt: number;
+};
+
+/** A named family tree (gia phả) — a container for a set of people. */
+export type FamilyTree = {
+  id: string;
+  name: string;
+  description: string;
   createdAt: number;
   updatedAt: number;
 };

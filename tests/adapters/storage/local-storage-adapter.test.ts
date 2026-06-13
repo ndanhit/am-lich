@@ -132,6 +132,7 @@ function person(overrides: Partial<Person> = {}): Person {
     birthDate: { year: 1950, month: 1, day: 1 },
     isDeceased: false,
     deathDate: null,
+    treeId: "t1",
     isMarriedIn: false,
     parentId: null,
     spouseId: null,
@@ -163,6 +164,34 @@ describe("LocalStorageAdapter — people (gia phả)", () => {
     const a = new LocalStorageAdapter();
     (mem as any).failNextSet = true;
     expect(() => a.savePeople([person()])).toThrow(/storage may be full/);
+  });
+});
+
+describe("LocalStorageAdapter — family trees", () => {
+  const fam = {
+    id: "f1",
+    name: "Họ Nguyễn",
+    description: "",
+    createdAt: 1,
+    updatedAt: 1,
+  };
+
+  it("loadFamilyTrees returns [] when key missing", () => {
+    expect(new LocalStorageAdapter().loadFamilyTrees()).toEqual([]);
+  });
+
+  it("saveFamilyTrees + loadFamilyTrees roundtrip", () => {
+    const a = new LocalStorageAdapter();
+    a.saveFamilyTrees([fam]);
+    expect(a.loadFamilyTrees()).toEqual([fam]);
+  });
+
+  it("uses an isolated key from people", () => {
+    const a = new LocalStorageAdapter();
+    a.savePeople([person({ id: "x" })]);
+    a.saveFamilyTrees([fam]);
+    expect(a.loadFamilyTrees()).toHaveLength(1);
+    expect(a.loadPeople()).toHaveLength(1);
   });
 });
 

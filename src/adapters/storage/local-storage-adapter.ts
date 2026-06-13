@@ -1,4 +1,4 @@
-import type { LunarEvent, QuickMemo, Person } from "../../lib/index";
+import type { LunarEvent, QuickMemo, Person, FamilyTree } from "../../lib/index";
 
 /**
  * Storage adapter interface — abstracts persistence.
@@ -21,12 +21,17 @@ export interface StorageAdapter {
   loadPeople(): Person[];
   /** Replaces all people in storage. Throws on write failure. */
   savePeople(people: Person[]): void;
+  /** Loads all stored family trees (gia phả). Returns [] if none or on failure. */
+  loadFamilyTrees(): FamilyTree[];
+  /** Replaces all family trees in storage. Throws on write failure. */
+  saveFamilyTrees(families: FamilyTree[]): void;
 }
 
 const STORAGE_KEY = "am-lich-events";
 const MEMOS_STORAGE_KEY = "am-lich-memos";
 const HIDDEN_SYSTEM_EVENTS_KEY = "am-lich-hidden-system-events";
 const PEOPLE_STORAGE_KEY = "am-lich-people";
+const FAMILIES_STORAGE_KEY = "am-lich-family-trees";
 
 /**
  * LocalStorage implementation of StorageAdapter.
@@ -65,6 +70,14 @@ export class LocalStorageAdapter implements StorageAdapter {
 
   savePeople(people: Person[]): void {
     writeArray(PEOPLE_STORAGE_KEY, people);
+  }
+
+  loadFamilyTrees(): FamilyTree[] {
+    return readArray<FamilyTree>(FAMILIES_STORAGE_KEY);
+  }
+
+  saveFamilyTrees(families: FamilyTree[]): void {
+    writeArray(FAMILIES_STORAGE_KEY, families);
   }
 }
 

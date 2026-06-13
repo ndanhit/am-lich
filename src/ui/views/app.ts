@@ -12,6 +12,8 @@ import { renderDayDetailModal } from "../components/day-detail-modal";
 import { renderMemoForm } from "../components/memo-form";
 import { renderMemoList } from "../components/memo-list";
 import { renderFamilyTree } from "../components/family-tree";
+import { renderFamilyList } from "../components/family-list";
+import { renderFamilyForm } from "../components/family-form";
 import { renderPersonForm } from "../components/person-form";
 import { renderPersonDetail } from "../components/person-detail";
 import { renderDateConverterModal } from "../components/date-converter-modal";
@@ -24,6 +26,7 @@ import type {
   SolarDate,
   QuickMemo,
   Person,
+  FamilyTree,
 } from "../../lib/index";
 
 // --- Year Boundary Constants (F1) ---
@@ -231,7 +234,69 @@ function renderMemoView() {
 }
 
 function renderFamilyView() {
-  renderFamilyTree(viewContainer, state, onSelectPerson, openCreateRootForm);
+  const family = state.getCurrentFamily();
+  if (state.getCurrentTreeId() == null || family == null) {
+    renderFamilyList(viewContainer, state, {
+      onOpen: (f) => state.setCurrentTree(f.id),
+      onCreate: openCreateFamilyForm,
+      onEdit: openEditFamilyForm,
+      onDelete: onFamilyDeleteRequest,
+    });
+    return;
+  }
+  renderFamilyTree(
+    viewContainer,
+    state,
+    family,
+    onSelectPerson,
+    openCreateRootForm,
+    () => state.setCurrentTree(null),
+  );
+}
+
+function openCreateFamilyForm() {
+  pushOverlayState();
+  renderFamilyForm(
+    modalContainer,
+    null,
+    (data) => state.createFamily(data),
+    () => {
+      renderCurrentView();
+      showToast("Đã tạo gia phả", "success");
+    },
+    () => {
+      /* cancel */
+    },
+  );
+}
+
+function openEditFamilyForm(family: FamilyTree) {
+  pushOverlayState();
+  renderFamilyForm(
+    modalContainer,
+    family,
+    (data) => state.editFamily(family.id, data),
+    () => {
+      renderCurrentView();
+      showToast("Đã cập nhật gia phả", "success");
+    },
+    () => {
+      /* cancel */
+    },
+  );
+}
+
+async function onFamilyDeleteRequest(family: FamilyTree) {
+  const count = state.countPeopleInTree(family.id);
+  const message =
+    count > 0
+      ? `Xóa gia phả "${family.name}" sẽ xóa luôn ${count} thành viên. Tiếp tục?`
+      : `Bạn có chắc chắn muốn xóa gia phả "${family.name}"?`;
+  if (await showConfirm("Xóa gia phả", message)) {
+    state.deleteFamily(family.id);
+    renderCurrentView();
+    showToast("Đã xóa gia phả", "success");
+  }
 }
 
 function personById(id: string | null): Person | null {
@@ -704,9 +769,11 @@ document.getElementById("add-event-btn")!.addEventListener("click", () => {
   if (currentView === "memo") {
     openCreateMemoForm();
   } else if (currentView === "family") {
-    // Only the first (root) person can be added freely; afterwards every
-    // addition must start from an existing node's detail modal.
-    if (state.getPeople().length === 0) {
+    if (state.getCurrentTreeId() == null) {
+      // In the family list → create a new tree.
+      openCreateFamilyForm();
+    } else if (state.getPeople().length === 0) {
+      // Empty tree → add its first (root) person.
       openCreateRootForm();
     } else {
       showToast("Chọn một người trên cây để thêm quan hệ", "warning");

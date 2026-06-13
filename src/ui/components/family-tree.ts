@@ -1,4 +1,4 @@
-import type { Person, FamilyTreeNode } from "../../lib/index";
+import type { Person, FamilyTreeNode, FamilyTree } from "../../lib/index";
 import { countDescendants, collectCollapsibleIds } from "../../lib/index";
 import { GENDER_LABELS } from "../types";
 import type { AppState } from "../state";
@@ -10,17 +10,28 @@ const AUTO_COLLAPSE_FROM_DEPTH = 2; // collapse generations at depth >= 2 (show 
 
 // Session-only view state (persists across re-renders, not across reloads).
 let zoomLevel = 1;
-const collapsedIds = new Set<string>();
+let collapsedIds = new Set<string>();
 let collapseInitialized = false;
+let lastTreeId: string | null = null;
 
 /** Render the family-tree (gia phả) view as a top-down genealogy chart. */
 export function renderFamilyTree(
   container: HTMLElement,
   state: AppState,
+  family: FamilyTree,
   onSelect: (person: Person) => void,
   onCreate: () => void,
+  onBack: () => void,
 ): void {
   container.innerHTML = "";
+
+  // Reset view state when switching to a different tree.
+  if (family.id !== lastTreeId) {
+    lastTreeId = family.id;
+    zoomLevel = 1;
+    collapsedIds = new Set<string>();
+    collapseInitialized = false;
+  }
 
   const section = document.createElement("div");
   section.className = "family-tree";
@@ -29,9 +40,13 @@ export function renderFamilyTree(
 
   if (roots.length === 0) {
     collapseInitialized = false;
-    const h2 = document.createElement("h2");
-    h2.textContent = "Gia phả";
-    section.appendChild(h2);
+    const backHeader = document.createElement("div");
+    backHeader.className = "family-tree-header";
+    backHeader.innerHTML = `<button class="tree-back-btn" id="tree-back">← ${escapeHtml(family.name)}</button>`;
+    backHeader
+      .querySelector("#tree-back")!
+      .addEventListener("click", () => onBack());
+    section.appendChild(backHeader);
     const empty = document.createElement("div");
     empty.className = "empty-state";
     empty.innerHTML = `
@@ -67,7 +82,7 @@ export function renderFamilyTree(
   const header = document.createElement("div");
   header.className = "family-tree-header";
   header.innerHTML = `
-    <h2>Gia phả</h2>
+    <button class="tree-back-btn" id="tree-back" title="Danh sách gia phả">← ${escapeHtml(family.name)}</button>
     <div class="tree-controls">
       <button class="tree-ctrl-btn" id="collapse-all" title="Thu gọn tất cả" aria-label="Thu gọn tất cả">⊟</button>
       <button class="tree-ctrl-btn" id="expand-all" title="Mở tất cả" aria-label="Mở tất cả">⊞</button>
@@ -83,6 +98,8 @@ export function renderFamilyTree(
   scroll.className = "tree-scroll";
   section.appendChild(scroll);
   container.appendChild(section);
+
+  header.querySelector("#tree-back")!.addEventListener("click", () => onBack());
 
   const label = header.querySelector("#zoom-fit") as HTMLElement;
 

@@ -68,6 +68,12 @@ export type PersonFormContext =
   | { mode: "addSpouse"; targetName: string; lockedGender: Gender }
   | { mode: "addParent"; targetName: string };
 
+/** DTO for the create/edit family-tree (gia phả) form */
+export type FamilyFormData = {
+  name: string;
+  description: string;
+};
+
 /** Active view in the app */
 export type AppView = "calendar" | "upcoming" | "memo" | "family";
 
