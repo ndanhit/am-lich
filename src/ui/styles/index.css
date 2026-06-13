@@ -1839,6 +1839,46 @@ textarea:focus {
   gap: var(--space-1);
 }
 
+/* Cách xưng hô modal */
+.kin-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  max-height: 55vh;
+  overflow-y: auto;
+}
+
+.kin-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-2) var(--space-3);
+  border: none;
+  background: var(--color-surface-hover, #f3f4f6);
+  border-radius: var(--radius-lg, 12px);
+  cursor: pointer;
+  text-align: left;
+  width: 100%;
+}
+
+.kin-name {
+  min-width: 0;
+  font-weight: 600;
+}
+
+.kin-gender {
+  font-size: var(--font-size-xs, 11px);
+  font-weight: 500;
+  color: var(--color-text-secondary);
+}
+
+.kin-term {
+  flex-shrink: 0;
+  font-weight: 700;
+  color: var(--color-primary, #5b52e6);
+}
+
 /* Lịch giỗ modal */
 .gio-list {
   display: flex;
