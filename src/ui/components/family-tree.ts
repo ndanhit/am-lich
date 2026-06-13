@@ -25,6 +25,7 @@ export function renderFamilyTree(
   onCreate: () => void,
   onBack: () => void,
   onSearch: () => void,
+  onGio: () => void,
 ): void {
   container.innerHTML = "";
 
@@ -92,6 +93,12 @@ export function renderFamilyTree(
           <circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
         </svg>
       </button>
+      <button class="tree-ctrl-btn" id="tree-gio" title="Lịch giỗ" aria-label="Lịch giỗ">
+        <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M12 2C8 6 8 10 12 14c4-4 4-8 0-12z"></path>
+          <path d="M6 14a6 6 0 0 0 12 0c0-2-1-4-3-6"></path>
+        </svg>
+      </button>
       <button class="tree-ctrl-btn tree-orient-btn" id="tree-orient"></button>
     </div>
   `;
@@ -118,6 +125,7 @@ export function renderFamilyTree(
 
   header.querySelector("#tree-back")!.addEventListener("click", () => onBack());
   header.querySelector("#tree-search")!.addEventListener("click", () => onSearch());
+  header.querySelector("#tree-gio")!.addEventListener("click", () => onGio());
 
   // Orientation toggle (xem ngang / xem dọc).
   const orientBtn = header.querySelector("#tree-orient") as HTMLElement;

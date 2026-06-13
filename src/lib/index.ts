@@ -165,6 +165,8 @@ export type {
   SearchFilters,
   PersonStatusFilter,
 } from "../application/people/search";
+export { buildGioEvents, getUpcomingGio } from "../application/people/gio";
+export type { GioOccurrence } from "../application/people/gio";
 export {
   addFamily,
   updateFamily,
