@@ -168,6 +168,13 @@ export type {
 export { buildGioEvents, getUpcomingGio } from "../application/people/gio";
 export type { GioOccurrence } from "../application/people/gio";
 export { generationOf, kinshipTerm } from "../application/people/kinship";
+export { buildFamilySnapshot } from "../application/sharing/snapshot";
+export type {
+  SharedSnapshot,
+  SnapshotOptions,
+} from "../application/sharing/snapshot";
+export { buildShareHash, parseShareHash } from "../application/sharing/share-link";
+export type { ShareLinkParts } from "../application/sharing/share-link";
 export {
   addFamily,
   updateFamily,

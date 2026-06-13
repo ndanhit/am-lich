@@ -1839,6 +1839,20 @@ textarea:focus {
   gap: var(--space-1);
 }
 
+/* Share family modal */
+.share-link-row {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.share-link-row input {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--font-size-xs, 11px);
+  color: var(--color-text-secondary);
+}
+
 /* Cách xưng hô modal */
 .kin-list {
   display: flex;

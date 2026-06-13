@@ -20,6 +20,8 @@ import { renderReorderChildren } from "../components/reorder-children";
 import { renderSearchPeople } from "../components/search-people";
 import { renderGioList } from "../components/gio-list";
 import { renderKinshipView } from "../components/kinship-view";
+import { renderShareFamilyModal } from "../components/share-family-modal";
+import { showLoginModal } from "../components/auth-modals";
 import { generationOf } from "../../lib/index";
 import { renderDateConverterModal } from "../components/date-converter-modal";
 import { convertSolarToLunar, computeBranchInsights } from "../../lib/index";
@@ -246,6 +248,7 @@ function renderFamilyView() {
       onCreate: openCreateFamilyForm,
       onEdit: openEditFamilyForm,
       onDelete: onFamilyDeleteRequest,
+      onShare: openShareFamily,
     });
     return;
   }
@@ -275,6 +278,17 @@ function openKinship(from: Person) {
   pushOverlayState();
   renderKinshipView(modalContainer, state, from, (person) =>
     onSelectPerson(person),
+  );
+}
+
+function openShareFamily(family: FamilyTree) {
+  pushOverlayState();
+  renderShareFamilyModal(
+    modalContainer,
+    family,
+    state.getPeopleOfTree(family.id),
+    showToast,
+    (onSuccess) => showLoginModal(modalContainer, showToast, onSuccess),
   );
 }
 

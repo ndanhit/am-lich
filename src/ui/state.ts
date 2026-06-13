@@ -511,6 +511,11 @@ export class AppState {
     return this.people.filter((p) => p.treeId === treeId).length;
   }
 
+  /** All people belonging to a given tree (any tree, not just the current one). */
+  getPeopleOfTree(treeId: string): Person[] {
+    return this.people.filter((p) => p.treeId === treeId);
+  }
+
   createFamily(form: FamilyFormData): void {
     validateFamilyParams(form.name);
     const now = Date.now();
