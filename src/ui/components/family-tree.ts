@@ -281,7 +281,9 @@ function renderNode(node: FamilyTreeNode, cb: NodeCallbacks): HTMLElement {
     link.className = "tree-couple-link";
     link.textContent = "⚭";
     couple.appendChild(link);
-    couple.appendChild(makeBox(spouse, cb));
+    const spouseBox = makeBox(spouse, cb);
+    spouseBox.classList.add("tree-spouse-box");
+    couple.appendChild(spouseBox);
   }
 
   li.appendChild(couple);
