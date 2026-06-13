@@ -31,6 +31,7 @@ function person(overrides: Partial<Person> = {}): Person {
     isDeceased: false,
     deathDate: null,
     isMarriedIn: false,
+    order: 0,
     parentId: null,
     spouseId: null,
     notes: "",

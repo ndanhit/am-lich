@@ -17,6 +17,7 @@ function person(overrides: Partial<Person> = {}): Person {
     deathDate: null,
     treeId: "t1",
     isMarriedIn: false,
+    order: 0,
     parentId: null,
     spouseId: null,
     notes: "",
@@ -101,6 +102,36 @@ describe("buildFamilyTree", () => {
     const b = person({ id: "b", birthDate: birth(1950) });
     const roots = buildFamilyTree([a, b]);
     expect(roots.map((n) => n.person.id)).toEqual(["b", "a"]);
+  });
+
+  it("sorts siblings by manual order, overriding birth date", () => {
+    const parent = person({ id: "p" });
+    // 'younger' is set to come first via order despite a later birth year.
+    const younger = person({
+      id: "younger",
+      parentId: "p",
+      birthDate: birth(2010),
+      order: 0,
+    });
+    const older = person({
+      id: "older",
+      parentId: "p",
+      birthDate: birth(1990),
+      order: 1,
+    });
+    const roots = buildFamilyTree([parent, younger, older]);
+    expect(roots[0].children.map((c) => c.person.id)).toEqual([
+      "younger",
+      "older",
+    ]);
+  });
+
+  it("falls back to birth date when sibling order ties", () => {
+    const parent = person({ id: "p" });
+    const a = person({ id: "a", parentId: "p", birthDate: birth(2000), order: 0 });
+    const b = person({ id: "b", parentId: "p", birthDate: birth(1990), order: 0 });
+    const roots = buildFamilyTree([parent, a, b]);
+    expect(roots[0].children.map((c) => c.person.id)).toEqual(["b", "a"]);
   });
 
   it("sorts siblings by partial birth dates (year, then month, then day)", () => {

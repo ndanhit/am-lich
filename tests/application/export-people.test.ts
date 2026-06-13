@@ -15,6 +15,7 @@ function person(overrides: Partial<Person> = {}): Person {
     deathDate: null,
     treeId: "t1",
     isMarriedIn: false,
+    order: 0,
     parentId: null,
     spouseId: null,
     notes: "Ghi chú",
@@ -139,6 +140,14 @@ describe("validateImportPayload with people", () => {
     const parsed = validateImportPayload(json);
     expect(parsed.people![0].isDeceased).toBe(true);
     expect(parsed.people![0].deathDate).toBeNull();
+  });
+
+  it("round-trips sibling order and defaults to 0 when missing", () => {
+    const withOrder = payloadJson([person({ order: 3 })]);
+    expect(validateImportPayload(withOrder).people![0].order).toBe(3);
+
+    const legacy = payloadJson([{ ...person(), order: undefined }]);
+    expect(validateImportPayload(legacy).people![0].order).toBe(0);
   });
 
   it("round-trips isMarriedIn and defaults to false when missing", () => {

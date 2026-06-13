@@ -126,6 +126,8 @@ export type Person = {
   isMarriedIn: boolean;
   parentId: string | null;
   spouseId: string | null;
+  /** Sibling order key (smaller = older = leftmost on the tree). */
+  order: number;
   notes: string;
   createdAt: number;
   updatedAt: number;

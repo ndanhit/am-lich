@@ -140,6 +140,7 @@ export function validateImportPayload(jsonPayload: string): ExportPayload {
         typeof p.isMarriedIn === "boolean" ? p.isMarriedIn : false;
       // Backward-compat: people without a treeId are migrated on import.
       const treeId = typeof p.treeId === "string" ? p.treeId : "";
+      const order = typeof p.order === "number" ? p.order : 0;
       return {
         id: p.id,
         treeId,
@@ -151,6 +152,7 @@ export function validateImportPayload(jsonPayload: string): ExportPayload {
         isMarriedIn,
         parentId: p.parentId,
         spouseId: p.spouseId,
+        order,
         notes: p.notes,
         createdAt: p.createdAt,
         updatedAt: p.updatedAt,
