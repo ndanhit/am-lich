@@ -7,6 +7,7 @@ import {
   QuickMemo,
   Person,
   PartialDate,
+  FamilyTree,
 } from "../../core/models/types";
 import { validateEventCreationParams } from "../../core/rules/leap-month";
 import { isValidGender } from "../people/crud";
@@ -137,8 +138,11 @@ export function validateImportPayload(jsonPayload: string): ExportPayload {
         typeof p.isDeceased === "boolean" ? p.isDeceased : deathDate !== null;
       const isMarriedIn =
         typeof p.isMarriedIn === "boolean" ? p.isMarriedIn : false;
+      // Backward-compat: people without a treeId are migrated on import.
+      const treeId = typeof p.treeId === "string" ? p.treeId : "";
       return {
         id: p.id,
+        treeId,
         name: p.name,
         gender: p.gender,
         birthDate,
@@ -150,6 +154,30 @@ export function validateImportPayload(jsonPayload: string): ExportPayload {
         notes: p.notes,
         createdAt: p.createdAt,
         updatedAt: p.updatedAt,
+      };
+    });
+  }
+
+  // Optional families (gia phả containers) — older exports won't have them
+  let validatedFamilies: FamilyTree[] | undefined;
+  if (raw.families !== undefined) {
+    if (!Array.isArray(raw.families)) {
+      throw new Error("Payload families must be an array");
+    }
+    validatedFamilies = raw.families.map((f: any) => {
+      if (!f.id || typeof f.id !== "string")
+        throw new Error("Invalid family ID");
+      if (!f.name || typeof f.name !== "string")
+        throw new Error("Invalid family name");
+      if (typeof f.createdAt !== "number" || typeof f.updatedAt !== "number") {
+        throw new Error("Invalid family timestamps");
+      }
+      return {
+        id: f.id,
+        name: f.name,
+        description: typeof f.description === "string" ? f.description : "",
+        createdAt: f.createdAt,
+        updatedAt: f.updatedAt,
       };
     });
   }
@@ -179,6 +207,7 @@ export function validateImportPayload(jsonPayload: string): ExportPayload {
     events: validatedEvents,
     ...(validatedMemos !== undefined ? { memos: validatedMemos } : {}),
     ...(validatedPeople !== undefined ? { people: validatedPeople } : {}),
+    ...(validatedFamilies !== undefined ? { families: validatedFamilies } : {}),
     ...(validatedSettings !== undefined ? { settings: validatedSettings } : {}),
   };
 }
@@ -207,6 +236,7 @@ export function generateExportPayload(
   memos?: QuickMemo[],
   hiddenSystemEventIds?: string[],
   people?: Person[],
+  families?: FamilyTree[],
 ): ExportPayload {
   const settings: ExportSettings | undefined =
     hiddenSystemEventIds && hiddenSystemEventIds.length > 0
@@ -219,6 +249,7 @@ export function generateExportPayload(
     events,
     ...(memos !== undefined ? { memos } : {}),
     ...(people !== undefined ? { people } : {}),
+    ...(families !== undefined ? { families } : {}),
     ...(settings !== undefined ? { settings } : {}),
   };
 }

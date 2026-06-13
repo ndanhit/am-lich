@@ -154,6 +154,15 @@ export {
 } from "../application/people/relations";
 export { computeBranchInsights } from "../application/people/insights";
 export type { BranchInsights } from "../application/people/insights";
+export {
+  addFamily,
+  updateFamily,
+  removeFamily,
+  removeTreePeople,
+  importFamilies,
+  validateFamilyParams,
+  migratePeople,
+} from "../application/families/crud";
 export { validateEventCreationParams } from "../core/rules/leap-month";
 export {
   VIETNAMESE_HOLIDAYS,
@@ -175,4 +184,5 @@ export type {
   Gender,
   FamilyTreeNode,
   PartialDate,
+  FamilyTree,
 } from "../core/models/types";

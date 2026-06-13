@@ -8,6 +8,7 @@ import type {
   QuickMemo,
   GroupedMemos,
   Person,
+  FamilyTree,
   FamilyTreeNode,
 } from "../core/models/types";
 import {
@@ -35,11 +36,23 @@ import {
   attachSpouse,
   attachParent,
   removePersonCascade,
+  addFamily,
+  updateFamily,
+  removeFamily,
+  removeTreePeople,
+  importFamilies,
+  validateFamilyParams,
+  migratePeople,
   VIETNAMESE_HOLIDAYS,
   isSystemEventId,
 } from "../lib/index";
 import type { StorageAdapter } from "../adapters/storage/local-storage-adapter";
-import type { EventFormData, MemoFormData, PersonFormData } from "./types";
+import type {
+  EventFormData,
+  MemoFormData,
+  PersonFormData,
+  FamilyFormData,
+} from "./types";
 
 export type StateListener = () => void;
 
@@ -52,6 +65,8 @@ export class AppState {
   private events: LunarEvent[] = [];
   private memos: QuickMemo[] = [];
   private people: Person[] = [];
+  private families: FamilyTree[] = [];
+  private currentTreeId: string | null = null;
   private hiddenSystemEventIds: Set<string> = new Set();
   private listeners: StateListener[] = [];
   private adapter: StorageAdapter;
@@ -62,7 +77,19 @@ export class AppState {
     this.events = adapter.load();
     this.memos = adapter.loadMemos();
     this.people = adapter.loadPeople();
+    this.families = adapter.loadFamilyTrees();
     this.hiddenSystemEventIds = new Set(adapter.loadHiddenSystemEventIds());
+
+    // Backward-compat: assign legacy people (no treeId) to a default tree.
+    const migrated = migratePeople(this.people, this.families, () =>
+      this.makeDefaultTree(),
+    );
+    this.people = migrated.people;
+    this.families = migrated.families;
+    if (migrated.changed) {
+      this.persistPeople();
+      this.persistFamilies();
+    }
     // Detect if data was empty due to corruption
     const raw = localStorage.getItem("am-lich-events");
     if (raw && this.events.length === 0) {
@@ -129,6 +156,28 @@ export class AppState {
       }
       throw err;
     }
+  }
+
+  private persistFamilies(): void {
+    try {
+      this.adapter.saveFamilyTrees(this.families);
+    } catch (err: any) {
+      if (err?.name === "QuotaExceededError" || err?.code === 22) {
+        throw new Error("Failed to save — storage may be full");
+      }
+      throw err;
+    }
+  }
+
+  private makeDefaultTree(): FamilyTree {
+    const now = Date.now();
+    return {
+      id: crypto.randomUUID(),
+      name: "Gia phả của tôi",
+      description: "",
+      createdAt: now,
+      updatedAt: now,
+    };
   }
 
   private persistHiddenSystemEvents(): void {
@@ -236,6 +285,7 @@ export class AppState {
       this.memos,
       Array.from(this.hiddenSystemEventIds),
       this.people,
+      this.families,
     );
     return JSON.stringify(payload, null, 2);
   }
@@ -288,6 +338,8 @@ export class AppState {
       this.events = [];
       this.memos = [];
       this.people = [];
+      this.families = [];
+      this.currentTreeId = null;
       this.hiddenSystemEventIds = new Set();
     }
 
@@ -314,9 +366,20 @@ export class AppState {
       this.memos = importMemos(this.memos, payload.memos);
     }
 
+    if (payload.families && payload.families.length > 0) {
+      this.families = importFamilies(this.families, payload.families);
+    }
+
     if (payload.people && payload.people.length > 0) {
       this.people = importPeople(this.people, payload.people);
     }
+
+    // Assign any imported people lacking a treeId to a tree (backward-compat).
+    const migrated = migratePeople(this.people, this.families, () =>
+      this.makeDefaultTree(),
+    );
+    this.people = migrated.people;
+    this.families = migrated.families;
 
     if (payload.settings?.hiddenSystemEventIds) {
       for (const id of payload.settings.hiddenSystemEventIds) {
@@ -331,6 +394,7 @@ export class AppState {
     this.persist();
     this.persistMemos();
     this.persistPeople();
+    this.persistFamilies();
     this.persistHiddenSystemEvents();
     this.notify();
 
@@ -414,14 +478,79 @@ export class AppState {
     this.notify();
   }
 
+  // ---- Family containers (nhiều gia phả) ----
+
+  getFamilies(): FamilyTree[] {
+    return this.families;
+  }
+
+  getCurrentTreeId(): string | null {
+    return this.currentTreeId;
+  }
+
+  getCurrentFamily(): FamilyTree | null {
+    return this.families.find((f) => f.id === this.currentTreeId) ?? null;
+  }
+
+  setCurrentTree(id: string | null): void {
+    this.currentTreeId = id;
+    this.notify();
+  }
+
+  countPeopleInTree(treeId: string): number {
+    return this.people.filter((p) => p.treeId === treeId).length;
+  }
+
+  createFamily(form: FamilyFormData): void {
+    validateFamilyParams(form.name);
+    const now = Date.now();
+    const newFamily: FamilyTree = {
+      id: crypto.randomUUID(),
+      name: form.name.trim().slice(0, 100),
+      description: (form.description ?? "").trim().slice(0, 500),
+      createdAt: now,
+      updatedAt: now,
+    };
+    this.families = addFamily(this.families, newFamily);
+    this.persistFamilies();
+    this.currentTreeId = newFamily.id; // auto-open the new tree
+    this.notify();
+  }
+
+  editFamily(id: string, form: FamilyFormData): void {
+    validateFamilyParams(form.name);
+    const existing = this.families.find((f) => f.id === id);
+    if (!existing) throw new Error(`Family ${id} not found`);
+    const updated: FamilyTree = {
+      ...existing,
+      name: form.name.trim().slice(0, 100),
+      description: (form.description ?? "").trim().slice(0, 500),
+      updatedAt: Date.now(),
+    };
+    this.families = updateFamily(this.families, updated);
+    this.persistFamilies();
+    this.notify();
+  }
+
+  deleteFamily(id: string): void {
+    this.families = removeFamily(this.families, id);
+    this.people = removeTreePeople(this.people, id);
+    if (this.currentTreeId === id) this.currentTreeId = null;
+    this.persistFamilies();
+    this.persistPeople();
+    this.notify();
+  }
+
   // ---- Family Tree (Gia phả) API ----
 
+  /** People of the currently-open tree (empty when none is open). */
   getPeople(): Person[] {
-    return this.people;
+    if (this.currentTreeId == null) return [];
+    return this.people.filter((p) => p.treeId === this.currentTreeId);
   }
 
   getFamilyTree(): FamilyTreeNode[] {
-    return buildFamilyTree(this.people);
+    return buildFamilyTree(this.getPeople());
   }
 
   private toPartialDate(
@@ -436,9 +565,13 @@ export class AppState {
     const birthDate = this.toPartialDate(form.birthDate);
     const deathDate = form.isDeceased ? this.toPartialDate(form.deathDate) : null;
     validatePersonCreationParams(form.name, birthDate, deathDate);
+    if (this.currentTreeId == null) {
+      throw new Error("Chưa chọn gia phả");
+    }
     const now = Date.now();
     return {
       id: crypto.randomUUID(),
+      treeId: this.currentTreeId,
       name: form.name.trim().slice(0, 100),
       gender: form.gender,
       birthDate,

@@ -13,6 +13,7 @@ function person(overrides: Partial<Person> = {}): Person {
     birthDate: { year: 1950, month: 3, day: 12 },
     isDeceased: false,
     deathDate: null,
+    treeId: "t1",
     isMarriedIn: false,
     parentId: null,
     spouseId: null,
@@ -42,6 +43,62 @@ describe("generateExportPayload with people", () => {
   it("includes an empty people array when provided as empty", () => {
     const payload = generateExportPayload(baseEvent, undefined, undefined, []);
     expect(payload.people).toEqual([]);
+  });
+
+  it("includes families when provided", () => {
+    const fam = {
+      id: "f1",
+      name: "Họ Nguyễn",
+      description: "gốc Bắc",
+      createdAt: 1,
+      updatedAt: 1,
+    };
+    const payload = generateExportPayload(
+      baseEvent,
+      undefined,
+      undefined,
+      undefined,
+      [fam],
+    );
+    expect(payload.families).toEqual([fam]);
+  });
+});
+
+describe("validateImportPayload with families & person.treeId", () => {
+  it("round-trips families and person treeId", () => {
+    const json = JSON.stringify({
+      version: 1,
+      exportedAt: 1,
+      events: [],
+      families: [
+        { id: "f1", name: "Họ Nguyễn", description: "d", createdAt: 1, updatedAt: 1 },
+      ],
+      people: [{ ...person({ treeId: "f1" }) }],
+    });
+    const parsed = validateImportPayload(json);
+    expect(parsed.families).toHaveLength(1);
+    expect(parsed.families![0].name).toBe("Họ Nguyễn");
+    expect(parsed.people![0].treeId).toBe("f1");
+  });
+
+  it("defaults person treeId to empty string when missing (backward-compat)", () => {
+    const json = JSON.stringify({
+      version: 1,
+      exportedAt: 1,
+      events: [],
+      people: [{ ...person(), treeId: undefined }],
+    });
+    expect(validateImportPayload(json).people![0].treeId).toBe("");
+  });
+
+  it("rejects a family without a name", () => {
+    const json = JSON.stringify({
+      version: 1,
+      exportedAt: 1,
+      events: [],
+      families: [{ id: "f1", createdAt: 1, updatedAt: 1 }],
+    });
+    expect(() => validateImportPayload(json)).toThrow(/family name/);
   });
 });
 
