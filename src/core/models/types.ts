@@ -128,6 +128,16 @@ export type Person = {
   spouseId: string | null;
   /** Sibling order key (smaller = older = leftmost on the tree). */
   order: number;
+  /** Tên thường gọi (alias) */
+  aliasName: string;
+  /** Tên khác: tên huý / tự / hiệu */
+  altNames: string;
+  /** Quê quán / nguyên quán */
+  homeland: string;
+  /** Nơi an táng (mộ phần) */
+  burialPlace: string;
+  /** Chức tước / học vị */
+  titles: string;
   notes: string;
   createdAt: number;
   updatedAt: number;

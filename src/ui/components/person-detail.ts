@@ -37,6 +37,12 @@ export function renderPersonDetail(
 
   const metaRows: string[] = [];
   metaRows.push(metaRow("Giới tính", GENDER_LABELS[person.gender]));
+  if (person.aliasName?.trim()) {
+    metaRows.push(metaRow("Tên thường gọi", escapeHtml(person.aliasName)));
+  }
+  if (person.altNames?.trim()) {
+    metaRows.push(metaRow("Tên khác", escapeHtml(person.altNames)));
+  }
   if (person.birthDate) {
     metaRows.push(metaRow("Ngày sinh", formatDateWithLunar(person.birthDate)));
   }
@@ -59,6 +65,15 @@ export function renderPersonDetail(
           ? "Chồng"
           : "Vợ/Chồng";
     metaRows.push(metaRow(spouseLabel, escapeHtml(spouse.name)));
+  }
+  if (person.titles?.trim()) {
+    metaRows.push(metaRow("Chức tước / học vị", escapeHtml(person.titles)));
+  }
+  if (person.homeland?.trim()) {
+    metaRows.push(metaRow("Quê quán", escapeHtml(person.homeland)));
+  }
+  if (person.burialPlace?.trim()) {
+    metaRows.push(metaRow("Nơi an táng", escapeHtml(person.burialPlace)));
   }
   if (person.notes.trim()) {
     metaRows.push(metaRow("Ghi chú", escapeHtml(person.notes)));

@@ -2137,6 +2137,20 @@ textarea:focus {
   min-width: 90px;
 }
 
+/* Collapsible "Thông tin thêm" section in the person form */
+.form-extra {
+  margin-bottom: var(--space-4);
+}
+
+.form-extra > summary {
+  cursor: pointer;
+  font-weight: 600;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  padding: var(--space-2) 0;
+  user-select: none;
+}
+
 /* Read-only field value (e.g. locked gender when adding a spouse) */
 .form-static {
   padding: var(--space-2) 0;
