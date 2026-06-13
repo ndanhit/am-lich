@@ -1869,6 +1869,12 @@ textarea:focus {
   display: none;
 }
 
+/* Collapsed node: show only the main person (hide the married-in spouse) */
+.tree-node.collapsed > .tree-couple > .tree-couple-link,
+.tree-node.collapsed > .tree-couple > .tree-spouse-box {
+  display: none;
+}
+
 /* Expand/collapse toggle sitting on the parent→children connector */
 .tree-toggle {
   position: relative;
