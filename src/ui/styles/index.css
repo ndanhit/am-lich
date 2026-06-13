@@ -1983,3 +1983,50 @@ textarea:focus {
 .detail-actions-wrap .btn {
   flex: 1 1 calc(50% - var(--space-2));
 }
+
+/* --- Branch insights section (person detail) --- */
+.detail-section {
+  margin-bottom: var(--space-6);
+}
+
+.detail-section-title {
+  font-size: var(--font-size-sm);
+  font-weight: 700;
+  color: var(--color-text-secondary);
+  margin-bottom: var(--space-3);
+}
+
+.detail-empty {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+}
+
+.stat-cards {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: var(--space-2);
+  margin-bottom: var(--space-3);
+}
+
+.stat-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 2px;
+  padding: var(--space-3) var(--space-2);
+  background: var(--color-surface-hover, #f3f4f6);
+  border-radius: var(--radius-lg, 12px);
+}
+
+.stat-card .num {
+  font-size: var(--font-size-lg);
+  font-weight: 700;
+  color: var(--color-primary, #5b52e6);
+  line-height: 1;
+}
+
+.stat-card .lbl {
+  font-size: var(--font-size-xs, 11px);
+  color: var(--color-text-secondary);
+}

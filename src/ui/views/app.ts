@@ -15,7 +15,7 @@ import { renderFamilyTree } from "../components/family-tree";
 import { renderPersonForm } from "../components/person-form";
 import { renderPersonDetail } from "../components/person-detail";
 import { renderDateConverterModal } from "../components/date-converter-modal";
-import { convertSolarToLunar } from "../../lib/index";
+import { convertSolarToLunar, computeBranchInsights } from "../../lib/index";
 import type { CalendarCell } from "../types";
 import type { AppView } from "../types";
 import type {
@@ -244,13 +244,14 @@ function onSelectPerson(person: Person) {
   pushOverlayState();
 
   const spouse = personById(person.spouseId);
+  const insights = computeBranchInsights(state.getPeople(), person.id);
 
   const close = () => {
     closeDetailPanel(detailContainer);
     backdrop.classList.remove("open");
   };
 
-  renderPersonDetail(detailContainer, person, spouse, {
+  renderPersonDetail(detailContainer, person, spouse, insights, {
     onEdit: (p) => {
       close();
       openEditPersonForm(p);
