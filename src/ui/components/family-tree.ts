@@ -24,6 +24,7 @@ export function renderFamilyTree(
   onSelect: (person: Person) => void,
   onCreate: () => void,
   onBack: () => void,
+  onSearch: () => void,
 ): void {
   container.innerHTML = "";
 
@@ -85,7 +86,14 @@ export function renderFamilyTree(
   header.className = "family-tree-header";
   header.innerHTML = `
     <button class="tree-back-btn" id="tree-back" title="Danh sách gia phả">← ${escapeHtml(family.name)}</button>
-    <button class="tree-ctrl-btn tree-orient-btn" id="tree-orient"></button>
+    <div class="tree-header-actions">
+      <button class="tree-ctrl-btn" id="tree-search" title="Tìm thành viên" aria-label="Tìm thành viên">
+        <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="7"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+      </button>
+      <button class="tree-ctrl-btn tree-orient-btn" id="tree-orient"></button>
+    </div>
   `;
   section.appendChild(header);
 
@@ -109,6 +117,7 @@ export function renderFamilyTree(
   container.appendChild(section);
 
   header.querySelector("#tree-back")!.addEventListener("click", () => onBack());
+  header.querySelector("#tree-search")!.addEventListener("click", () => onSearch());
 
   // Orientation toggle (xem ngang / xem dọc).
   const orientBtn = header.querySelector("#tree-orient") as HTMLElement;
