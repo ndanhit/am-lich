@@ -142,15 +142,14 @@ function insightsSection(s: BranchInsights): string {
       </div>`;
   }
 
-  const genderParts: string[] = [];
-  if (s.maleDescendants > 0) genderParts.push(`${s.maleDescendants} nam`);
-  if (s.femaleDescendants > 0) genderParts.push(`${s.femaleDescendants} nữ`);
-  if (s.otherDescendants > 0) genderParts.push(`${s.otherDescendants} khác`);
-
   const rows: string[] = [];
-  rows.push(metaRow("Con trực tiếp", String(s.directChildren)));
-  if (genderParts.length > 0) {
-    rows.push(metaRow("Giới tính con cháu", genderParts.join(" · ")));
+  for (const g of s.generationStats) {
+    const parts: string[] = [];
+    if (g.male > 0) parts.push(`${g.male} nam`);
+    if (g.female > 0) parts.push(`${g.female} nữ`);
+    if (g.other > 0) parts.push(`${g.other} khác`);
+    const detail = parts.length > 0 ? ` (${parts.join(" · ")})` : "";
+    rows.push(metaRow(generationLabel(g.depth), `${g.count}${detail}`));
   }
   if (s.daughtersInLaw > 0 || s.sonsInLaw > 0) {
     rows.push(metaRow("Dâu / Rể", `${s.daughtersInLaw} dâu · ${s.sonsInLaw} rể`));
@@ -166,6 +165,11 @@ function insightsSection(s: BranchInsights): string {
       </div>
       <div class="detail-meta">${rows.join("")}</div>
     </div>`;
+}
+
+const GENERATION_LABELS = ["", "Con", "Cháu", "Chắt", "Chít", "Chút"];
+function generationLabel(depth: number): string {
+  return GENERATION_LABELS[depth] ?? `Đời ${depth}`;
 }
 
 function statCard(num: number, label: string): string {
