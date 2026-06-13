@@ -6,7 +6,7 @@ import type {
   QuickMemo,
   FamilyTree,
 } from "../../lib/index";
-import { computeBranchInsights, generationOf } from "../../lib/index";
+import { computeBranchInsights, generationOf, buildPhaKy } from "../../lib/index";
 import type { StorageAdapter } from "../../adapters/storage/local-storage-adapter";
 import { FamilyShareAdapter } from "../../adapters/supabase/family-share-adapter";
 import { AppState } from "../state";
@@ -16,6 +16,7 @@ import { renderSearchPeople } from "./search-people";
 import { renderGioList } from "./gio-list";
 import { renderKinshipView } from "./kinship-view";
 import { renderPersonForm } from "./person-form";
+import { renderPhaKyView } from "./phaky-view";
 import type { PersonFormContext, PersonFormData } from "../types";
 import type { SuggestionKind } from "../../lib/index";
 
@@ -58,8 +59,27 @@ export function renderSnapshotViewer(
   state.setCurrentTree(snapshot.family.id);
   const familyId = snapshot.family.id;
 
+  const people = snapshot.people;
+  const totalMembers = people.length;
+  const deceasedCount = people.filter((p) => p.isDeceased).length;
+  const phaky = buildPhaKy(people);
+  const generations = phaky.length ? phaky[phaky.length - 1].generation : 0;
+  const fam = snapshot.family;
+
   app.innerHTML = `
-    <div class="shared-banner">Đang xem gia phả được chia sẻ — chỉ đọc</div>
+    <div class="shared-banner no-print">Đang xem gia phả được chia sẻ — chỉ đọc</div>
+    <section class="family-hero" id="shared-hero">
+      <h1 class="family-hero-title">Dòng họ ${escapeHtml(fam.name)}</h1>
+      ${fam.description.trim() ? `<p class="family-hero-desc">${escapeHtml(fam.description)}</p>` : ""}
+      <div class="family-hero-stats">
+        <div class="hero-stat"><span class="hero-stat-num">${generations}</span><span class="hero-stat-label">thế hệ</span></div>
+        <div class="hero-stat"><span class="hero-stat-num">${totalMembers}</span><span class="hero-stat-label">thành viên</span></div>
+        <div class="hero-stat"><span class="hero-stat-num">${deceasedCount}</span><span class="hero-stat-label">đã khuất</span></div>
+      </div>
+      <div class="family-hero-actions no-print">
+        <button class="btn btn-secondary" id="shared-phaky-btn">Phả ký / In</button>
+      </div>
+    </section>
     <main id="shared-view"></main>
     <div id="shared-detail"></div>
     <div id="shared-modal"></div>
@@ -69,6 +89,10 @@ export function renderSnapshotViewer(
   const detail = app.querySelector("#shared-detail") as HTMLElement;
   const modal = app.querySelector("#shared-modal") as HTMLElement;
   const backdrop = app.querySelector("#shared-backdrop") as HTMLElement;
+
+  app
+    .querySelector("#shared-phaky-btn")!
+    .addEventListener("click", () => renderPhaKyView(modal, fam, people));
 
   const doSuggest = (
     kind: SuggestionKind,

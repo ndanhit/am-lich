@@ -27,6 +27,7 @@ import {
 } from "../components/shared-family-view";
 import { renderSharedWithMeModal } from "../components/shared-with-me-modal";
 import { renderSuggestionsInbox } from "../components/suggestions-inbox";
+import { renderPhaKyView } from "../components/phaky-view";
 import { showLoginModal } from "../components/auth-modals";
 import { generationOf, parseShareHash } from "../../lib/index";
 import { renderDateConverterModal } from "../components/date-converter-modal";
@@ -277,7 +278,15 @@ function renderFamilyView() {
     () => state.setCurrentTree(null),
     openSearchPeople,
     openGioList,
+    openPhaKy,
   );
+}
+
+function openPhaKy() {
+  const family = state.getCurrentFamily();
+  if (family == null) return;
+  pushOverlayState();
+  renderPhaKyView(modalContainer, family, state.getPeople());
 }
 
 function openSearchPeople() {

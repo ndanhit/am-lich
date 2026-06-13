@@ -181,6 +181,8 @@ export type {
   SuggestionPayload,
   SuggestionForm,
 } from "../application/sharing/suggestion";
+export { buildPhaKy } from "../application/sharing/phaky";
+export type { PhaKyEntry } from "../application/sharing/phaky";
 export {
   addFamily,
   updateFamily,
