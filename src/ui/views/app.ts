@@ -20,7 +20,14 @@ import { renderReorderChildren } from "../components/reorder-children";
 import { renderSearchPeople } from "../components/search-people";
 import { renderGioList } from "../components/gio-list";
 import { renderKinshipView } from "../components/kinship-view";
-import { generationOf } from "../../lib/index";
+import { renderShareFamilyModal } from "../components/share-family-modal";
+import {
+  renderSharedFamilyView,
+  renderSnapshotViewer,
+} from "../components/shared-family-view";
+import { renderSharedWithMeModal } from "../components/shared-with-me-modal";
+import { showLoginModal } from "../components/auth-modals";
+import { generationOf, parseShareHash } from "../../lib/index";
 import { renderDateConverterModal } from "../components/date-converter-modal";
 import { convertSolarToLunar, computeBranchInsights } from "../../lib/index";
 import type { CalendarCell } from "../types";
@@ -60,7 +67,15 @@ function isOverlayOpen() {
 // --- DOM Setup ---
 const app = document.getElementById("app")!;
 
-app.innerHTML = `
+// Read-only public route: open a shared family by secret link (#/share/<id>?t=).
+const shareRoute = parseShareHash(location.hash);
+if (shareRoute) {
+  renderSharedFamilyView(app, shareRoute);
+}
+
+app.innerHTML = shareRoute
+  ? app.innerHTML
+  : `
     <header class="app-header">
         <h1>Âm Lịch</h1>
         <div class="app-header-actions">
@@ -246,6 +261,8 @@ function renderFamilyView() {
       onCreate: openCreateFamilyForm,
       onEdit: openEditFamilyForm,
       onDelete: onFamilyDeleteRequest,
+      onShare: openShareFamily,
+      onSharedWithMe: openSharedWithMe,
     });
     return;
   }
@@ -275,6 +292,27 @@ function openKinship(from: Person) {
   pushOverlayState();
   renderKinshipView(modalContainer, state, from, (person) =>
     onSelectPerson(person),
+  );
+}
+
+function openShareFamily(family: FamilyTree) {
+  pushOverlayState();
+  renderShareFamilyModal(
+    modalContainer,
+    family,
+    state.getPeopleOfTree(family.id),
+    showToast,
+    (onSuccess) => showLoginModal(modalContainer, showToast, onSuccess),
+  );
+}
+
+function openSharedWithMe() {
+  pushOverlayState();
+  renderSharedWithMeModal(
+    modalContainer,
+    showToast,
+    (onSuccess) => showLoginModal(modalContainer, showToast, onSuccess),
+    (snapshot) => renderSnapshotViewer(app, snapshot, () => location.reload()),
   );
 }
 
@@ -341,7 +379,7 @@ function onSelectPerson(person: Person) {
     backdrop.classList.remove("open");
   };
 
-  renderPersonDetail(detailContainer, person, spouse, insights, generation, {
+  renderPersonDetail(detailContainer, person, spouse, insights, generation, false, {
     onEdit: (p) => {
       close();
       openEditPersonForm(p);
@@ -808,6 +846,8 @@ function setActiveTab(view: AppView) {
   renderCurrentView();
 }
 
+// All shell wiring + initial render are skipped in the shared read-only view.
+if (!shareRoute) {
 tabCalendar.addEventListener("click", () => setActiveTab("calendar"));
 tabUpcoming.addEventListener("click", () => setActiveTab("upcoming"));
 tabMemo.addEventListener("click", () => setActiveTab("memo"));
@@ -853,3 +893,4 @@ if (state.corruptedOnLoad) {
 
 // --- State Change Re-render ---
 state.subscribe(() => renderCurrentView());
+}

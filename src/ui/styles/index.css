@@ -1839,6 +1839,44 @@ textarea:focus {
   gap: var(--space-1);
 }
 
+/* Shared (read-only) public family view */
+.shared-banner {
+  background: var(--color-primary, #5b52e6);
+  color: #fff;
+  text-align: center;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  padding: var(--space-2) var(--space-4);
+}
+
+.shared-loading,
+.shared-error,
+.shared-password {
+  max-width: 420px;
+  margin: 18vh auto;
+  padding: var(--space-6);
+  text-align: center;
+}
+
+.shared-password input {
+  width: 100%;
+  margin: var(--space-3) 0;
+}
+
+/* Share family modal */
+.share-link-row {
+  display: flex;
+  gap: var(--space-2);
+  align-items: center;
+}
+
+.share-link-row input {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--font-size-xs, 11px);
+  color: var(--color-text-secondary);
+}
+
 /* Cách xưng hô modal */
 .kin-list {
   display: flex;
