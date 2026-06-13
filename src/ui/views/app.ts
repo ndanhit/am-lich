@@ -18,6 +18,7 @@ import { renderPersonForm } from "../components/person-form";
 import { renderPersonDetail } from "../components/person-detail";
 import { renderReorderChildren } from "../components/reorder-children";
 import { renderSearchPeople } from "../components/search-people";
+import { renderGioList } from "../components/gio-list";
 import { renderDateConverterModal } from "../components/date-converter-modal";
 import { convertSolarToLunar, computeBranchInsights } from "../../lib/index";
 import type { CalendarCell } from "../types";
@@ -254,12 +255,18 @@ function renderFamilyView() {
     openCreateRootForm,
     () => state.setCurrentTree(null),
     openSearchPeople,
+    openGioList,
   );
 }
 
 function openSearchPeople() {
   pushOverlayState();
   renderSearchPeople(modalContainer, state, (person) => onSelectPerson(person));
+}
+
+function openGioList() {
+  pushOverlayState();
+  renderGioList(modalContainer, state, (person) => onSelectPerson(person));
 }
 
 function openCreateFamilyForm() {
