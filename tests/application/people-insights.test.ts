@@ -91,6 +91,20 @@ describe("computeBranchInsights", () => {
     expect(s.directChildren).toBe(0);
   });
 
+  it("breaks descendants down by generation (con / cháu)", () => {
+    const s = computeBranchInsights(fixture(), "g");
+    expect(s.generationStats).toEqual([
+      { depth: 1, count: 2, male: 1, female: 1, other: 0 }, // con: son, daughter
+      { depth: 2, count: 1, male: 0, female: 1, other: 0 }, // cháu: grandkid
+    ]);
+  });
+
+  it("reports the partner's branch when viewing a married-in person", () => {
+    const blood = computeBranchInsights(fixture(), "g");
+    const inLaw = computeBranchInsights(fixture(), "gw"); // gw = vợ lấy vào của g
+    expect(inLaw).toEqual(blood);
+  });
+
   it("is safe when the id does not exist", () => {
     const s = computeBranchInsights(fixture(), "ghost");
     expect(s.descendants).toBe(0);
