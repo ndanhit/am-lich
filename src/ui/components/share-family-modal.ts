@@ -60,11 +60,58 @@ export function renderShareFamilyModal(
           <button class="btn btn-secondary" id="share-pass-save">Lưu</button>
         </div>
       </div>
+      <div class="form-group" style="margin-top:var(--space-4)">
+        <label for="invite-email">Mời theo email (chỉ người đăng nhập đúng email mới xem)</label>
+        <div class="share-link-row">
+          <input type="email" id="invite-email" placeholder="email@vidu.com" autocomplete="off">
+          <button class="btn btn-secondary" id="invite-add">Mời</button>
+        </div>
+        <div class="kin-list" id="invite-list" style="margin-top:var(--space-2)"></div>
+      </div>
       <div class="detail-actions detail-actions-wrap" style="margin-top:var(--space-4)">
         <button class="btn btn-secondary" id="share-update">Cập nhật bản mới nhất</button>
         <button class="btn btn-danger" id="share-stop">Gỡ chia sẻ</button>
       </div>
     `;
+
+    const inviteList = body.querySelector("#invite-list") as HTMLElement;
+    const loadInvites = async (): Promise<void> => {
+      try {
+        const shares = await FamilyShareAdapter.listShares(family.id);
+        inviteList.innerHTML = shares.length
+          ? ""
+          : `<div class="detail-empty">Chưa mời ai.</div>`;
+        for (const s of shares) {
+          const row = document.createElement("div");
+          row.className = "kin-item";
+          row.innerHTML = `<span class="kin-name">${escapeHtml(s.email)} <span class="kin-gender">${s.status === "accepted" ? "đã nhận" : "đã mời"}</span></span>
+            <button class="icon-btn" title="Thu hồi" data-id="${s.id}">🗑</button>`;
+          row.querySelector("button")!.addEventListener("click", async () => {
+            await FamilyShareAdapter.revokeShare(s.id).catch((e) =>
+              showToast(e.message, "error"),
+            );
+            void loadInvites();
+          });
+          inviteList.appendChild(row);
+        }
+      } catch (e: any) {
+        inviteList.innerHTML = `<div class="detail-empty">Lỗi: ${escapeHtml(e.message)}</div>`;
+      }
+    };
+    body.querySelector("#invite-add")!.addEventListener("click", async () => {
+      const email = (body.querySelector("#invite-email") as HTMLInputElement).value;
+      if (!email.trim()) return;
+      try {
+        await FamilyShareAdapter.inviteByEmail(family, email);
+        (body.querySelector("#invite-email") as HTMLInputElement).value = "";
+        showToast("Đã mời", "success");
+        void loadInvites();
+      } catch (e: any) {
+        showToast(e.message, "error");
+      }
+    });
+    void loadInvites();
+
     body.querySelector("#share-pass-save")!.addEventListener("click", async () => {
       const val = (body.querySelector("#share-pass") as HTMLInputElement).value;
       try {

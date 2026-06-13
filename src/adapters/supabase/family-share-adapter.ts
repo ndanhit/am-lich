@@ -46,6 +46,88 @@ export class FamilyShareAdapter {
     return shareToken;
   }
 
+  // --- Mời theo email (PR-C) -------------------------------------------------
+
+  static async inviteByEmail(
+    family: FamilyTree,
+    email: string,
+  ): Promise<void> {
+    const { data: auth } = await supabase.auth.getUser();
+    if (!auth?.user) throw new Error("Chưa đăng nhập");
+    const { error } = await supabase.from("lich_family_shares").upsert(
+      {
+        family_id: family.id,
+        owner_id: auth.user.id,
+        family_name: family.name,
+        invitee_email: email.trim().toLowerCase(),
+        status: "pending",
+      },
+      { onConflict: "family_id,invitee_email" },
+    );
+    if (error) throw new Error(`Mời thất bại: ${error.message}`);
+  }
+
+  static async listShares(
+    familyId: string,
+  ): Promise<Array<{ id: string; email: string; status: string }>> {
+    const { data, error } = await supabase
+      .from("lich_family_shares")
+      .select("id, invitee_email, status")
+      .eq("family_id", familyId)
+      .order("created_at");
+    if (error) throw new Error(error.message);
+    return (data ?? []).map((r: any) => ({
+      id: r.id,
+      email: r.invitee_email,
+      status: r.status,
+    }));
+  }
+
+  static async revokeShare(shareId: string): Promise<void> {
+    const { error } = await supabase
+      .from("lich_family_shares")
+      .delete()
+      .eq("id", shareId);
+    if (error) throw new Error(error.message);
+  }
+
+  /** Families shared TO the current user (via their email). */
+  static async listSharedWithMe(): Promise<
+    Array<{ familyId: string; name: string; status: string }>
+  > {
+    const { data, error } = await supabase
+      .from("lich_family_shares")
+      .select("family_id, family_name, status")
+      .order("created_at", { ascending: false });
+    if (error) throw new Error(error.message);
+    return (data ?? []).map((r: any) => ({
+      familyId: r.family_id,
+      name: r.family_name,
+      status: r.status,
+    }));
+  }
+
+  static async acceptShare(familyId: string): Promise<void> {
+    const { error } = await supabase
+      .from("lich_family_shares")
+      .update({ status: "accepted" })
+      .eq("family_id", familyId);
+    if (error) throw new Error(error.message);
+  }
+
+  /** Read a shared snapshot as an authenticated, invited (accepted) user. */
+  static async getSharedFamilyAuthed(
+    familyId: string,
+  ): Promise<SharedSnapshot | null> {
+    const { data, error } = await supabase
+      .from(TABLE)
+      .select("payload")
+      .eq("family_id", familyId)
+      .maybeSingle();
+    if (error) throw new Error(error.message);
+    return data ? (data.payload as SharedSnapshot) : null;
+  }
+
   static async unpublishFamily(familyId: string): Promise<void> {
     const { error } = await supabase.from(TABLE).delete().eq("family_id", familyId);
     if (error) throw new Error(`Gỡ chia sẻ thất bại: ${error.message}`);

@@ -41,6 +41,74 @@ class SnapshotAdapter implements StorageAdapter {
   saveFamilyTrees(): void {}
 }
 
+/**
+ * Render a read-only view of a shared family snapshot, taking over `app`.
+ * Reuses the full tree/search/giỗ/kinship stack via an in-memory state.
+ */
+export function renderSnapshotViewer(
+  app: HTMLElement,
+  snapshot: SharedSnapshot,
+  onBack: () => void = () => {},
+): void {
+  const state = new AppState(new SnapshotAdapter(snapshot));
+  state.setCurrentTree(snapshot.family.id);
+
+  app.innerHTML = `
+    <div class="shared-banner">Đang xem gia phả được chia sẻ — chỉ đọc</div>
+    <main id="shared-view"></main>
+    <div id="shared-detail"></div>
+    <div id="shared-modal"></div>
+    <div id="shared-backdrop" class="backdrop"></div>
+  `;
+  const view = app.querySelector("#shared-view") as HTMLElement;
+  const detail = app.querySelector("#shared-detail") as HTMLElement;
+  const modal = app.querySelector("#shared-modal") as HTMLElement;
+  const backdrop = app.querySelector("#shared-backdrop") as HTMLElement;
+
+  const openDetail = (person: Person): void => {
+    backdrop.classList.add("open");
+    const spouse =
+      person.spouseId != null
+        ? (state.getPeople().find((p) => p.id === person.spouseId) ?? null)
+        : null;
+    const insights = computeBranchInsights(state.getPeople(), person.id);
+    const generation = generationOf(state.getPeople(), person.id);
+    const close = (): void => {
+      closeDetailPanel(detail);
+      backdrop.classList.remove("open");
+    };
+    renderPersonDetail(detail, person, spouse, insights, generation, true, {
+      onEdit: () => {},
+      onAddChild: () => {},
+      onAddSpouse: () => {},
+      onAddParent: () => {},
+      onReorderChildren: () => {},
+      onKinship: (p) => {
+        close();
+        renderKinshipView(modal, state, p, openDetail);
+      },
+      onCreateGio: () => {},
+      onDelete: () => {},
+      onClose: close,
+    });
+  };
+  backdrop.addEventListener("click", () => {
+    closeDetailPanel(detail);
+    backdrop.classList.remove("open");
+  });
+
+  renderFamilyTree(
+    view,
+    state,
+    snapshot.family,
+    openDetail,
+    () => {},
+    onBack,
+    () => renderSearchPeople(modal, state, openDetail),
+    () => renderGioList(modal, state, openDetail),
+  );
+}
+
 /** Render a read-only public view of a shared family from a #/share link. */
 export function renderSharedFamilyView(
   app: HTMLElement,
@@ -76,73 +144,13 @@ export function renderSharedFamilyView(
         err.textContent = "Mật khẩu không đúng.";
         return;
       }
-      renderViewer(res.snapshot);
+      renderSnapshotViewer(app, res.snapshot);
     };
     app.querySelector("#shared-pass-go")!.addEventListener("click", go);
     input.addEventListener("keydown", (e) => {
       if (e.key === "Enter") void go();
     });
     setTimeout(() => input.focus(), 100);
-  };
-
-  const renderViewer = (snapshot: SharedSnapshot): void => {
-    const state = new AppState(new SnapshotAdapter(snapshot));
-    state.setCurrentTree(snapshot.family.id);
-
-    app.innerHTML = `
-      <div class="shared-banner">Đang xem gia phả được chia sẻ — chỉ đọc</div>
-      <main id="shared-view"></main>
-      <div id="shared-detail"></div>
-      <div id="shared-modal"></div>
-      <div id="shared-backdrop" class="backdrop"></div>
-    `;
-    const view = app.querySelector("#shared-view") as HTMLElement;
-    const detail = app.querySelector("#shared-detail") as HTMLElement;
-    const modal = app.querySelector("#shared-modal") as HTMLElement;
-    const backdrop = app.querySelector("#shared-backdrop") as HTMLElement;
-
-    const openDetail = (person: Person): void => {
-      backdrop.classList.add("open");
-      const spouse =
-        person.spouseId != null
-          ? (state.getPeople().find((p) => p.id === person.spouseId) ?? null)
-          : null;
-      const insights = computeBranchInsights(state.getPeople(), person.id);
-      const generation = generationOf(state.getPeople(), person.id);
-      const close = (): void => {
-        closeDetailPanel(detail);
-        backdrop.classList.remove("open");
-      };
-      renderPersonDetail(detail, person, spouse, insights, generation, true, {
-        onEdit: () => {},
-        onAddChild: () => {},
-        onAddSpouse: () => {},
-        onAddParent: () => {},
-        onReorderChildren: () => {},
-        onKinship: (p) => {
-          close();
-          renderKinshipView(modal, state, p, openDetail);
-        },
-        onCreateGio: () => {},
-        onDelete: () => {},
-        onClose: close,
-      });
-    };
-    backdrop.addEventListener("click", () => {
-      closeDetailPanel(detail);
-      backdrop.classList.remove("open");
-    });
-
-    renderFamilyTree(
-      view,
-      state,
-      snapshot.family,
-      openDetail,
-      () => {},
-      () => {},
-      () => renderSearchPeople(modal, state, openDetail),
-      () => renderGioList(modal, state, openDetail),
-    );
   };
 
   FamilyShareAdapter.getSharedFamilyByToken(route.token)
@@ -152,7 +160,7 @@ export function renderSharedFamilyView(
       } else if ("passwordRequired" in res) {
         askPassword();
       } else {
-        renderViewer(res.snapshot);
+        renderSnapshotViewer(app, res.snapshot);
       }
     })
     .catch((e) => showError(e.message));

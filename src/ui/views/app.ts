@@ -21,7 +21,11 @@ import { renderSearchPeople } from "../components/search-people";
 import { renderGioList } from "../components/gio-list";
 import { renderKinshipView } from "../components/kinship-view";
 import { renderShareFamilyModal } from "../components/share-family-modal";
-import { renderSharedFamilyView } from "../components/shared-family-view";
+import {
+  renderSharedFamilyView,
+  renderSnapshotViewer,
+} from "../components/shared-family-view";
+import { renderSharedWithMeModal } from "../components/shared-with-me-modal";
 import { showLoginModal } from "../components/auth-modals";
 import { generationOf, parseShareHash } from "../../lib/index";
 import { renderDateConverterModal } from "../components/date-converter-modal";
@@ -258,6 +262,7 @@ function renderFamilyView() {
       onEdit: openEditFamilyForm,
       onDelete: onFamilyDeleteRequest,
       onShare: openShareFamily,
+      onSharedWithMe: openSharedWithMe,
     });
     return;
   }
@@ -298,6 +303,16 @@ function openShareFamily(family: FamilyTree) {
     state.getPeopleOfTree(family.id),
     showToast,
     (onSuccess) => showLoginModal(modalContainer, showToast, onSuccess),
+  );
+}
+
+function openSharedWithMe() {
+  pushOverlayState();
+  renderSharedWithMeModal(
+    modalContainer,
+    showToast,
+    (onSuccess) => showLoginModal(modalContainer, showToast, onSuccess),
+    (snapshot) => renderSnapshotViewer(app, snapshot, () => location.reload()),
   );
 }
 

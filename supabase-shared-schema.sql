@@ -73,6 +73,7 @@ create table if not exists public.lich_family_shares (
   id            uuid primary key default gen_random_uuid(),
   family_id     uuid not null references public.lich_shared_families(family_id) on delete cascade,
   owner_id      uuid not null references auth.users(id) on delete cascade,
+  family_name   text not null default '',
   invitee_email text not null,
   status        text not null default 'pending',
   created_at    timestamptz not null default now(),
