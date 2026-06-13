@@ -13,6 +13,8 @@ let zoomLevel = 1;
 let collapsedIds = new Set<string>();
 let collapseInitialized = false;
 let lastTreeId: string | null = null;
+// View orientation is a user preference, kept across trees within a session.
+let orientation: "vertical" | "horizontal" = "vertical";
 
 /** Render the family-tree (gia phả) view as a top-down genealogy chart. */
 export function renderFamilyTree(
@@ -78,30 +80,50 @@ export function renderFamilyTree(
   const peopleById = new Map(state.getPeople().map((p) => [p.id, p]));
   const cb: NodeCallbacks = { onSelect, peopleById };
 
-  // Header: title + controls (collapse all / expand all / zoom / fit).
+  // Header: back to list + orientation toggle.
   const header = document.createElement("div");
   header.className = "family-tree-header";
   header.innerHTML = `
     <button class="tree-back-btn" id="tree-back" title="Danh sách gia phả">← ${escapeHtml(family.name)}</button>
-    <div class="tree-controls">
-      <button class="tree-ctrl-btn" id="collapse-all" title="Thu gọn tất cả" aria-label="Thu gọn tất cả">⊟</button>
-      <button class="tree-ctrl-btn" id="expand-all" title="Mở tất cả" aria-label="Mở tất cả">⊞</button>
-      <span class="tree-ctrl-sep"></span>
-      <button class="tree-ctrl-btn" id="zoom-out" title="Thu nhỏ" aria-label="Thu nhỏ">−</button>
-      <button class="tree-ctrl-btn tree-zoom-label" id="zoom-fit" title="Vừa màn hình" aria-label="Vừa màn hình">100%</button>
-      <button class="tree-ctrl-btn" id="zoom-in" title="Phóng to" aria-label="Phóng to">+</button>
-    </div>
+    <button class="tree-ctrl-btn tree-orient-btn" id="tree-orient"></button>
   `;
   section.appendChild(header);
 
   const scroll = document.createElement("div");
   scroll.className = "tree-scroll";
   section.appendChild(scroll);
+
+  // Floating control bar (collapse/expand + zoom) at the bottom-right corner.
+  const fab = document.createElement("div");
+  fab.className = "tree-fab";
+  fab.innerHTML = `
+    <button class="tree-ctrl-btn" id="collapse-all" title="Thu gọn tất cả" aria-label="Thu gọn tất cả">⊟</button>
+    <button class="tree-ctrl-btn" id="expand-all" title="Mở tất cả" aria-label="Mở tất cả">⊞</button>
+    <span class="tree-ctrl-sep"></span>
+    <button class="tree-ctrl-btn" id="zoom-out" title="Thu nhỏ" aria-label="Thu nhỏ">−</button>
+    <button class="tree-ctrl-btn tree-zoom-label" id="zoom-fit" title="Vừa màn hình" aria-label="Vừa màn hình">100%</button>
+    <button class="tree-ctrl-btn" id="zoom-in" title="Phóng to" aria-label="Phóng to">+</button>
+  `;
+  section.appendChild(fab);
+
   container.appendChild(section);
 
   header.querySelector("#tree-back")!.addEventListener("click", () => onBack());
 
-  const label = header.querySelector("#zoom-fit") as HTMLElement;
+  // Orientation toggle (xem ngang / xem dọc).
+  const orientBtn = header.querySelector("#tree-orient") as HTMLElement;
+  const updateOrientBtn = (): void => {
+    orientBtn.textContent =
+      orientation === "vertical" ? "⇄ Xem ngang" : "⇅ Xem dọc";
+  };
+  updateOrientBtn();
+  orientBtn.addEventListener("click", () => {
+    orientation = orientation === "vertical" ? "horizontal" : "vertical";
+    updateOrientBtn();
+    buildTree();
+  });
+
+  const label = fab.querySelector("#zoom-fit") as HTMLElement;
 
   const applyZoom = (): void => {
     const tree = scroll.querySelector(".tree") as HTMLElement | null;
@@ -116,7 +138,8 @@ export function renderFamilyTree(
   const buildTree = (): void => {
     scroll.innerHTML = "";
     const tree = document.createElement("ul");
-    tree.className = "tree";
+    tree.className =
+      orientation === "horizontal" ? "tree horizontal" : "tree";
     for (const root of roots) tree.appendChild(renderNode(root, cb));
     scroll.appendChild(tree);
     applyZoom();
@@ -124,24 +147,24 @@ export function renderFamilyTree(
   buildTree();
 
   // --- Collapse / expand all ---
-  header.querySelector("#collapse-all")!.addEventListener("click", () => {
+  fab.querySelector("#collapse-all")!.addEventListener("click", () => {
     collapsedIds.clear();
     for (const id of collectCollapsibleIds(roots, 0)) collapsedIds.add(id);
     buildTree();
   });
-  header.querySelector("#expand-all")!.addEventListener("click", () => {
+  fab.querySelector("#expand-all")!.addEventListener("click", () => {
     collapsedIds.clear();
     buildTree();
   });
 
   // --- Zoom controls ---
-  header
+  fab
     .querySelector("#zoom-in")!
     .addEventListener("click", () => setZoom(zoomLevel + 0.1));
-  header
+  fab
     .querySelector("#zoom-out")!
     .addEventListener("click", () => setZoom(zoomLevel - 0.1));
-  header.querySelector("#zoom-fit")!.addEventListener("click", () => {
+  fab.querySelector("#zoom-fit")!.addEventListener("click", () => {
     const tree = scroll.querySelector(".tree") as HTMLElement | null;
     if (!tree) return;
     tree.style.setProperty("zoom", "1");
