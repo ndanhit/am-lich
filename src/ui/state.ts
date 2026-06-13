@@ -36,6 +36,10 @@ import {
   attachSpouse,
   attachParent,
   removePersonCascade,
+  reorderSiblings,
+  ensureSiblingOrder,
+  nextSiblingOrder,
+  compareByBirth,
   addFamily,
   updateFamily,
   removeFamily,
@@ -90,6 +94,11 @@ export class AppState {
       this.persistPeople();
       this.persistFamilies();
     }
+
+    // Backward-compat: initialize sibling order for legacy people.
+    const ordered = ensureSiblingOrder(this.people);
+    this.people = ordered.people;
+    if (ordered.changed) this.persistPeople();
     // Detect if data was empty due to corruption
     const raw = localStorage.getItem("am-lich-events");
     if (raw && this.events.length === 0) {
@@ -380,6 +389,7 @@ export class AppState {
     );
     this.people = migrated.people;
     this.families = migrated.families;
+    this.people = ensureSiblingOrder(this.people).people;
 
     if (payload.settings?.hiddenSystemEventIds) {
       for (const id of payload.settings.hiddenSystemEventIds) {
@@ -580,6 +590,7 @@ export class AppState {
       isMarriedIn: false,
       parentId: null,
       spouseId: null,
+      order: 0,
       notes: (form.notes ?? "").trim().slice(0, 500),
       createdAt: now,
       updatedAt: now,
@@ -588,14 +599,18 @@ export class AppState {
 
   /** Add the first/root blood person (only meaningful when the tree is empty). */
   addRootPerson(form: PersonFormData): void {
-    this.people = addPerson(this.people, this.buildPerson(form));
+    const p = this.buildPerson(form);
+    p.order = nextSiblingOrder(this.people, p.treeId, null);
+    this.people = addPerson(this.people, p);
     this.persistPeople();
     this.notify();
   }
 
   /** Add a blood child under an existing person. */
   addChild(parentId: string, form: PersonFormData): void {
-    this.people = attachChild(this.people, parentId, this.buildPerson(form));
+    const p = this.buildPerson(form);
+    p.order = nextSiblingOrder(this.people, p.treeId, parentId);
+    this.people = attachChild(this.people, parentId, p);
     this.persistPeople();
     this.notify();
   }
@@ -607,9 +622,11 @@ export class AppState {
     this.notify();
   }
 
-  /** Add a blood parent above an existing person (which becomes a child). */
+  /** Add a blood parent above an existing person (which becomes a root). */
   addParent(childId: string, form: PersonFormData): void {
-    this.people = attachParent(this.people, childId, this.buildPerson(form));
+    const p = this.buildPerson(form);
+    p.order = nextSiblingOrder(this.people, p.treeId, null);
+    this.people = attachParent(this.people, childId, p);
     this.persistPeople();
     this.notify();
   }
@@ -641,6 +658,23 @@ export class AppState {
 
   deletePerson(id: string): void {
     this.people = removePersonCascade(this.people, id);
+    this.persistPeople();
+    this.notify();
+  }
+
+  /** Blood children of `parentId` (current tree) sorted by order then birth. */
+  getOrderedChildren(parentId: string): Person[] {
+    return this.getPeople()
+      .filter((p) => p.parentId === parentId && !p.isMarriedIn)
+      .sort(
+        (a, b) =>
+          (a.order ?? 0) - (b.order ?? 0) || compareByBirth(a, b),
+      );
+  }
+
+  /** Persist a new sibling ordering for the children of `parentId`. */
+  reorderChildren(parentId: string, orderedIds: string[]): void {
+    this.people = reorderSiblings(this.people, parentId, orderedIds);
     this.persistPeople();
     this.notify();
   }

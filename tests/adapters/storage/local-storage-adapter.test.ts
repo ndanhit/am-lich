@@ -134,6 +134,7 @@ function person(overrides: Partial<Person> = {}): Person {
     deathDate: null,
     treeId: "t1",
     isMarriedIn: false,
+    order: 0,
     parentId: null,
     spouseId: null,
     notes: "",

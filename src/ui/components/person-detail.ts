@@ -16,6 +16,7 @@ export type PersonDetailCallbacks = {
   onAddChild: (person: Person) => void;
   onAddSpouse: (person: Person) => void;
   onAddParent: (person: Person) => void;
+  onReorderChildren: (person: Person) => void;
   onCreateGio: (person: Person) => void;
   onDelete: (person: Person) => void;
   onClose: () => void;
@@ -77,6 +78,10 @@ export function renderPersonDetail(
   const parentBtn = canAddParent
     ? `<button class="btn btn-secondary add-parent-btn">Thêm cha/mẹ</button>`
     : "";
+  const reorderBtn =
+    insights.directChildren >= 2
+      ? `<button class="btn btn-secondary reorder-btn">Sắp xếp con</button>`
+      : "";
   const gioBtn = isCompleteDate(person.deathDate)
     ? `<button class="btn btn-secondary gio-btn">Tạo nhắc giỗ</button>`
     : "";
@@ -100,6 +105,7 @@ export function renderPersonDetail(
         <button class="btn btn-secondary add-child-btn">Thêm con</button>
         ${spouseBtn}
         ${parentBtn}
+        ${reorderBtn}
         <button class="btn btn-secondary edit-btn">Sửa</button>
         ${gioBtn}
         <button class="btn btn-danger delete-btn">Xóa</button>
@@ -124,6 +130,9 @@ export function renderPersonDetail(
   panel
     .querySelector(".add-parent-btn")
     ?.addEventListener("click", () => cb.onAddParent(person));
+  panel
+    .querySelector(".reorder-btn")
+    ?.addEventListener("click", () => cb.onReorderChildren(person));
   panel
     .querySelector(".gio-btn")
     ?.addEventListener("click", () => cb.onCreateGio(person));

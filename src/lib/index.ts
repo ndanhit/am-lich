@@ -145,7 +145,13 @@ export {
   getDescendantIds,
   countDescendants,
   collectCollapsibleIds,
+  compareByBirth,
 } from "../application/people/tree";
+export {
+  reorderSiblings,
+  ensureSiblingOrder,
+  nextSiblingOrder,
+} from "../application/people/ordering";
 export {
   attachChild,
   attachSpouse,

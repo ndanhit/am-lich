@@ -2067,6 +2067,73 @@ textarea:focus {
   flex: 1 1 calc(50% - var(--space-2));
 }
 
+/* --- Reorder children modal --- */
+.reorder-hint {
+  font-size: var(--font-size-sm);
+  color: var(--color-text-secondary);
+  margin: 0 0 var(--space-3);
+}
+
+.reorder-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.reorder-item {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-surface-hover, #f3f4f6);
+  border-radius: var(--radius-lg, 12px);
+}
+
+.reorder-rank {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  background: var(--color-primary, #5b52e6);
+  color: #fff;
+  font-size: var(--font-size-xs, 11px);
+  font-weight: 700;
+}
+
+.reorder-name {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.reorder-gender {
+  font-size: var(--font-size-xs, 11px);
+  color: var(--color-text-secondary);
+}
+
+.reorder-actions {
+  display: flex;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.reorder-actions .icon-btn {
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.reorder-actions .icon-btn[disabled] {
+  opacity: 0.3;
+  cursor: default;
+}
+
 /* --- Branch insights section (person detail) --- */
 .detail-section {
   margin-bottom: var(--space-6);

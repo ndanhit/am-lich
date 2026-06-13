@@ -5,7 +5,7 @@ import type { Person, FamilyTreeNode } from "../../core/models/types";
  * People without a birth year sort last; within the same year, an unknown
  * month/day sorts after a known one.
  */
-function compareByBirth(a: Person, b: Person): number {
+export function compareByBirth(a: Person, b: Person): number {
   const da = a.birthDate;
   const db = b.birthDate;
   if (da && db) {
@@ -18,6 +18,16 @@ function compareByBirth(a: Person, b: Person): number {
   if (da && !db) return -1;
   if (!da && db) return 1;
   return 0;
+}
+
+/**
+ * Sibling ordering: manual `order` first (smaller = leftmost), then birthDate
+ * as a stable tiebreak.
+ */
+function compareNodes(a: FamilyTreeNode, b: FamilyTreeNode): number {
+  const byOrder = (a.person.order ?? 0) - (b.person.order ?? 0);
+  if (byOrder !== 0) return byOrder;
+  return compareByBirth(a.person, b.person);
 }
 
 /**
@@ -63,13 +73,13 @@ export function buildFamilyTree(allPeople: Person[]): FamilyTreeNode[] {
     }
     visited.add(node.person.id);
     node.depth = depth;
-    node.children.sort((a, b) => compareByBirth(a.person, b.person));
+    node.children.sort(compareNodes);
     for (const child of node.children) {
       assignDepth(child, depth + 1);
     }
   };
 
-  roots.sort((a, b) => compareByBirth(a.person, b.person));
+  roots.sort(compareNodes);
   for (const root of roots) {
     assignDepth(root, 0);
   }

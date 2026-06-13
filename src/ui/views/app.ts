@@ -16,6 +16,7 @@ import { renderFamilyList } from "../components/family-list";
 import { renderFamilyForm } from "../components/family-form";
 import { renderPersonForm } from "../components/person-form";
 import { renderPersonDetail } from "../components/person-detail";
+import { renderReorderChildren } from "../components/reorder-children";
 import { renderDateConverterModal } from "../components/date-converter-modal";
 import { convertSolarToLunar, computeBranchInsights } from "../../lib/index";
 import type { CalendarCell } from "../types";
@@ -333,6 +334,10 @@ function onSelectPerson(person: Person) {
       close();
       openAddParentForm(p);
     },
+    onReorderChildren: (p) => {
+      close();
+      openReorderChildren(p);
+    },
     onCreateGio: (p) => {
       close();
       onCreateGio(p);
@@ -629,6 +634,22 @@ function openAddParentForm(person: Person) {
     () => {
       renderCurrentView();
       showToast("Đã thêm cha/mẹ", "success");
+    },
+    () => {
+      /* cancel */
+    },
+  );
+}
+
+function openReorderChildren(parent: Person) {
+  pushOverlayState();
+  renderReorderChildren(
+    modalContainer,
+    state,
+    parent,
+    () => {
+      renderCurrentView();
+      showToast("Đã cập nhật thứ tự con", "success");
     },
     () => {
       /* cancel */
