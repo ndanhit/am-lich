@@ -97,9 +97,33 @@ export function renderPersonForm(
             <div class="form-error" id="person-death-error"></div>
           </div>
 
+          <details class="form-extra">
+            <summary>Thông tin thêm</summary>
+            <div class="form-group">
+              <label for="person-alias">Tên thường gọi</label>
+              <input type="text" id="person-alias" maxlength="100" value="${escapeAttr(editPerson ? editPerson.aliasName ?? "" : "")}">
+            </div>
+            <div class="form-group">
+              <label for="person-altnames">Tên khác (huý / tự / hiệu)</label>
+              <input type="text" id="person-altnames" maxlength="200" value="${escapeAttr(editPerson ? editPerson.altNames ?? "" : "")}">
+            </div>
+            <div class="form-group">
+              <label for="person-homeland">Quê quán</label>
+              <input type="text" id="person-homeland" maxlength="200" value="${escapeAttr(editPerson ? editPerson.homeland ?? "" : "")}">
+            </div>
+            <div class="form-group">
+              <label for="person-burial">Nơi an táng (mộ phần)</label>
+              <input type="text" id="person-burial" maxlength="200" value="${escapeAttr(editPerson ? editPerson.burialPlace ?? "" : "")}">
+            </div>
+            <div class="form-group">
+              <label for="person-titles">Chức tước / học vị</label>
+              <input type="text" id="person-titles" maxlength="200" value="${escapeAttr(editPerson ? editPerson.titles ?? "" : "")}">
+            </div>
+          </details>
+
           <div class="form-group">
             <label for="person-notes">Ghi chú</label>
-            <textarea id="person-notes" maxlength="500" rows="3" placeholder="vd: quê quán, nghề nghiệp...">${escapeText(defaultNotes)}</textarea>
+            <textarea id="person-notes" maxlength="500" rows="3" placeholder="vd: nghề nghiệp, công trạng...">${escapeText(defaultNotes)}</textarea>
           </div>
 
           <button type="submit" class="btn-cta" id="person-submit-btn">${cta}</button>
@@ -170,6 +194,8 @@ export function renderPersonForm(
     ).value as Gender;
 
     const deceased = deceasedCheckbox.checked;
+    const val = (id: string): string =>
+      (overlay.querySelector(`#${id}`) as HTMLInputElement).value;
 
     const formData: PersonFormData = {
       name,
@@ -177,6 +203,11 @@ export function renderPersonForm(
       birthDate: getBirth(),
       isDeceased: deceased,
       deathDate: deceased ? getDeath() : null,
+      aliasName: val("person-alias"),
+      altNames: val("person-altnames"),
+      homeland: val("person-homeland"),
+      burialPlace: val("person-burial"),
+      titles: val("person-titles"),
       notes: notesInput.value,
     };
 

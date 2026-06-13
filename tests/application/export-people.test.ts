@@ -16,6 +16,11 @@ function person(overrides: Partial<Person> = {}): Person {
     treeId: "t1",
     isMarriedIn: false,
     order: 0,
+    aliasName: "",
+    altNames: "",
+    homeland: "",
+    burialPlace: "",
+    titles: "",
     parentId: null,
     spouseId: null,
     notes: "Ghi chú",
@@ -140,6 +145,23 @@ describe("validateImportPayload with people", () => {
     const parsed = validateImportPayload(json);
     expect(parsed.people![0].isDeceased).toBe(true);
     expect(parsed.people![0].deathDate).toBeNull();
+  });
+
+  it("round-trips traditional fields and defaults them to empty string", () => {
+    const full = payloadJson([
+      person({ homeland: "Bắc Ninh", burialPlace: "Nghĩa trang làng", titles: "Cử nhân" }),
+    ]);
+    const p = validateImportPayload(full).people![0];
+    expect(p.homeland).toBe("Bắc Ninh");
+    expect(p.burialPlace).toBe("Nghĩa trang làng");
+    expect(p.titles).toBe("Cử nhân");
+
+    const legacy = payloadJson([
+      { ...person(), homeland: undefined, aliasName: undefined },
+    ]);
+    const lp = validateImportPayload(legacy).people![0];
+    expect(lp.homeland).toBe("");
+    expect(lp.aliasName).toBe("");
   });
 
   it("round-trips sibling order and defaults to 0 when missing", () => {

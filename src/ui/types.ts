@@ -53,6 +53,11 @@ export type PersonFormData = {
   birthDate: PartialDate | null;
   isDeceased: boolean;
   deathDate: PartialDate | null;
+  aliasName: string;
+  altNames: string;
+  homeland: string;
+  burialPlace: string;
+  titles: string;
   notes: string;
 };
 
