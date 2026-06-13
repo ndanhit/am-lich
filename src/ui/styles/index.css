@@ -1785,19 +1785,23 @@ textarea:focus {
   padding-right: var(--space-2);
 }
 
-/* Controls toolbar (collapse/expand + zoom) */
-.tree-controls {
+/* Floating controls bar (collapse/expand + zoom) — bottom-right */
+.tree-fab {
+  position: fixed;
+  bottom: var(--space-6);
+  right: var(--space-6);
+  z-index: 90;
   display: flex;
   align-items: center;
   gap: 2px;
   background: var(--color-surface);
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-lg, 12px);
-  box-shadow: var(--shadow-md);
-  padding: 2px;
+  border-radius: var(--radius-full, 999px);
+  box-shadow: var(--shadow-lg);
+  padding: 4px;
 }
 
-.tree-controls .tree-ctrl-btn {
+.tree-ctrl-btn {
   height: 32px;
   min-width: 32px;
   padding: 0 6px;
@@ -1811,22 +1815,33 @@ textarea:focus {
   cursor: pointer;
 }
 
-.tree-controls .tree-ctrl-btn:hover {
+.tree-ctrl-btn:hover {
   background: var(--color-surface-hover, #f3f4f6);
 }
 
-.tree-controls .tree-zoom-label {
+.tree-zoom-label {
   min-width: 46px;
   font-size: var(--font-size-sm);
   font-weight: 600;
   color: var(--color-text-secondary);
 }
 
-.tree-controls .tree-ctrl-sep {
+.tree-ctrl-sep {
   width: 1px;
   height: 20px;
   background: var(--color-border);
   margin: 0 2px;
+}
+
+/* Orientation toggle in the header */
+.tree-orient-btn {
+  flex-shrink: 0;
+  width: auto;
+  font-size: var(--font-size-sm);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-lg, 12px);
 }
 
 /* Horizontal + vertical scroll for wide/zoomed trees */
@@ -1963,6 +1978,87 @@ textarea:focus {
   width: 0;
   height: 20px;
   border-left: 2px solid var(--color-border, rgba(0, 0, 0, 0.12));
+}
+
+/* === Horizontal layout (xem ngang): left → right, transpose of the above === */
+.tree.horizontal,
+.tree.horizontal ul {
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.tree.horizontal ul {
+  padding-top: 0;
+  padding-left: 20px;
+}
+
+.tree.horizontal li {
+  flex-direction: row;
+  align-items: center;
+  padding: 12px 0 12px 20px;
+}
+
+.tree.horizontal > li {
+  padding-left: 0;
+}
+
+/* Connectors: vertical line halves to the LEFT of each node */
+.tree.horizontal li::before,
+.tree.horizontal li::after {
+  top: auto;
+  bottom: 50%;
+  left: 0;
+  right: auto;
+  width: 20px;
+  height: 50%;
+  border-top: 0;
+  border-left: 2px solid var(--color-border, rgba(0, 0, 0, 0.12));
+}
+
+.tree.horizontal li::after {
+  bottom: auto;
+  top: 50%;
+  border-left: 0;
+  border-top: 2px solid var(--color-border, rgba(0, 0, 0, 0.12));
+}
+
+.tree.horizontal li:first-child::before,
+.tree.horizontal li:last-child::after {
+  border: 0 none;
+}
+
+.tree.horizontal li:last-child::before {
+  border-bottom: 2px solid var(--color-border, rgba(0, 0, 0, 0.12));
+  border-radius: 0 0 0 6px;
+}
+
+.tree.horizontal li:first-child::after {
+  border-radius: 6px 0 0 0;
+}
+
+/* Horizontal line from a parent across to its children column */
+.tree.horizontal ul::before {
+  top: 50%;
+  left: 0;
+  width: 20px;
+  height: 0;
+  border-left: 0;
+  border-top: 2px solid var(--color-border, rgba(0, 0, 0, 0.12));
+}
+
+/* Only-child in horizontal keeps left padding, not the vertical top padding */
+.tree.horizontal li:only-child {
+  padding-top: 12px;
+  padding-left: 20px;
+}
+
+.tree.horizontal > li:only-child {
+  padding-left: 0;
+}
+
+.tree.horizontal .tree-toggle {
+  margin-top: 0;
+  margin-left: 4px;
 }
 
 /* A couple drawn side by side (person + married-in spouse) */
