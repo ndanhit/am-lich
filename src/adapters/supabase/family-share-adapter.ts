@@ -1,4 +1,4 @@
-import type { FamilyTree, Person } from "../../lib/index";
+import type { FamilyTree, Person, SharedSnapshot } from "../../lib/index";
 import { buildFamilySnapshot } from "../../lib/index";
 import { supabase } from "./client";
 
@@ -49,6 +49,40 @@ export class FamilyShareAdapter {
   static async unpublishFamily(familyId: string): Promise<void> {
     const { error } = await supabase.from(TABLE).delete().eq("family_id", familyId);
     if (error) throw new Error(`Gỡ chia sẻ thất bại: ${error.message}`);
+  }
+
+  /** Set or clear (empty/null) the link password for a published family. */
+  static async setFamilyPassword(
+    familyId: string,
+    password: string | null,
+  ): Promise<void> {
+    const { error } = await supabase.rpc("set_shared_family_password", {
+      p_family_id: familyId,
+      p_pass: password,
+    });
+    if (error) throw new Error(`Đặt mật khẩu thất bại: ${error.message}`);
+  }
+
+  /**
+   * Fetch a shared snapshot via the secret link token (anonymous-friendly RPC).
+   * Returns { passwordRequired } if a password is needed, or null if not found.
+   */
+  static async getSharedFamilyByToken(
+    token: string,
+    password?: string,
+  ): Promise<
+    { snapshot: SharedSnapshot } | { passwordRequired: true } | null
+  > {
+    const { data, error } = await supabase.rpc("get_shared_family", {
+      p_token: token,
+      p_pass: password ?? null,
+    });
+    if (error) throw new Error(`Không mở được link: ${error.message}`);
+    if (!data) return null;
+    if ((data as any).error === "password_required") {
+      return { passwordRequired: true };
+    }
+    return { snapshot: data as SharedSnapshot };
   }
 
   /** Returns publish info for a family owned by the current user, or null. */

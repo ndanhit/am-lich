@@ -30,6 +30,7 @@ export function renderPersonDetail(
   spouse: Person | null,
   insights: BranchInsights,
   generation: number,
+  readOnly: boolean,
   cb: PersonDetailCallbacks,
 ): void {
   container.innerHTML = "";
@@ -122,14 +123,18 @@ export function renderPersonDetail(
       </div>
       ${insightsSection(insights)}
       <div class="detail-actions detail-actions-wrap">
-        <button class="btn btn-secondary add-child-btn">Thêm con</button>
+        ${
+          readOnly
+            ? `<button class="btn btn-secondary kinship-btn">Cách xưng hô</button>`
+            : `<button class="btn btn-secondary add-child-btn">Thêm con</button>
         ${spouseBtn}
         ${parentBtn}
         ${reorderBtn}
         <button class="btn btn-secondary kinship-btn">Cách xưng hô</button>
         <button class="btn btn-secondary edit-btn">Sửa</button>
         ${gioBtn}
-        <button class="btn btn-danger delete-btn">Xóa</button>
+        <button class="btn btn-danger delete-btn">Xóa</button>`
+        }
       </div>
     </div>
   `;
@@ -140,11 +145,11 @@ export function renderPersonDetail(
     .querySelector(".detail-panel-close")!
     .addEventListener("click", cb.onClose);
   panel
-    .querySelector(".edit-btn")!
-    .addEventListener("click", () => cb.onEdit(person));
+    .querySelector(".edit-btn")
+    ?.addEventListener("click", () => cb.onEdit(person));
   panel
-    .querySelector(".add-child-btn")!
-    .addEventListener("click", () => cb.onAddChild(person));
+    .querySelector(".add-child-btn")
+    ?.addEventListener("click", () => cb.onAddChild(person));
   panel
     .querySelector(".add-spouse-btn")
     ?.addEventListener("click", () => cb.onAddSpouse(person));

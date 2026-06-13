@@ -21,8 +21,9 @@ import { renderSearchPeople } from "../components/search-people";
 import { renderGioList } from "../components/gio-list";
 import { renderKinshipView } from "../components/kinship-view";
 import { renderShareFamilyModal } from "../components/share-family-modal";
+import { renderSharedFamilyView } from "../components/shared-family-view";
 import { showLoginModal } from "../components/auth-modals";
-import { generationOf } from "../../lib/index";
+import { generationOf, parseShareHash } from "../../lib/index";
 import { renderDateConverterModal } from "../components/date-converter-modal";
 import { convertSolarToLunar, computeBranchInsights } from "../../lib/index";
 import type { CalendarCell } from "../types";
@@ -62,7 +63,15 @@ function isOverlayOpen() {
 // --- DOM Setup ---
 const app = document.getElementById("app")!;
 
-app.innerHTML = `
+// Read-only public route: open a shared family by secret link (#/share/<id>?t=).
+const shareRoute = parseShareHash(location.hash);
+if (shareRoute) {
+  renderSharedFamilyView(app, shareRoute);
+}
+
+app.innerHTML = shareRoute
+  ? app.innerHTML
+  : `
     <header class="app-header">
         <h1>Âm Lịch</h1>
         <div class="app-header-actions">
@@ -355,7 +364,7 @@ function onSelectPerson(person: Person) {
     backdrop.classList.remove("open");
   };
 
-  renderPersonDetail(detailContainer, person, spouse, insights, generation, {
+  renderPersonDetail(detailContainer, person, spouse, insights, generation, false, {
     onEdit: (p) => {
       close();
       openEditPersonForm(p);
@@ -822,6 +831,8 @@ function setActiveTab(view: AppView) {
   renderCurrentView();
 }
 
+// All shell wiring + initial render are skipped in the shared read-only view.
+if (!shareRoute) {
 tabCalendar.addEventListener("click", () => setActiveTab("calendar"));
 tabUpcoming.addEventListener("click", () => setActiveTab("upcoming"));
 tabMemo.addEventListener("click", () => setActiveTab("memo"));
@@ -867,3 +878,4 @@ if (state.corruptedOnLoad) {
 
 // --- State Change Re-render ---
 state.subscribe(() => renderCurrentView());
+}

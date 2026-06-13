@@ -45,7 +45,7 @@ export function renderShareFamilyModal(
   const fullLink = (token: string): string =>
     `${location.origin}${location.pathname}${buildShareHash(family.id, token)}`;
 
-  const renderShared = (token: string): void => {
+  const renderShared = (token: string, hasPassword: boolean): void => {
     const link = fullLink(token);
     body.innerHTML = `
       <p class="reorder-hint">Bất cứ ai có link dưới đây đều xem được (chỉ đọc). Chia sẻ thận trọng.</p>
@@ -53,11 +53,27 @@ export function renderShareFamilyModal(
         <input type="text" id="share-link" readonly value="${escapeAttr(link)}">
         <button class="btn btn-primary" id="share-copy">Copy</button>
       </div>
+      <div class="form-group" style="margin-top:var(--space-4)">
+        <label for="share-pass">Mật khẩu link (tuỳ chọn)</label>
+        <div class="share-link-row">
+          <input type="text" id="share-pass" placeholder="${hasPassword ? "Đang đặt mật khẩu — nhập mới để đổi" : "Để trống = không mật khẩu"}">
+          <button class="btn btn-secondary" id="share-pass-save">Lưu</button>
+        </div>
+      </div>
       <div class="detail-actions detail-actions-wrap" style="margin-top:var(--space-4)">
         <button class="btn btn-secondary" id="share-update">Cập nhật bản mới nhất</button>
         <button class="btn btn-danger" id="share-stop">Gỡ chia sẻ</button>
       </div>
     `;
+    body.querySelector("#share-pass-save")!.addEventListener("click", async () => {
+      const val = (body.querySelector("#share-pass") as HTMLInputElement).value;
+      try {
+        await FamilyShareAdapter.setFamilyPassword(family.id, val || null);
+        showToast(val ? "Đã đặt mật khẩu" : "Đã bỏ mật khẩu", "success");
+      } catch (e: any) {
+        showToast(e.message, "error");
+      }
+    });
     body.querySelector("#share-copy")!.addEventListener("click", async () => {
       try {
         await navigator.clipboard.writeText(link);
@@ -95,7 +111,7 @@ export function renderShareFamilyModal(
       try {
         const token = await FamilyShareAdapter.publishFamily(family, people);
         showToast("Đã đăng tải", "success");
-        renderShared(token);
+        renderShared(token, false);
       } catch (e: any) {
         showToast(e.message, "error");
       }
@@ -119,7 +135,7 @@ export function renderShareFamilyModal(
     }
     try {
       const info = await FamilyShareAdapter.getMyPublishedFamily(family.id);
-      if (info) renderShared(info.shareToken);
+      if (info) renderShared(info.shareToken, info.hasPassword);
       else renderNotShared();
     } catch (e: any) {
       body.innerHTML = `<div class="detail-empty">Lỗi: ${escapeHtml(e.message)}</div>`;
