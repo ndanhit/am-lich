@@ -152,6 +152,8 @@ export {
   attachParent,
   removePersonCascade,
 } from "../application/people/relations";
+export { computeBranchInsights } from "../application/people/insights";
+export type { BranchInsights } from "../application/people/insights";
 export { validateEventCreationParams } from "../core/rules/leap-month";
 export {
   VIETNAMESE_HOLIDAYS,

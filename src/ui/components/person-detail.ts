@@ -1,4 +1,4 @@
-import type { Person, PartialDate } from "../../lib/index";
+import type { Person, PartialDate, BranchInsights } from "../../lib/index";
 import {
   formatSolarDate,
   formatPartialDate,
@@ -26,6 +26,7 @@ export function renderPersonDetail(
   container: HTMLElement,
   person: Person,
   spouse: Person | null,
+  insights: BranchInsights,
   cb: PersonDetailCallbacks,
 ): void {
   container.innerHTML = "";
@@ -94,6 +95,7 @@ export function renderPersonDetail(
       <div class="detail-meta">
         ${metaRows.join("")}
       </div>
+      ${insightsSection(insights)}
       <div class="detail-actions detail-actions-wrap">
         <button class="btn btn-secondary add-child-btn">Thêm con</button>
         ${spouseBtn}
@@ -128,6 +130,50 @@ export function renderPersonDetail(
   panel
     .querySelector(".delete-btn")!
     .addEventListener("click", () => cb.onDelete(person));
+}
+
+/** Render the "Thống kê nhánh" section from branch insights. */
+function insightsSection(s: BranchInsights): string {
+  if (s.descendants === 0) {
+    return `
+      <div class="detail-section">
+        <div class="detail-section-title">Thống kê nhánh</div>
+        <div class="detail-empty">Chưa có con cháu được ghi nhận.</div>
+      </div>`;
+  }
+
+  const genderParts: string[] = [];
+  if (s.maleDescendants > 0) genderParts.push(`${s.maleDescendants} nam`);
+  if (s.femaleDescendants > 0) genderParts.push(`${s.femaleDescendants} nữ`);
+  if (s.otherDescendants > 0) genderParts.push(`${s.otherDescendants} khác`);
+
+  const rows: string[] = [];
+  rows.push(metaRow("Con trực tiếp", String(s.directChildren)));
+  if (genderParts.length > 0) {
+    rows.push(metaRow("Giới tính con cháu", genderParts.join(" · ")));
+  }
+  if (s.daughtersInLaw > 0 || s.sonsInLaw > 0) {
+    rows.push(metaRow("Dâu / Rể", `${s.daughtersInLaw} dâu · ${s.sonsInLaw} rể`));
+  }
+
+  return `
+    <div class="detail-section">
+      <div class="detail-section-title">Thống kê nhánh</div>
+      <div class="stat-cards">
+        ${statCard(s.generations, "thế hệ")}
+        ${statCard(s.descendants, "con cháu")}
+        ${statCard(s.totalMembers, "thành viên")}
+      </div>
+      <div class="detail-meta">${rows.join("")}</div>
+    </div>`;
+}
+
+function statCard(num: number, label: string): string {
+  return `
+    <div class="stat-card">
+      <span class="num">${num}</span>
+      <span class="lbl">${label}</span>
+    </div>`;
 }
 
 function metaRow(label: string, value: string): string {
