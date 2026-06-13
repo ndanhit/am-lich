@@ -26,6 +26,7 @@ import {
   renderSnapshotViewer,
 } from "../components/shared-family-view";
 import { renderSharedWithMeModal } from "../components/shared-with-me-modal";
+import { renderSuggestionsInbox } from "../components/suggestions-inbox";
 import { showLoginModal } from "../components/auth-modals";
 import { generationOf, parseShareHash } from "../../lib/index";
 import { renderDateConverterModal } from "../components/date-converter-modal";
@@ -263,6 +264,7 @@ function renderFamilyView() {
       onDelete: onFamilyDeleteRequest,
       onShare: openShareFamily,
       onSharedWithMe: openSharedWithMe,
+      onSuggestionsInbox: openSuggestionsInbox,
     });
     return;
   }
@@ -303,6 +305,17 @@ function openShareFamily(family: FamilyTree) {
     state.getPeopleOfTree(family.id),
     showToast,
     (onSuccess) => showLoginModal(modalContainer, showToast, onSuccess),
+  );
+}
+
+function openSuggestionsInbox() {
+  pushOverlayState();
+  renderSuggestionsInbox(
+    modalContainer,
+    state,
+    showToast,
+    (onSuccess) => showLoginModal(modalContainer, showToast, onSuccess),
+    () => renderCurrentView(),
   );
 }
 

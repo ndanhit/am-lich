@@ -8,6 +8,7 @@ export type FamilyListCallbacks = {
   onDelete: (family: FamilyTree) => void;
   onShare: (family: FamilyTree) => void;
   onSharedWithMe: () => void;
+  onSuggestionsInbox: () => void;
 };
 
 /** Render the list of family trees (gia phả) the user owns. */
@@ -26,6 +27,7 @@ export function renderFamilyList(
   header.innerHTML = `
     <h2>Gia phả</h2>
     <div class="tree-header-actions">
+      <button class="btn btn-secondary" id="suggestions-btn" title="Đề xuất gửi tới bạn">Đề xuất</button>
       <button class="btn btn-secondary" id="shared-with-me-btn">Được chia sẻ</button>
       <button class="btn btn-primary" id="create-family-btn">Tạo</button>
     </div>
@@ -37,6 +39,9 @@ export function renderFamilyList(
   header
     .querySelector("#shared-with-me-btn")!
     .addEventListener("click", () => cb.onSharedWithMe());
+  header
+    .querySelector("#suggestions-btn")!
+    .addEventListener("click", () => cb.onSuggestionsInbox());
 
   const families = state.getFamilies();
 

@@ -175,6 +175,12 @@ export type {
 } from "../application/sharing/snapshot";
 export { buildShareHash, parseShareHash } from "../application/sharing/share-link";
 export type { ShareLinkParts } from "../application/sharing/share-link";
+export { describeSuggestion } from "../application/sharing/suggestion";
+export type {
+  SuggestionKind,
+  SuggestionPayload,
+  SuggestionForm,
+} from "../application/sharing/suggestion";
 export {
   addFamily,
   updateFamily,
