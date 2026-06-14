@@ -493,7 +493,7 @@ function makeBox(person: Person, cb: NodeCallbacks): HTMLElement {
     `Chi tiết ${person.name} (${GENDER_LABELS[person.gender]})`,
   );
   const lines: string[] = [
-    `<span class="tree-name-text">${escapeHtml(person.name)}</span>`,
+    `<span class="tree-name-text">${escapeHtml(displayName(person, deceased))}</span>`,
   ];
   if (cb.detailed) {
     const meta = pickMetaLine(person, cb.childCountById.get(person.id) ?? 0);
@@ -504,6 +504,25 @@ function makeBox(person: Person, cb: NodeCallbacks): HTMLElement {
   box.innerHTML = lines.join("");
   box.addEventListener("click", () => cb.onSelect(person));
   return box;
+}
+
+/** Compact name for the tree node:
+ *  - đã mất + có tên thường gọi → dùng tên thường gọi (gần gũi như cách họ
+ *    thường được nhắc khi cúng giỗ);
+ *  - còn sống → chỉ token cuối ("Nguyễn Văn A" → "A"), vì các thế hệ cùng
+ *    họ trong cây sẽ trùng họ, không cần lặp;
+ *  - còn lại (đã mất, không có alias) → dùng full name.
+ * Tên gốc + giới tính vẫn nằm trong aria-label cho screen reader. */
+function displayName(p: Person, deceased: boolean): string {
+  const alias = (p.aliasName ?? "").trim();
+  if (deceased && alias) return alias;
+  if (!deceased) {
+    const full = (p.name ?? "").trim();
+    if (!full) return "";
+    const tokens = full.split(/\s+/);
+    return tokens[tokens.length - 1];
+  }
+  return p.name;
 }
 
 /** Single-line meta with cascading priority:

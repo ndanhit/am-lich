@@ -2186,12 +2186,12 @@ textarea:focus {
 }
 
 .tree ul {
-  padding-top: 20px;
+  padding-top: 14px;
 }
 
 .tree li {
   position: relative;
-  padding: 20px 12px 0;
+  padding: 14px 6px 0;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -2215,7 +2215,7 @@ textarea:focus {
   top: 0;
   right: 50%;
   width: 50%;
-  height: 20px;
+  height: 14px;
   border-top: 2px solid var(--color-border, rgba(0, 0, 0, 0.12));
 }
 
@@ -2232,7 +2232,7 @@ textarea:focus {
 }
 
 .tree li:only-child {
-  padding-top: 20px;
+  padding-top: 14px;
 }
 
 /* Trim the outer edges of the first/last siblings' connectors */
@@ -2257,7 +2257,7 @@ textarea:focus {
   top: 0;
   left: 50%;
   width: 0;
-  height: 20px;
+  height: 14px;
   border-left: 2px solid var(--color-border, rgba(0, 0, 0, 0.12));
 }
 
@@ -2270,13 +2270,13 @@ textarea:focus {
 
 .tree.horizontal ul {
   padding-top: 0;
-  padding-left: 20px;
+  padding-left: 14px;
 }
 
 .tree.horizontal li {
   flex-direction: row;
   align-items: center;
-  padding: 12px 0 12px 20px;
+  padding: 8px 0 8px 14px;
 }
 
 .tree.horizontal > li {
@@ -2290,7 +2290,7 @@ textarea:focus {
   bottom: 50%;
   left: 0;
   right: auto;
-  width: 20px;
+  width: 14px;
   height: 50%;
   border-top: 0;
   border-left: 2px solid var(--color-border, rgba(0, 0, 0, 0.12));
@@ -2346,7 +2346,7 @@ textarea:focus {
 .tree-couple {
   display: flex;
   align-items: center;
-  gap: var(--space-2);
+  gap: 4px;
 }
 
 .tree-couple-link {
@@ -3073,16 +3073,16 @@ body:has(.family-tree) .share-hint {
   align-items: center;
   text-align: center;
   justify-content: center;
-  gap: 1px;
+  gap: 0;
   background: var(--paper-bg-soft);
   border: 1px solid var(--ink);
   border-top: 3px solid var(--accent-red);
   border-radius: 3px;
   box-shadow: 1px 1px 0 var(--paper-edge);
-  padding: 6px 12px;
+  padding: 3px 8px 4px;
   font-family: var(--font-display);
   color: var(--ink);
-  min-width: 64px;
+  min-width: 44px;
   transition: box-shadow 0.15s, transform 0.15s;
 }
 .family-tree .tree-node-box:hover {
