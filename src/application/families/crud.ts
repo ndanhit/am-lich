@@ -1,4 +1,15 @@
 import type { FamilyTree, Person } from "../../core/models/types";
+import { convertSolarToLunar } from "../../core/lunar-math/converter";
+
+/** Legacy people with a complete solar death date but no lunar giỗ yet. */
+function needsGioBackfill(p: Person): boolean {
+  return (
+    p.deathLunar == null &&
+    p.deathDate != null &&
+    p.deathDate.month != null &&
+    p.deathDate.day != null
+  );
+}
 
 export function addFamily(
   families: FamilyTree[],
@@ -63,16 +74,31 @@ export function migratePeople(
   makeDefaultTree: () => FamilyTree,
 ): { people: Person[]; families: FamilyTree[]; changed: boolean } {
   const hasOrphans = people.some((p) => !p.treeId);
-  if (!hasOrphans) return { people, families, changed: false };
+  const hasGioBackfill = people.some(needsGioBackfill);
+  if (!hasOrphans && !hasGioBackfill) {
+    return { people, families, changed: false };
+  }
 
-  let target = families[0];
   let nextFamilies = families;
-  if (!target) {
+  let target = families[0];
+  if (hasOrphans && !target) {
     target = makeDefaultTree();
     nextFamilies = [target];
   }
-  const nextPeople = people.map((p) =>
-    p.treeId ? p : { ...p, treeId: target.id },
-  );
+  const nextPeople = people.map((p) => {
+    let np = p;
+    if (!np.treeId && target) np = { ...np, treeId: target.id };
+    if (needsGioBackfill(np)) {
+      const d = np.deathDate!;
+      const lunar = convertSolarToLunar(d.year, d.month!, d.day!);
+      if (lunar) {
+        np = {
+          ...np,
+          deathLunar: { day: lunar.lunarDay, month: Math.abs(lunar.lunarMonth) },
+        };
+      }
+    }
+    return np;
+  });
   return { people: nextPeople, families: nextFamilies, changed: true };
 }

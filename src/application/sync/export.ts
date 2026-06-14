@@ -124,6 +124,7 @@ export function validateImportPayload(jsonPayload: string): ExportPayload {
       if (!isValidGender(p.gender)) throw new Error("Invalid person gender");
       const birthDate = parsePartialDate(p.birthDate, "birthDate");
       const deathDate = parsePartialDate(p.deathDate, "deathDate");
+      const deathLunar = parseLunarGio(p.deathLunar);
       if (p.parentId !== null && typeof p.parentId !== "string")
         throw new Error("Invalid person parentId");
       if (p.spouseId !== null && typeof p.spouseId !== "string")
@@ -150,6 +151,7 @@ export function validateImportPayload(jsonPayload: string): ExportPayload {
         birthDate,
         isDeceased,
         deathDate,
+        deathLunar,
         isMarriedIn,
         parentId: p.parentId,
         spouseId: p.spouseId,
@@ -233,6 +235,19 @@ function parsePartialDate(value: any, label: string): PartialDate | null {
   const month = typeof value.month === "number" ? value.month : null;
   const day = typeof value.day === "number" ? value.day : null;
   return { year: value.year, month, day };
+}
+
+/** Parse an optional lunar giỗ ({ month, day }); returns null when incomplete. */
+function parseLunarGio(value: any): { month: number; day: number } | null {
+  if (value === null || value === undefined) return null;
+  if (
+    typeof value !== "object" ||
+    typeof value.month !== "number" ||
+    typeof value.day !== "number"
+  ) {
+    return null;
+  }
+  return { month: value.month, day: value.day };
 }
 
 /**

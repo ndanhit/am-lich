@@ -1,4 +1,9 @@
-import type { Person, PartialDate, Gender } from "../../core/models/types";
+import type {
+  Person,
+  PartialDate,
+  Gender,
+  LunarDate,
+} from "../../core/models/types";
 
 export function addPerson(people: Person[], newPerson: Person): Person[] {
   if (people.some((p) => p.id === newPerson.id)) {
@@ -115,6 +120,20 @@ export function validatePersonCreationParams(
   }
   if (birthDate && deathDate && comparePartialAsc(deathDate, birthDate) < 0) {
     throw new Error("Ngày mất không thể trước ngày sinh");
+  }
+}
+
+/**
+ * Validate a lunar death anniversary (ngày giỗ). Both month (1–12) and day
+ * (1–30) are required when present; null means "chưa rõ" and is allowed.
+ */
+export function validateLunarGio(gio: LunarDate | null | undefined): void {
+  if (gio == null) return;
+  if (!Number.isInteger(gio.month) || gio.month < 1 || gio.month > 12) {
+    throw new Error("Tháng giỗ không hợp lệ");
+  }
+  if (!Number.isInteger(gio.day) || gio.day < 1 || gio.day > 30) {
+    throw new Error("Ngày giỗ không hợp lệ");
   }
 }
 

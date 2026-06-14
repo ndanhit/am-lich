@@ -31,6 +31,7 @@ import {
   updatePerson,
   importPeople,
   validatePersonCreationParams,
+  validateLunarGio,
   buildFamilyTree,
   attachChild,
   attachSpouse,
@@ -579,8 +580,9 @@ export class AppState {
   /** Build a fresh Person from form data (id/timestamps + default relations). */
   private buildPerson(form: PersonFormData): Person {
     const birthDate = this.toPartialDate(form.birthDate);
-    const deathDate = form.isDeceased ? this.toPartialDate(form.deathDate) : null;
-    validatePersonCreationParams(form.name, birthDate, deathDate);
+    const deathLunar = form.isDeceased ? form.deathLunar : null;
+    validatePersonCreationParams(form.name, birthDate, null);
+    validateLunarGio(deathLunar);
     if (this.currentTreeId == null) {
       throw new Error("Chưa chọn gia phả");
     }
@@ -592,7 +594,8 @@ export class AppState {
       gender: form.gender,
       birthDate,
       isDeceased: form.isDeceased,
-      deathDate,
+      deathDate: null,
+      deathLunar,
       isMarriedIn: false,
       parentId: null,
       spouseId: null,
@@ -644,8 +647,9 @@ export class AppState {
 
   editPerson(id: string, form: PersonFormData): void {
     const birthDate = this.toPartialDate(form.birthDate);
-    const deathDate = form.isDeceased ? this.toPartialDate(form.deathDate) : null;
-    validatePersonCreationParams(form.name, birthDate, deathDate);
+    const deathLunar = form.isDeceased ? form.deathLunar : null;
+    validatePersonCreationParams(form.name, birthDate, null);
+    validateLunarGio(deathLunar);
 
     const existing = this.people.find((p) => p.id === id);
     if (!existing) throw new Error(`Person ${id} not found`);
@@ -657,7 +661,8 @@ export class AppState {
       gender: form.gender,
       birthDate,
       isDeceased: form.isDeceased,
-      deathDate,
+      deathDate: null,
+      deathLunar,
       aliasName: (form.aliasName ?? "").trim().slice(0, 100),
       altNames: (form.altNames ?? "").trim().slice(0, 200),
       homeland: (form.homeland ?? "").trim().slice(0, 200),

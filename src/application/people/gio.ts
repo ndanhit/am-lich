@@ -16,14 +16,29 @@ import { getUpcomingEvents } from "../queries/upcoming";
 export function buildGioEvents(people: Person[]): LunarEvent[] {
   const events: LunarEvent[] = [];
   for (const p of people) {
-    const d = p.deathDate;
-    if (!d || d.month == null || d.day == null) continue;
-    const lunar = convertSolarToLunar(d.year, d.month, d.day);
-    if (!lunar) continue;
+    let month: number | null = null;
+    let day: number | null = null;
+    if (p.deathLunar && p.deathLunar.month != null && p.deathLunar.day != null) {
+      // Preferred: the lunar anniversary entered directly by the user.
+      month = p.deathLunar.month;
+      day = p.deathLunar.day;
+    } else if (p.deathDate && p.deathDate.month != null && p.deathDate.day != null) {
+      // Legacy data: derive the lunar anniversary from the solar death date.
+      const lunar = convertSolarToLunar(
+        p.deathDate.year,
+        p.deathDate.month,
+        p.deathDate.day,
+      );
+      if (lunar) {
+        month = Math.abs(lunar.lunarMonth);
+        day = lunar.lunarDay;
+      }
+    }
+    if (month == null || day == null) continue;
     events.push({
       id: p.id,
       name: `Giỗ ${p.name}`,
-      lunarDate: { day: lunar.lunarDay, month: Math.abs(lunar.lunarMonth) },
+      lunarDate: { day, month },
       recurrence: RecurrenceRule.YEARLY,
       leapMonthRule: LeapMonthRule.REGULAR_ONLY,
       createdAt: p.createdAt,

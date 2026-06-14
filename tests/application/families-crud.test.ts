@@ -8,6 +8,7 @@ import {
   validateFamilyParams,
   migratePeople,
 } from "../../src/application/families/crud";
+import { convertSolarToLunar } from "../../src/core/lunar-math/converter";
 import type { FamilyTree, Person } from "../../src/core/models/types";
 
 function family(overrides: Partial<FamilyTree> = {}): FamilyTree {
@@ -122,5 +123,38 @@ describe("migratePeople", () => {
     expect(res.families).toHaveLength(1);
     expect(res.people[0].treeId).toBe("existing");
     expect(res.people[1].treeId).toBe("keep"); // untouched
+  });
+
+  it("backfills a lunar giỗ from a legacy solar death date", () => {
+    const people = [
+      person({
+        id: "1",
+        treeId: "f1",
+        isDeceased: true,
+        deathDate: { year: 2000, month: 3, day: 10 },
+      }),
+    ];
+    const res = migratePeople(people, [family({ id: "f1" })], makeDefault);
+    const lunar = convertSolarToLunar(2000, 3, 10)!;
+    expect(res.changed).toBe(true);
+    expect(res.people[0].deathLunar).toEqual({
+      day: lunar.lunarDay,
+      month: Math.abs(lunar.lunarMonth),
+    });
+  });
+
+  it("leaves an existing lunar giỗ untouched", () => {
+    const people = [
+      person({
+        id: "1",
+        treeId: "f1",
+        isDeceased: true,
+        deathLunar: { month: 8, day: 15 },
+        deathDate: { year: 2000, month: 3, day: 10 },
+      }),
+    ];
+    const res = migratePeople(people, [family({ id: "f1" })], makeDefault);
+    expect(res.changed).toBe(false);
+    expect(res.people[0].deathLunar).toEqual({ month: 8, day: 15 });
   });
 });

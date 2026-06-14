@@ -1,4 +1,4 @@
-import type { Gender, PartialDate } from "../../lib/index";
+import type { Gender, PartialDate, LunarDate } from "../../lib/index";
 import type { PersonFormData, PersonFormContext } from "../types";
 import { GENDER_LABELS } from "../types";
 
@@ -34,7 +34,7 @@ export function renderPersonForm(
     lockedGender ?? (editPerson ? editPerson.gender : "male");
   const defaultNotes = editPerson ? editPerson.notes : "";
   const isDeceased =
-    isEdit && (editPerson!.isDeceased || editPerson!.deathDate !== null);
+    isEdit && (editPerson!.isDeceased || editPerson!.deathLunar != null);
 
   const genderField = lockedGender
     ? `<input type="hidden" name="gender" value="${lockedGender}">
@@ -92,8 +92,9 @@ export function renderPersonForm(
           </div>
 
           <div class="form-group" id="person-death-group" style="display: ${isDeceased ? "block" : "none"}">
-            <label>Ngày mất (dương lịch, không bắt buộc)</label>
-            ${datePickerHtml("death")}
+            <label>Ngày giỗ (âm lịch, không bắt buộc)</label>
+            ${gioPickerHtml()}
+            <div class="form-hint">Chọn tháng &amp; ngày âm lịch để app nhắc giỗ hằng năm.</div>
             <div class="form-error" id="person-death-error"></div>
           </div>
 
@@ -151,10 +152,9 @@ export function renderPersonForm(
     "birth",
     editPerson ? editPerson.birthDate : null,
   );
-  const getDeath = setupDatePicker(
+  const getGio = setupGioPicker(
     overlay,
-    "death",
-    editPerson ? editPerson.deathDate : null,
+    editPerson ? (editPerson.deathLunar ?? null) : null,
   );
 
   deceasedCheckbox.addEventListener("change", () => {
@@ -202,7 +202,7 @@ export function renderPersonForm(
       gender,
       birthDate: getBirth(),
       isDeceased: deceased,
-      deathDate: deceased ? getDeath() : null,
+      deathLunar: deceased ? getGio() : null,
       aliasName: val("person-alias"),
       altNames: val("person-altnames"),
       homeland: val("person-homeland"),
@@ -216,7 +216,7 @@ export function renderPersonForm(
       closeForm(overlay, onSaved);
     } catch (err: any) {
       const msg = err.message || "Dữ liệu không hợp lệ";
-      if (msg.includes("mất")) {
+      if (msg.includes("giỗ") || msg.includes("mất")) {
         showError(overlay, "person-death-error", "person-death", msg);
       } else if (msg.includes("sinh")) {
         showError(overlay, "person-birth-error", "person-birth", msg);
@@ -266,6 +266,47 @@ function datePickerHtml(prefix: string): string {
         <option value="">Ngày</option>
       </select>
     </div>`;
+}
+
+/** Markup for a lunar giỗ picker: Tháng ÂL + Ngày ÂL (both optional). */
+function gioPickerHtml(): string {
+  const months = Array.from(
+    { length: 12 },
+    (_, i) => `<option value="${i + 1}">Tháng ${i + 1}</option>`,
+  ).join("");
+  const days = Array.from(
+    { length: 30 },
+    (_, i) => `<option value="${i + 1}">Ngày ${i + 1}</option>`,
+  ).join("");
+  return `
+    <div class="date-picker">
+      <select id="gio-month" class="date-select" aria-label="Tháng âm lịch">
+        <option value="">Tháng ÂL</option>${months}
+      </select>
+      <select id="gio-day" class="date-select" aria-label="Ngày âm lịch">
+        <option value="">Ngày ÂL</option>${days}
+      </select>
+    </div>`;
+}
+
+/**
+ * Wire the lunar giỗ picker. Returns a getter producing the chosen LunarDate
+ * (month + day) — or null when either part is missing.
+ */
+function setupGioPicker(
+  overlay: HTMLElement,
+  initial: LunarDate | null,
+): () => LunarDate | null {
+  const monthSel = overlay.querySelector("#gio-month") as HTMLSelectElement;
+  const daySel = overlay.querySelector("#gio-day") as HTMLSelectElement;
+  if (initial) {
+    monthSel.value = String(initial.month);
+    daySel.value = String(initial.day);
+  }
+  return () => {
+    if (!monthSel.value || !daySel.value) return null;
+    return { month: Number(monthSel.value), day: Number(daySel.value) };
+  };
 }
 
 /**
