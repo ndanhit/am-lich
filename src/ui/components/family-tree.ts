@@ -174,6 +174,20 @@ export function renderFamilyTree(
     applyZoom();
   };
 
+  // Track whether the current zoom value came from an auto-fit (vs. a manual
+  // user gesture). We re-fit on resize ONLY while this flag is true so the
+  // tree adapts when the detail panel slides in, but never overrides a zoom
+  // the user explicitly set.
+  let autoFitActive = false;
+  let manualSetZoom: ((next: number) => void) | null = null;
+
+  const centerHorizontally = (): void => {
+    if (scroll.scrollWidth > scroll.clientWidth) {
+      scroll.scrollLeft = (scroll.scrollWidth - scroll.clientWidth) / 2;
+    }
+    scroll.scrollTop = 0;
+  };
+
   // Scale the tree down so its natural width fits the visible scroll area
   // (never scales up past 100%).
   const fitToWidth = (): void => {
@@ -182,19 +196,36 @@ export function renderFamilyTree(
     tree.style.setProperty("zoom", "1");
     const natural = tree.scrollWidth;
     const avail = scroll.clientWidth;
+    autoFitActive = true;
     setZoom(natural > 0 ? Math.min(1, avail / natural) : 1);
+    autoFitActive = true;
+    requestAnimationFrame(centerHorizontally);
   };
 
   // Read-only viewers open at a legible zoom: fit the width but never shrink
   // below MIN_READABLE_ZOOM (they pan/pinch to explore instead of squinting).
+  // Small trees that already fit are shown at 100% — no point shrinking them.
   const fitReadable = (): void => {
     const tree = scroll.querySelector(".tree") as HTMLElement | null;
     if (!tree) return;
     tree.style.setProperty("zoom", "1");
     const natural = tree.scrollWidth;
     const avail = scroll.clientWidth;
-    const fit = natural > 0 ? Math.min(1, avail / natural) : 1;
-    setZoom(Math.max(MIN_READABLE_ZOOM, fit));
+    autoFitActive = true;
+    if (natural === 0 || natural <= avail) {
+      setZoom(1);
+    } else {
+      setZoom(Math.max(MIN_READABLE_ZOOM, avail / natural));
+    }
+    autoFitActive = true;
+    requestAnimationFrame(centerHorizontally);
+  };
+
+  // Any setZoom call from a user gesture should turn off the auto-fit flag
+  // so subsequent ResizeObserver ticks don't override the user's choice.
+  manualSetZoom = (next: number): void => {
+    autoFitActive = false;
+    setZoom(next);
   };
 
   const buildTree = (): void => {
@@ -229,10 +260,10 @@ export function renderFamilyTree(
   // --- Zoom controls ---
   fab
     .querySelector("#zoom-in")!
-    .addEventListener("click", () => setZoom(zoomLevel + 0.1));
+    .addEventListener("click", () => manualSetZoom!(zoomLevel + 0.1));
   fab
     .querySelector("#zoom-out")!
-    .addEventListener("click", () => setZoom(zoomLevel - 0.1));
+    .addEventListener("click", () => manualSetZoom!(zoomLevel - 0.1));
   fab.querySelector("#zoom-fit")!.addEventListener("click", () => fitToWidth());
 
   // --- Pinch-to-zoom ---
@@ -253,7 +284,9 @@ export function renderFamilyTree(
     (e) => {
       if (e.touches.length === 2 && pinchStartDist > 0) {
         e.preventDefault();
-        setZoom((pinchStartZoom * touchDistance(e.touches)) / pinchStartDist);
+        manualSetZoom!(
+          (pinchStartZoom * touchDistance(e.touches)) / pinchStartDist,
+        );
       }
     },
     { passive: false },
@@ -261,6 +294,33 @@ export function renderFamilyTree(
   scroll.addEventListener("touchend", (e) => {
     if (e.touches.length < 2) pinchStartDist = 0;
   });
+
+  // --- Ctrl/Cmd + wheel zoom (desktop) ---
+  scroll.addEventListener(
+    "wheel",
+    (e) => {
+      if (!(e.ctrlKey || e.metaKey)) return;
+      e.preventDefault();
+      const step = e.deltaY > 0 ? -0.1 : 0.1;
+      manualSetZoom!(zoomLevel + step);
+    },
+    { passive: false },
+  );
+
+  // --- Re-fit when the scroll width changes (detail panel open/close, window
+  // resize). Only while auto-fit is active so we never override a user zoom. ---
+  let resizeTimer: number | null = null;
+  const ro = new ResizeObserver(() => {
+    if (!autoFitActive) return;
+    if (resizeTimer != null) window.clearTimeout(resizeTimer);
+    resizeTimer = window.setTimeout(() => {
+      resizeTimer = null;
+      if (!autoFitActive) return;
+      if (readOnly) fitReadable();
+      else fitToWidth();
+    }, 150);
+  });
+  ro.observe(scroll);
 
   // --- Drag-to-pan (mouse / single pointer) ---
   enableDragPan(scroll);

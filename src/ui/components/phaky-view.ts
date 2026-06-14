@@ -1,6 +1,8 @@
 import type { Person, FamilyTree, PhaKyEntry } from "../../lib/index";
 import { buildPhaKy, formatPartialDate } from "../../lib/index";
 
+export type PhaKyOptions = { totalPeople?: number };
+
 /**
  * Render a read-only "phả ký" — a read-friendly narrative of the family tree
  * grouped by generation, shown on screen (no printing).
@@ -9,6 +11,7 @@ export function renderPhaKyView(
   container: HTMLElement,
   family: FamilyTree,
   people: Person[],
+  opts: PhaKyOptions = {},
 ): void {
   const entries = buildPhaKy(people);
 
@@ -23,7 +26,7 @@ export function renderPhaKyView(
             <line x1="6" y1="6" x2="18" y2="18"></line>
           </svg>
         </button>
-        <div class="modal-title-text">Phả ký</div>
+        <div class="modal-title-text">Phả ký dòng họ ${escapeHtml(family.name)}</div>
       </div>
       <div class="modal-body" id="phaky-body"></div>
     </div>
@@ -42,13 +45,16 @@ export function renderPhaKyView(
   });
 
   const body = overlay.querySelector("#phaky-body") as HTMLElement;
-  body.appendChild(renderPhaKyDocument(family, entries));
+  body.appendChild(
+    renderPhaKyDocument(family, entries, opts.totalPeople ?? people.length),
+  );
 }
 
-/** Build the print-friendly phả ký document body (shared by viewer & owner). */
+/** Build the read-friendly phả ký document body. */
 export function renderPhaKyDocument(
   family: FamilyTree,
   entries: PhaKyEntry[],
+  totalPeople?: number,
 ): HTMLElement {
   const doc = document.createElement("div");
   doc.className = "phaky-doc";
@@ -56,13 +62,23 @@ export function renderPhaKyDocument(
   const generations = entries.length
     ? entries[entries.length - 1].generation
     : 0;
+  // "Total people" includes married-in spouses; phả ký lists only blood
+  // members. Surfacing the gap explains why this count differs from the hero.
+  const marriedIn =
+    totalPeople != null ? Math.max(0, totalPeople - entries.length) : 0;
 
   const header = document.createElement("div");
   header.className = "phaky-doc-header";
+  const metaParts = [
+    `${entries.length} thành viên huyết thống`,
+    `${generations} đời`,
+  ];
+  if (marriedIn > 0) {
+    metaParts.push(`${marriedIn} người kết hôn vào dòng họ`);
+  }
   header.innerHTML = `
-    <h1 class="phaky-title">Phả ký dòng họ ${escapeHtml(family.name)}</h1>
     ${(family.description ?? "").trim() ? `<p class="phaky-desc">${escapeHtml(family.description)}</p>` : ""}
-    <p class="phaky-meta">${entries.length} thành viên huyết thống · ${generations} đời</p>
+    <p class="phaky-meta">${metaParts.join(" · ")}</p>
   `;
   doc.appendChild(header);
 

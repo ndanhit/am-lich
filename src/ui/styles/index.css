@@ -1849,11 +1849,29 @@ textarea:focus {
   padding: 4px;
 }
 
+/* Mobile: anchor closer to the bottom edge so it sits near the tree and
+   stays in easy thumb reach. */
+@media (max-width: 767px) {
+  .tree-fab {
+    bottom: var(--space-3);
+    right: var(--space-3);
+  }
+}
+
 /* Desktop: keep the FAB anchored near the (centered) content column instead
    of drifting to the far bottom-right corner of a wide viewport. */
 @media (min-width: 768px) {
   .tree-fab {
     right: max(var(--space-6), calc(50vw - 540px));
+  }
+}
+
+/* Touch devices: header controls (search / lịch giỗ / phả ký / orientation)
+   need a 44×44 hit area for thumbs. Keep the FAB and tree-toggle compact. */
+@media (pointer: coarse) {
+  .family-tree-header .tree-ctrl-btn {
+    min-width: 44px;
+    height: 44px;
   }
 }
 
@@ -2422,6 +2440,21 @@ textarea:focus {
   flex: 1 1 calc(50% - var(--space-2));
 }
 
+/* Viewer mode: only 2 buttons (Cách xưng hô + Đề xuất). Use a tight 2-col
+   grid with reduced padding so labels stay on one line in a narrow side
+   panel. */
+.detail-actions-viewer {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2);
+}
+.detail-actions-viewer .btn {
+  padding: 10px var(--space-2);
+  width: 100%;
+  font-size: var(--font-size-sm, 13px);
+  white-space: nowrap;
+}
+
 /* --- Reorder children modal --- */
 .reorder-hint {
   font-size: var(--font-size-sm);
@@ -2656,10 +2689,58 @@ textarea:focus {
   align-self: center;
 }
 
+/* Mobile: "Xem phả ký" drops to its own full-width row so the stats stay
+   on one tidy line. */
+@media (max-width: 480px) {
+  .family-hero--compact .family-hero-stats {
+    justify-content: space-around;
+  }
+  .family-hero--compact .family-hero-stats .btn-sm {
+    flex: 0 0 100%;
+    margin-top: var(--space-1);
+  }
+}
+
 /* When there is no back button (read-only viewer), keep the tree controls
    tidy on the right. */
 #shared-view .family-tree-header {
   justify-content: flex-end;
+}
+
+/* Make the shared view fill the viewport so the tree gets the available
+   vertical space instead of collapsing to content height. */
+#shared-view {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+#shared-view .family-tree {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+#shared-view .tree-scroll {
+  flex: 1 1 auto;
+  min-height: 320px;
+}
+
+/* Footer with a soft CTA back to the main app. Recipients of a share link
+   often land here without ever having opened Âm Lịch. */
+.share-footer {
+  padding: var(--space-4) var(--space-4) var(--space-6);
+  text-align: center;
+  font-size: var(--font-size-xs, 11px);
+  color: var(--color-text-secondary);
+}
+.share-footer a {
+  color: var(--color-primary, #5b52e6);
+  text-decoration: none;
+  font-weight: 600;
+}
+.share-footer a:hover {
+  text-decoration: underline;
 }
 
 /* One-time interaction hint for first-time viewers. */
