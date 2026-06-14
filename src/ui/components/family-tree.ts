@@ -5,6 +5,8 @@ import type { AppState } from "../state";
 
 const MIN_ZOOM = 0.3;
 const MAX_ZOOM = 2;
+// Read-only viewers open at a legible zoom rather than the full-tree overview.
+const MIN_READABLE_ZOOM = 0.6;
 const AUTO_COLLAPSE_THRESHOLD = 15; // blood-node count above which we auto-collapse
 const AUTO_COLLAPSE_FROM_DEPTH = 2; // collapse generations at depth >= 2 (show ~3 levels)
 
@@ -28,8 +30,9 @@ export function renderFamilyTree(
   onBack: () => void,
   onSearch: () => void,
   onGio: () => void,
-  onPhaKy?: () => void,
+  opts: { onPhaKy?: () => void; readOnly?: boolean } = {},
 ): void {
+  const { onPhaKy, readOnly = false } = opts;
   container.innerHTML = "";
 
   // Reset view state when switching to a different tree.
@@ -50,10 +53,12 @@ export function renderFamilyTree(
     collapseInitialized = false;
     const backHeader = document.createElement("div");
     backHeader.className = "family-tree-header";
-    backHeader.innerHTML = `<button class="tree-back-btn" id="tree-back">← ${escapeHtml(family.name)}</button>`;
+    backHeader.innerHTML = readOnly
+      ? ""
+      : `<button class="tree-back-btn" id="tree-back">← ${escapeHtml(family.name)}</button>`;
     backHeader
-      .querySelector("#tree-back")!
-      .addEventListener("click", () => onBack());
+      .querySelector("#tree-back")
+      ?.addEventListener("click", () => onBack());
     section.appendChild(backHeader);
     const empty = document.createElement("div");
     empty.className = "empty-state";
@@ -90,7 +95,7 @@ export function renderFamilyTree(
   const header = document.createElement("div");
   header.className = "family-tree-header";
   header.innerHTML = `
-    <button class="tree-back-btn" id="tree-back" title="Danh sách gia phả">← ${escapeHtml(family.name)}</button>
+    ${readOnly ? "" : `<button class="tree-back-btn" id="tree-back" title="Danh sách gia phả">← ${escapeHtml(family.name)}</button>`}
     <div class="tree-header-actions">
       <button class="tree-ctrl-btn" id="tree-search" title="Tìm thành viên" aria-label="Tìm thành viên">
         <svg viewBox="0 0 24 24" width="18" height="18" stroke="currentColor" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round">
@@ -133,7 +138,7 @@ export function renderFamilyTree(
 
   container.appendChild(section);
 
-  header.querySelector("#tree-back")!.addEventListener("click", () => onBack());
+  header.querySelector("#tree-back")?.addEventListener("click", () => onBack());
   header.querySelector("#tree-search")!.addEventListener("click", () => onSearch());
   header.querySelector("#tree-gio")!.addEventListener("click", () => onGio());
   if (onPhaKy) {
@@ -180,6 +185,18 @@ export function renderFamilyTree(
     setZoom(natural > 0 ? Math.min(1, avail / natural) : 1);
   };
 
+  // Read-only viewers open at a legible zoom: fit the width but never shrink
+  // below MIN_READABLE_ZOOM (they pan/pinch to explore instead of squinting).
+  const fitReadable = (): void => {
+    const tree = scroll.querySelector(".tree") as HTMLElement | null;
+    if (!tree) return;
+    tree.style.setProperty("zoom", "1");
+    const natural = tree.scrollWidth;
+    const avail = scroll.clientWidth;
+    const fit = natural > 0 ? Math.min(1, avail / natural) : 1;
+    setZoom(Math.max(MIN_READABLE_ZOOM, fit));
+  };
+
   const buildTree = (): void => {
     scroll.innerHTML = "";
     const tree = document.createElement("ul");
@@ -192,7 +209,8 @@ export function renderFamilyTree(
     // without manual zooming (especially when opening a share link on desktop).
     if (autoFitPending) {
       autoFitPending = false;
-      fitToWidth();
+      if (readOnly) fitReadable();
+      else fitToWidth();
     }
   };
   buildTree();

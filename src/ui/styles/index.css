@@ -2613,6 +2613,82 @@ textarea:focus {
   }
 }
 
+/* ── Shared link viewer: compact hero, read-only chip, hint ───────── */
+.family-hero-head {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  flex-wrap: wrap;
+}
+
+.readonly-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 2px 10px;
+  border-radius: var(--radius-full, 999px);
+  background: var(--color-primary-soft, #ece9ff);
+  color: var(--color-primary, #5b52e6);
+  font-size: var(--font-size-xs, 11px);
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+.family-hero--compact {
+  padding: var(--space-3) var(--space-4) var(--space-2);
+}
+.family-hero--compact .family-hero-title {
+  margin-bottom: 0;
+  font-size: var(--font-size-lg, 18px);
+}
+.family-hero--compact .family-hero-stats {
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--space-4, 16px);
+  margin: var(--space-2) 0 0;
+}
+
+.btn-sm {
+  padding: 6px 14px;
+  font-size: var(--font-size-sm, 13px);
+}
+.family-hero-stats .btn-sm {
+  align-self: center;
+}
+
+/* When there is no back button (read-only viewer), keep the tree controls
+   tidy on the right. */
+#shared-view .family-tree-header {
+  justify-content: flex-end;
+}
+
+/* One-time interaction hint for first-time viewers. */
+.share-hint {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  margin: 0 var(--space-4) var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  background: var(--color-primary-soft, #ece9ff);
+  color: var(--color-text-secondary);
+  border-radius: var(--radius-md, 10px);
+  font-size: var(--font-size-xs, 11px);
+  line-height: 1.4;
+}
+.share-hint span {
+  flex: 1;
+}
+.share-hint-close {
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  color: var(--color-text-muted, #9a96b0);
+  font-size: 14px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 2px 4px;
+}
+
 /* ── Phả ký (read-only narrative) ────────────────────────────────── */
 .phaky-modal {
   max-width: 720px;
