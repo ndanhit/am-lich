@@ -1,12 +1,21 @@
 import type { Person, FamilyTreeNode, FamilyTree } from "../../lib/index";
-import { countDescendants, collectCollapsibleIds } from "../../lib/index";
+import {
+  countDescendants,
+  collectCollapsibleIds,
+  formatPartialDate,
+} from "../../lib/index";
 import { GENDER_LABELS } from "../types";
 import type { AppState } from "../state";
 
 const MIN_ZOOM = 0.3;
 const MAX_ZOOM = 2;
 // Read-only viewers open at a legible zoom rather than the full-tree overview.
-const MIN_READABLE_ZOOM = 0.6;
+// Bumped to 0.75 once boxes started showing alias + years + titles — at lower
+// zoom the meta becomes unreadable, so we floor higher and rely on user pinch
+// to see the whole tree at once.
+const MIN_READABLE_ZOOM = 0.75;
+// Below this zoom we hide meta (alias / years / titles) via [data-zoom-small].
+const META_HIDE_ZOOM = 0.7;
 const AUTO_COLLAPSE_THRESHOLD = 15; // blood-node count above which we auto-collapse
 const AUTO_COLLAPSE_FROM_DEPTH = 2; // collapse generations at depth >= 2 (show ~3 levels)
 
@@ -89,7 +98,9 @@ export function renderFamilyTree(
   }
 
   const peopleById = new Map(state.getPeople().map((p) => [p.id, p]));
-  const cb: NodeCallbacks = { onSelect, peopleById };
+  // Share-view (readOnly) shows extra biographical fields inside each box —
+  // tự, năm sinh-mất, chức danh — to match the traditional phả đồ feel.
+  const cb: NodeCallbacks = { onSelect, peopleById, detailed: readOnly };
 
   // Header: back to list + orientation toggle.
   const header = document.createElement("div");
@@ -166,7 +177,16 @@ export function renderFamilyTree(
 
   const applyZoom = (): void => {
     const tree = scroll.querySelector(".tree") as HTMLElement | null;
-    if (tree) tree.style.setProperty("zoom", String(zoomLevel));
+    if (tree) {
+      tree.style.setProperty("zoom", String(zoomLevel));
+      // CSS hides alias/years/titles when this attribute is set so very small
+      // boxes don't smear text on top of the connector lines.
+      if (zoomLevel < META_HIDE_ZOOM) {
+        tree.setAttribute("data-zoom-small", "1");
+      } else {
+        tree.removeAttribute("data-zoom-small");
+      }
+    }
     label.textContent = `${Math.round(zoomLevel * 100)}%`;
   };
   const setZoom = (next: number): void => {
@@ -329,6 +349,7 @@ export function renderFamilyTree(
 type NodeCallbacks = {
   onSelect: (person: Person) => void;
   peopleById: Map<string, Person>;
+  detailed: boolean;
 };
 
 function touchDistance(touches: TouchList): number {
@@ -447,7 +468,8 @@ function renderNode(node: FamilyTreeNode, cb: NodeCallbacks): HTMLElement {
   return li;
 }
 
-/** A compact, clickable node box: name + gender icon (outline) after the name. */
+/** A clickable node box. Name only by default; in `detailed` mode (share view)
+ * also stacks tự, năm sinh-mất, and chức danh — the traditional phả đồ feel. */
 function makeBox(person: Person, cb: NodeCallbacks): HTMLElement {
   const box = document.createElement("button");
   box.type = "button";
@@ -457,9 +479,34 @@ function makeBox(person: Person, cb: NodeCallbacks): HTMLElement {
     "aria-label",
     `Chi tiết ${person.name} (${GENDER_LABELS[person.gender]})`,
   );
-  box.innerHTML = `<span class="tree-name-text">${escapeHtml(person.name)}</span>`;
+  const lines: string[] = [
+    `<span class="tree-name-text">${escapeHtml(person.name)}</span>`,
+  ];
+  if (cb.detailed) {
+    const alias = (person.aliasName ?? "").trim();
+    if (alias)
+      lines.push(`<span class="tree-alias">tự ${escapeHtml(alias)}</span>`);
+    const years = formatLifespan(person);
+    if (years) lines.push(`<span class="tree-years">${years}</span>`);
+    const titles = (person.titles ?? "").trim();
+    if (titles)
+      lines.push(`<span class="tree-title">${escapeHtml(titles)}</span>`);
+  }
+  box.innerHTML = lines.join("");
   box.addEventListener("click", () => cb.onSelect(person));
   return box;
+}
+
+/** "1958 — giỗ 18/2 ÂL" / "1958" / "giỗ 18/2 ÂL" / "đã mất" / "". */
+function formatLifespan(p: Person): string {
+  const birth = p.birthDate ? escapeHtml(formatPartialDate(p.birthDate)) : "";
+  const death = p.isDeceased
+    ? p.deathLunar
+      ? `giỗ ${p.deathLunar.day}/${p.deathLunar.month} ÂL`
+      : "đã mất"
+    : "";
+  if (birth && death) return `${birth} — ${death}`;
+  return birth || death;
 }
 
 function escapeHtml(str: string): string {

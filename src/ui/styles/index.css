@@ -3,6 +3,11 @@
    Design Token System & Component Styles
    ======================================== */
 
+/* Traditional book-style fonts for the shared family-tree view (scope: hero,
+   shared-view, phả ký overlay when share view is mounted). Both families
+   ship the Vietnamese subset. */
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,600;0,700;1,400&family=Inknut+Antiqua:wght@500;700&display=swap');
+
 /* --- Design Tokens --- */
 :root {
   /* Colors */
@@ -2850,4 +2855,308 @@ textarea:focus {
   font-size: var(--font-size-xs, 11px);
   font-style: italic;
   color: var(--color-text-secondary);
+}
+
+/* ====================================================================
+   "Sách phả đồ" reskin — shared-view only (read-only viewer)
+   Scope: #shared-view, the compact hero, and the phả ký modal when it
+   opens on top of a shared view. Owner mode keeps the modern look.
+   ==================================================================== */
+
+#shared-view,
+body:has(#shared-view) .family-hero--compact,
+body:has(#shared-view) .phaky-overlay {
+  --font-display: 'Inknut Antiqua', 'Be Vietnam Pro', Georgia, serif;
+  --font-body: 'Be Vietnam Pro', system-ui, sans-serif;
+  --paper-bg: #f7f1e3;
+  --paper-bg-soft: #fdf9ee;
+  --paper-edge: #e6dcc4;
+  --ink: #2a221a;
+  --ink-soft: #4a3f33;
+  --ink-muted: #6b5d4a;
+  --accent-red: #8a2b2b;
+  --accent-pink: #a04a5e;
+}
+
+/* Paper background with soft aged corners. Pure CSS — no images. */
+body:has(#shared-view) .family-hero--compact,
+#shared-view {
+  background: var(--paper-bg);
+  background-image:
+    radial-gradient(at 0% 0%, rgba(74, 63, 51, 0.05), transparent 40%),
+    radial-gradient(at 100% 100%, rgba(74, 63, 51, 0.05), transparent 40%);
+  color: var(--ink);
+}
+
+/* Footer underneath also gets the parchment tone so the page reads as one
+   continuous "spread". */
+body:has(#shared-view) {
+  background: var(--paper-bg);
+}
+
+/* --- Hero as a book frontispiece ---------------------------------- */
+body:has(#shared-view) .family-hero-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--accent-red);
+}
+body:has(#shared-view) .family-hero-head::after {
+  content: "❦";
+  display: block;
+  flex-basis: 100%;
+  margin-top: 4px;
+  text-align: center;
+  color: var(--ink-muted);
+  font-size: 18px;
+  line-height: 1;
+}
+body:has(#shared-view) .family-hero-desc {
+  font-family: var(--font-body);
+  font-style: italic;
+  color: var(--ink-soft);
+}
+body:has(#shared-view) .hero-stat-num {
+  font-family: var(--font-display);
+  color: var(--ink);
+}
+body:has(#shared-view) .hero-stat-label {
+  font-family: var(--font-body);
+  font-style: italic;
+  color: var(--ink-muted);
+}
+
+/* "Chỉ đọc" chip as a small red seal. */
+body:has(#shared-view) .readonly-chip {
+  background: #fdf6e3;
+  border: 1px solid var(--accent-red);
+  color: var(--accent-red);
+  font-family: var(--font-body);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+/* "Xem phả ký" button — small ink-stroke pill. */
+body:has(#shared-view) .family-hero-stats .btn-sm {
+  background: var(--paper-bg-soft);
+  border: 1px solid var(--ink);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-weight: 600;
+}
+body:has(#shared-view) .family-hero-stats .btn-sm:hover {
+  background: #f1ebd9;
+}
+
+/* --- Hint banner ------------------------------------------------- */
+body:has(#shared-view) .share-hint {
+  background: var(--paper-bg-soft);
+  border: 1px dashed var(--ink-muted);
+  color: var(--ink-soft);
+  font-family: var(--font-body);
+  font-style: italic;
+}
+
+/* --- Tree node box: ink-framed, stacked, multi-field ---------------- */
+#shared-view .tree-node-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 1px;
+  background: var(--paper-bg-soft);
+  border: 1px solid var(--ink);
+  border-top: 3px solid var(--accent-red);
+  border-radius: 3px;
+  box-shadow: 1px 1px 0 var(--paper-edge);
+  padding: 6px 12px;
+  font-family: var(--font-display);
+  color: var(--ink);
+  min-width: 64px;
+  transition: box-shadow 0.15s, transform 0.15s;
+}
+#shared-view .tree-node-box:hover {
+  box-shadow: 2px 2px 0 var(--paper-edge), 0 0 0 1px var(--accent-red);
+  transform: translateY(-1px);
+}
+#shared-view .tree-node-box.gender-female {
+  border-top-color: var(--accent-pink);
+}
+#shared-view .tree-node-box.gender-other {
+  border-top-color: var(--ink-muted);
+}
+#shared-view .tree-node-box.deceased {
+  background: #f1ebd9;
+  color: var(--ink-soft);
+}
+#shared-view .tree-spouse-box {
+  background: transparent;
+  border-style: dashed;
+  border-top-style: solid;
+}
+#shared-view .tree-name-text {
+  font-weight: 700;
+  font-size: 13px;
+  line-height: 1.2;
+  color: var(--ink);
+}
+#shared-view .tree-alias {
+  font-style: italic;
+  font-size: 11px;
+  line-height: 1.2;
+  color: var(--ink-muted);
+}
+#shared-view .tree-years,
+#shared-view .tree-title {
+  font-family: var(--font-body);
+  font-size: 10px;
+  line-height: 1.2;
+  color: var(--ink-soft);
+  white-space: nowrap;
+}
+#shared-view .tree-title {
+  font-style: italic;
+}
+
+/* Below a readable threshold, drop alias/years/title so the boxes shrink
+   back to "name only" and the tree stays scannable. JS toggles
+   data-zoom-small="1" on the .tree element when zoom < 0.7. */
+#shared-view .tree[data-zoom-small="1"] .tree-alias,
+#shared-view .tree[data-zoom-small="1"] .tree-years,
+#shared-view .tree[data-zoom-small="1"] .tree-title {
+  display: none;
+}
+
+/* --- Ink connectors ------------------------------------------------ */
+#shared-view .tree li::before,
+#shared-view .tree li::after,
+#shared-view .tree ul::before {
+  border-color: var(--ink);
+  border-width: 1.5px;
+}
+
+/* --- Collapse / expand toggle: ink-styled small chip --------------- */
+#shared-view .tree-toggle {
+  background: var(--paper-bg-soft);
+  border: 1px solid var(--ink);
+  color: var(--ink);
+  font-family: var(--font-body);
+  box-shadow: 1px 1px 0 var(--paper-edge);
+}
+
+/* --- Tree-fab + header controls: same parchment family ------------- */
+body:has(#shared-view) .tree-fab {
+  background: var(--paper-bg-soft);
+  border: 1px solid var(--ink);
+  box-shadow: 2px 2px 0 var(--paper-edge);
+}
+body:has(#shared-view) .tree-ctrl-btn {
+  color: var(--ink);
+  font-family: var(--font-body);
+}
+body:has(#shared-view) .tree-zoom-label {
+  color: var(--ink-soft);
+}
+
+/* Footer CTA in the same paper palette. */
+body:has(#shared-view) .share-footer {
+  color: var(--ink-muted);
+  font-family: var(--font-body);
+}
+body:has(#shared-view) .share-footer a {
+  color: var(--accent-red);
+}
+
+/* --- Phả ký modal: book-chapter feel ------------------------------ */
+body:has(#shared-view) .phaky-overlay .modal-content {
+  background: var(--paper-bg);
+  background-image:
+    radial-gradient(at 0% 0%, rgba(74, 63, 51, 0.05), transparent 40%),
+    radial-gradient(at 100% 100%, rgba(74, 63, 51, 0.05), transparent 40%);
+  color: var(--ink);
+  border: 1px solid var(--ink);
+  border-radius: 4px;
+}
+body:has(#shared-view) .phaky-overlay .modal-header {
+  border-bottom: 1px solid var(--ink-muted);
+}
+body:has(#shared-view) .phaky-overlay .modal-title-text {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--accent-red);
+}
+body:has(#shared-view) .phaky-overlay .modal-title-text::before,
+body:has(#shared-view) .phaky-overlay .modal-title-text::after {
+  content: "❦";
+  display: inline-block;
+  margin: 0 8px;
+  color: var(--ink-muted);
+  font-weight: 400;
+}
+body:has(#shared-view) .phaky-overlay .close-btn {
+  color: var(--ink);
+}
+body:has(#shared-view) .phaky-doc {
+  color: var(--ink);
+  font-family: var(--font-body);
+}
+body:has(#shared-view) .phaky-doc-header {
+  border-bottom: double 3px var(--ink);
+}
+body:has(#shared-view) .phaky-desc {
+  font-style: italic;
+  color: var(--ink-soft);
+}
+body:has(#shared-view) .phaky-meta {
+  color: var(--ink-muted);
+  font-family: var(--font-body);
+  font-style: italic;
+}
+body:has(#shared-view) .phaky-gen-title {
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--accent-red);
+  border-bottom: double 3px var(--ink);
+  padding-bottom: 4px;
+}
+body:has(#shared-view) .phaky-entry {
+  border-left: 2px solid var(--ink-muted);
+}
+body:has(#shared-view) .phaky-entry-name {
+  font-family: var(--font-display);
+  color: var(--accent-red);
+}
+body:has(#shared-view) .phaky-entry-detail {
+  font-family: var(--font-body);
+  color: var(--ink-soft);
+}
+body:has(#shared-view) .phaky-entry-notes {
+  color: var(--ink-muted);
+}
+
+/* --- Detail panel (right-side): inherit paper feel on share view --- */
+body:has(#shared-view) .detail-panel {
+  background: var(--paper-bg);
+  background-image:
+    radial-gradient(at 0% 0%, rgba(74, 63, 51, 0.05), transparent 40%),
+    radial-gradient(at 100% 100%, rgba(74, 63, 51, 0.05), transparent 40%);
+  color: var(--ink);
+}
+body:has(#shared-view) .detail-panel .modal-title-text {
+  font-family: var(--font-display);
+  color: var(--accent-red);
+}
+body:has(#shared-view) .detail-panel .detail-section-title {
+  font-family: var(--font-display);
+  color: var(--ink);
+}
+body:has(#shared-view) .detail-actions-viewer .btn {
+  background: var(--paper-bg-soft);
+  border: 1px solid var(--ink);
+  color: var(--ink);
+  font-family: var(--font-body);
+}
+body:has(#shared-view) .detail-actions-viewer .btn:hover {
+  background: #f1ebd9;
 }
