@@ -3160,3 +3160,149 @@ body:has(#shared-view) .detail-actions-viewer .btn {
 body:has(#shared-view) .detail-actions-viewer .btn:hover {
   background: #f1ebd9;
 }
+
+/* "Thống kê nhánh" stat cards inside the detail panel — drop the purple
+   modern feel, match parchment + ink. */
+body:has(#shared-view) .detail-panel .stat-card {
+  background: var(--paper-bg-soft);
+  border: 1px solid var(--ink-muted);
+  border-radius: 3px;
+}
+body:has(#shared-view) .detail-panel .stat-card .num {
+  font-family: var(--font-display);
+  color: var(--accent-red);
+}
+body:has(#shared-view) .detail-panel .stat-card .lbl {
+  font-family: var(--font-body);
+  font-style: italic;
+  color: var(--ink-muted);
+}
+body:has(#shared-view) .detail-panel .detail-meta-item {
+  color: var(--ink);
+}
+body:has(#shared-view) .detail-panel .detail-meta-item .label {
+  color: var(--ink-muted);
+  font-family: var(--font-body);
+  font-style: italic;
+}
+body:has(#shared-view) .detail-panel .detail-empty {
+  color: var(--ink-muted);
+  font-style: italic;
+}
+
+/* --- Generic modal-overlay inside share view (lịch giỗ, search, etc.) ---
+   Same paper feel as the phả ký modal. Phả ký keeps its ❦ flourish via the
+   more specific .phaky-overlay rules above. */
+body:has(#shared-view) .modal-overlay .modal-content {
+  background: var(--paper-bg);
+  background-image:
+    radial-gradient(at 0% 0%, rgba(74, 63, 51, 0.05), transparent 40%),
+    radial-gradient(at 100% 100%, rgba(74, 63, 51, 0.05), transparent 40%);
+  color: var(--ink);
+  border: 1px solid var(--ink);
+  border-radius: 4px;
+}
+body:has(#shared-view) .modal-overlay .modal-header {
+  border-bottom: 1px solid var(--ink-muted);
+}
+body:has(#shared-view) .modal-overlay .modal-title-text {
+  font-family: var(--font-display);
+  color: var(--accent-red);
+}
+body:has(#shared-view) .modal-overlay .close-btn {
+  color: var(--ink);
+}
+
+/* Lịch giỗ list rows: ink frame + ink-soft secondary text. */
+body:has(#shared-view) .gio-item {
+  background: var(--paper-bg-soft);
+  border: 1px solid var(--ink-muted);
+  border-radius: 3px;
+}
+body:has(#shared-view) .gio-item:hover {
+  background: #f1ebd9;
+}
+body:has(#shared-view) .gio-item-name {
+  font-family: var(--font-display);
+  color: var(--ink);
+}
+body:has(#shared-view) .gio-item-sub {
+  font-family: var(--font-body);
+  color: var(--ink-soft);
+}
+body:has(#shared-view) .gio-item-days {
+  font-family: var(--font-body);
+  color: var(--accent-red);
+  font-weight: 700;
+}
+
+/* The TH-month / day badge on the left of each gio row. */
+body:has(#shared-view) .upcoming-date-badge {
+  background: #fdf6e3;
+  border: 1px solid var(--accent-red);
+  border-radius: 3px;
+}
+body:has(#shared-view) .upcoming-date-badge .month,
+body:has(#shared-view) .upcoming-date-badge .day {
+  color: var(--accent-red);
+  font-family: var(--font-display);
+}
+
+/* Inputs / selects inside share-view modals — same paper feel. */
+body:has(#shared-view) .modal-overlay input,
+body:has(#shared-view) .modal-overlay select,
+body:has(#shared-view) .modal-overlay textarea {
+  background: var(--paper-bg-soft);
+  border: 1px solid var(--ink-muted);
+  border-radius: 3px;
+  color: var(--ink);
+  font-family: var(--font-body);
+}
+body:has(#shared-view) .modal-overlay input:focus,
+body:has(#shared-view) .modal-overlay select:focus,
+body:has(#shared-view) .modal-overlay textarea:focus {
+  border-color: var(--accent-red);
+  box-shadow: 0 0 0 2px rgba(138, 43, 43, 0.15);
+}
+
+/* Tìm thành viên: result rows. */
+body:has(#shared-view) .search-result {
+  background: var(--paper-bg-soft);
+  border: 1px solid var(--ink-muted);
+  border-radius: 3px;
+}
+body:has(#shared-view) .search-result:hover {
+  background: #f1ebd9;
+}
+body:has(#shared-view) .search-result-name {
+  font-family: var(--font-display);
+  color: var(--ink);
+}
+body:has(#shared-view) .search-result-meta {
+  font-family: var(--font-body);
+  color: var(--ink-soft);
+  font-style: italic;
+}
+
+/* Cách xưng hô: kin rows. */
+body:has(#shared-view) .kin-item {
+  background: var(--paper-bg-soft);
+  border: 1px solid var(--ink-muted);
+  border-radius: 3px;
+}
+body:has(#shared-view) .kin-item:hover {
+  background: #f1ebd9;
+}
+body:has(#shared-view) .kin-name {
+  font-family: var(--font-display);
+  color: var(--ink);
+}
+body:has(#shared-view) .kin-gender {
+  font-family: var(--font-body);
+  color: var(--ink-soft);
+  font-style: italic;
+}
+body:has(#shared-view) .kin-term {
+  font-family: var(--font-display);
+  color: var(--accent-red);
+}

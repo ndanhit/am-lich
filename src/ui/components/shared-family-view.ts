@@ -70,7 +70,6 @@ export function renderSnapshotViewer(
     <section class="family-hero family-hero--compact" id="shared-hero">
       <div class="family-hero-head">
         <h1 class="family-hero-title">Dòng họ ${escapeHtml(fam.name)}</h1>
-        <span class="readonly-chip" title="Bạn đang xem bản chia sẻ — chỉ đọc">Chỉ đọc</span>
       </div>
       ${(fam.description ?? "").trim() ? `<p class="family-hero-desc">${escapeHtml(fam.description)}</p>` : ""}
       <div class="family-hero-stats">
@@ -81,9 +80,6 @@ export function renderSnapshotViewer(
       </div>
     </section>
     <main id="shared-view"></main>
-    <footer class="share-footer">
-      <a href="./" rel="noopener">Tạo gia phả của riêng bạn với Âm Lịch</a>
-    </footer>
     <div id="shared-detail"></div>
     <div id="shared-modal"></div>
     <div id="shared-backdrop" class="backdrop"></div>
