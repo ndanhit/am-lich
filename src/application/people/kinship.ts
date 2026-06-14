@@ -35,7 +35,8 @@ function termUp(level: number, parentGender: string, toGender: string): string {
   if (level === 1) return toGender === "female" ? "mẹ" : "cha";
   if (level === 2) {
     const side = parentGender === "female" ? "ngoại" : "nội";
-    return `${toGender === "female" ? "bà" : "ông"} ${side}`;
+    // Phương ngữ miền Trung: "mệ" thay cho "bà".
+    return `${toGender === "female" ? "mệ" : "ông"} ${side}`;
   }
   if (level === 3) return toGender === "female" ? "cụ bà" : "cụ ông";
   if (level === 4) return "kỵ";
@@ -53,6 +54,7 @@ function structuralTerm(
   toBloodId: string,
   toOrder: number,
   toGender: string,
+  toIsMarriedIn: boolean,
 ): string {
   const a = ancestorChain(byId, fromBloodId);
   const b = ancestorChain(byId, toBloodId);
@@ -89,13 +91,25 @@ function structuralTerm(
     return childB.order < childA.order ? `${elder(toGender)} họ` : "em họ";
   }
 
-  // `to` is a sibling of `from`'s parent (uncle/aunt level).
+  // `to` is a sibling of `from`'s parent (uncle/aunt level) — or that
+  // sibling's married-in spouse. Phương ngữ miền Trung:
+  //  - Bên nội: anh trai của ba = bác (vợ cũng bác); em trai của ba = chú
+  //    (vợ = thím); chị/em gái của ba = O (chồng = dượng).
+  //  - Bên ngoại: anh/em trai của mẹ = cậu (vợ = mự); chị/em gái của mẹ = dì
+  //    (chồng = dượng).
   if (dA === 2 && dB === 1) {
     const parent = byId.get(a[1])!;
     const paternal = parent.gender !== "female";
-    if (toOrder < parent.order) return "bác";
-    if (paternal) return toGender === "female" ? "cô" : "chú";
-    return toGender === "female" ? "dì" : "cậu";
+    const sibling = byId.get(toBloodId)!;
+    const siblingFemale = sibling.gender === "female";
+    const senior = toOrder < parent.order;
+    if (paternal) {
+      if (siblingFemale) return toIsMarriedIn ? "dượng" : "O";
+      if (senior) return "bác"; // anh trai của ba — vợ cũng gọi bác
+      return toIsMarriedIn ? "thím" : "chú";
+    }
+    if (siblingFemale) return toIsMarriedIn ? "dượng" : "dì";
+    return toIsMarriedIn ? "mự" : "cậu";
   }
 
   if (dA === 1) return "cháu"; // from is parent-level of to
@@ -144,5 +158,6 @@ export function kinshipTerm(
   // Seniority from the blood anchor's order; gender from the actual `to`
   // (so e.g. an uncle's wife still shows a female-appropriate term).
   const toOrder = byId.get(toBlood)!.order;
-  return structuralTerm(byId, fromBlood, toBlood, toOrder, to.gender);
+  const toIsMarriedIn = toBlood !== toId;
+  return structuralTerm(byId, fromBlood, toBlood, toOrder, to.gender, toIsMarriedIn);
 }

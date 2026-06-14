@@ -507,15 +507,15 @@ function makeBox(person: Person, cb: NodeCallbacks): HTMLElement {
 }
 
 /** Compact name for the tree node:
- *  - đã mất + có tên thường gọi → dùng tên thường gọi (gần gũi như cách họ
- *    thường được nhắc khi cúng giỗ);
- *  - còn sống → chỉ token cuối ("Nguyễn Văn A" → "A"), vì các thế hệ cùng
- *    họ trong cây sẽ trùng họ, không cần lặp;
+ *  - có tên thường gọi → luôn dùng tên thường gọi (gần gũi như cách họ thường
+ *    được nhắc trong nhà);
+ *  - còn sống, không có alias → chỉ token cuối ("Nguyễn Văn A" → "A"), vì các
+ *    thế hệ cùng họ trong cây sẽ trùng họ, không cần lặp;
  *  - còn lại (đã mất, không có alias) → dùng full name.
  * Tên gốc + giới tính vẫn nằm trong aria-label cho screen reader. */
 function displayName(p: Person, deceased: boolean): string {
   const alias = (p.aliasName ?? "").trim();
-  if (deceased && alias) return alias;
+  if (alias) return alias;
   if (!deceased) {
     const full = (p.name ?? "").trim();
     if (!full) return "";
@@ -528,7 +528,8 @@ function displayName(p: Person, deceased: boolean): string {
 /** Single-line meta with cascading priority:
  *  1. giỗ N/M ÂL (if deathLunar)
  *  2. N tuổi    (if birthDate.year and age ≥ 1)
- *  3. tự X       (if aliasName)
+ *  3. tên thật  (if aliasName is shown as the node name, surface the formal
+ *               name here instead of repeating the alias)
  *  4. N con      (if direct children exist)
  * Returns "" (rendered as a non-breaking space) to preserve box height. */
 function pickMetaLine(p: Person, childCount: number): string {
@@ -540,7 +541,8 @@ function pickMetaLine(p: Person, childCount: number): string {
     if (age >= 1) return `${age} tuổi`;
   }
   const alias = (p.aliasName ?? "").trim();
-  if (alias) return `tự ${escapeHtml(alias)}`;
+  const full = (p.name ?? "").trim();
+  if (alias && full && full !== alias) return escapeHtml(full);
   if (childCount > 0) return `${childCount} con`;
   // Non-breaking space keeps the .tree-meta line from collapsing.
   return "&nbsp;";
