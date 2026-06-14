@@ -1,0 +1,36 @@
+# Cho phép các bot tạo "preview" (mạng xã hội / ứng dụng chat) đọc thẻ
+# Open Graph để hiện thẻ xem trước khi chia sẻ link gia phả.
+User-agent: facebookexternalhit
+Allow: /
+
+User-agent: Facebot
+Allow: /
+
+User-agent: Twitterbot
+Allow: /
+
+User-agent: Slackbot
+Allow: /
+
+User-agent: Slackbot-LinkExpanding
+Allow: /
+
+User-agent: TelegramBot
+Allow: /
+
+User-agent: WhatsApp
+Allow: /
+
+User-agent: LinkedInBot
+Allow: /
+
+User-agent: Discordbot
+Allow: /
+
+User-agent: Zalo
+Allow: /
+
+# Chặn mọi bot còn lại (gồm Google, Bing và các công cụ tìm kiếm khác)
+# thu thập / lập chỉ mục. Kết hợp với <meta name="robots" content="noindex">.
+User-agent: *
+Disallow: /
