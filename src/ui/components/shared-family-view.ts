@@ -413,6 +413,7 @@ function sharedToast(msg: string): void {
   el.textContent = msg;
   el.style.position = "fixed";
   el.style.left = "50%";
+  el.style.top = "auto";
   el.style.bottom = "24px";
   el.style.transform = "translateX(-50%)";
   el.style.zIndex = "3000";
