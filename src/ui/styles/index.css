@@ -3211,6 +3211,24 @@ body:has(#shared-view) .modal-overlay .modal-content {
   color: var(--ink);
   border: 1px solid var(--ink);
   border-radius: 4px;
+  /* Lock the modal to a stable height so filtering (e.g. tìm thành viên)
+     doesn't make the dialog jump as the result count changes. The body
+     scrolls instead. Capped at 85vh for short viewports. */
+  height: min(640px, 85vh);
+}
+body:has(#shared-view) .modal-overlay .modal-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+/* Inner lists used to manage their own scroll (max-height: 50–55vh). With
+   the modal now fixed-height + modal-body scrolling, defer to the outer
+   container so we have a single scroll context. */
+body:has(#shared-view) .modal-overlay .search-results,
+body:has(#shared-view) .modal-overlay .gio-list,
+body:has(#shared-view) .modal-overlay .kin-list {
+  max-height: none;
+  overflow: visible;
 }
 body:has(#shared-view) .modal-overlay .modal-header {
   border-bottom: 1px solid var(--ink-muted);
