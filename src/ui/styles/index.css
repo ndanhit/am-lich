@@ -3340,6 +3340,70 @@ body:has(.family-tree) .kin-item {
 body:has(.family-tree) .kin-item:hover {
   background: #f1ebd9;
 }
+
+/* CTA submit buttons (Thêm / Lưu / Tạo sự kiện) — swap modern purple for an
+   ink-stroke red pill so they match the paper aesthetic. */
+body:has(.family-tree) .modal-overlay .btn-cta {
+  background: var(--accent-red);
+  color: #fdf9ee;
+  border-radius: 3px;
+  font-family: var(--font-body);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  box-shadow: 1px 1px 0 var(--paper-edge);
+}
+body:has(.family-tree) .modal-overlay .btn-cta:hover {
+  background: #732222;
+}
+body:has(.family-tree) .modal-overlay .btn-cta:disabled {
+  background: var(--ink-muted);
+}
+
+/* Form field labels inside share-mode modals. */
+body:has(.family-tree) .modal-overlay label,
+body:has(.family-tree) .modal-overlay .form-label {
+  color: var(--ink-soft);
+  font-family: var(--font-body);
+}
+
+/* Native radio + checkbox — color them with accent-red so they read as ink
+   strokes on parchment rather than the default Chrome blue. */
+body:has(.family-tree) .modal-overlay input[type="radio"],
+body:has(.family-tree) .modal-overlay input[type="checkbox"] {
+  accent-color: var(--accent-red);
+}
+
+/* Sắp xếp con: numbered rank chip — paper-soft with ink frame instead of a
+   purple disc. */
+body:has(.family-tree) .reorder-item {
+  background: var(--paper-bg-soft);
+  border: 1px solid var(--ink-muted);
+  border-radius: 3px;
+}
+body:has(.family-tree) .reorder-rank {
+  background: var(--accent-red);
+  color: #fdf9ee;
+  font-family: var(--font-body);
+}
+body:has(.family-tree) .reorder-name {
+  font-family: var(--font-display);
+  color: var(--ink);
+}
+body:has(.family-tree) .reorder-gender {
+  color: var(--ink-soft);
+  font-style: italic;
+  font-family: var(--font-body);
+}
+body:has(.family-tree) .reorder-actions .icon-btn {
+  color: var(--ink);
+}
+
+/* Collapsible "Thông tin thêm" heading inside the person form. */
+body:has(.family-tree) .modal-overlay summary,
+body:has(.family-tree) .modal-overlay details > summary {
+  color: var(--accent-red);
+  font-family: var(--font-display);
+}
 body:has(.family-tree) .kin-name {
   font-family: var(--font-display);
   color: var(--ink);
