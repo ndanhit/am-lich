@@ -11,6 +11,7 @@ import {
   generationOf,
   buildPhaKy,
   describeSuggestion,
+  formatPartialDate,
 } from "../../lib/index";
 import type { StorageAdapter } from "../../adapters/storage/local-storage-adapter";
 import { FamilyShareAdapter } from "../../adapters/supabase/family-share-adapter";
@@ -114,8 +115,7 @@ export function renderSnapshotViewer(
     tray.hidden = false;
     tray.innerHTML = `
       <span class="suggest-tray-badge">${drafts.length}</span>
-      <span>đề xuất đang soạn</span>
-      <strong class="suggest-tray-send">Gửi →</strong>`;
+      <strong class="suggest-tray-send">Gửi đề xuất →</strong>`;
   };
   tray.addEventListener("click", () => openCart());
 
@@ -272,7 +272,7 @@ export function renderSnapshotViewer(
       label: "Đề xuất sửa thông tin",
       run: () => openSuggestForm({ mode: "edit", person }, "edit", person.id),
     });
-    renderActionSheet(modal, `Đề xuất cho ${person.name}`, opts);
+    renderActionSheet(modal, `Đề xuất cho ${person.name}`, opts, personBrief(person, state.getPeople()));
   };
 
   const openDetail = (person: Person): void => {
@@ -421,16 +421,37 @@ function sharedToast(msg: string): void {
   setTimeout(() => el.remove(), 3000);
 }
 
+/** A short one-line summary of a person, shown under the suggest sheet title. */
+function personBrief(person: Person, people: Person[]): string {
+  const parts: string[] = [];
+  if (person.gender === "male") parts.push("Nam");
+  else if (person.gender === "female") parts.push("Nữ");
+  const gen = generationOf(people, person.id);
+  if (gen) parts.push(`đời thứ ${gen}`);
+  if (person.birthDate) parts.push(`sinh ${formatPartialDate(person.birthDate)}`);
+  if (person.isDeceased) {
+    parts.push(
+      person.deathLunar
+        ? `giỗ ${person.deathLunar.day}/${person.deathLunar.month} ÂL`
+        : "đã mất",
+    );
+  }
+  const directChildren = computeBranchInsights(people, person.id).directChildren;
+  if (directChildren > 0) parts.push(`${directChildren} con`);
+  return parts.join(" · ");
+}
+
 /** A simple choice sheet rendered as a modal. */
 function renderActionSheet(
   container: HTMLElement,
   title: string,
   options: Array<{ label: string; run: () => void }>,
+  subtitle = "",
 ): void {
   const overlay = document.createElement("div");
   overlay.className = "modal-overlay open";
   overlay.innerHTML = `
-    <div class="modal-content">
+    <div class="modal-content modal-content--sheet">
       <div class="modal-header">
         <button class="close-btn" id="sheet-close" aria-label="Đóng">
           <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
@@ -438,6 +459,7 @@ function renderActionSheet(
           </svg>
         </button>
         <div class="modal-title-text">${escapeHtml(title)}</div>
+        ${subtitle ? `<div class="modal-subtitle-text">${escapeHtml(subtitle)}</div>` : ""}
       </div>
       <div class="modal-body">
         <div class="detail-actions detail-actions-wrap" id="sheet-opts"></div>
