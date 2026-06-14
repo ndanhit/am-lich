@@ -1427,10 +1427,12 @@ textarea:focus {
 }
 
 .form-group input,
-.form-group select {
+.form-group select,
+.form-group textarea {
   width: 100%;
   padding: var(--space-3);
   font-size: var(--font-size-base);
+  box-sizing: border-box;
 }
 
 .form-group .char-count {
