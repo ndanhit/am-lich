@@ -2874,8 +2874,11 @@ body:has(#shared-view) .phaky-overlay {
   --ink: #2a221a;
   --ink-soft: #4a3f33;
   --ink-muted: #6b5d4a;
+  /* Red for the lineage (nam), indigo for nữ — a high-contrast pairing that
+     keeps the parchment palette but mirrors the red-vs-blue ink convention
+     used in old Vietnamese phả manuscripts. */
   --accent-red: #8a2b2b;
-  --accent-pink: #a04a5e;
+  --accent-blue: #2a4a7a;
 }
 
 /* Paper background with soft aged corners. Pure CSS — no images. */
@@ -2957,12 +2960,13 @@ body:has(#shared-view) .share-hint {
   font-style: italic;
 }
 
-/* --- Tree node box: ink-framed, stacked, multi-field ---------------- */
+/* --- Tree node box: ink-framed, fixed 2-line height ---------------- */
 #shared-view .tree-node-box {
   display: flex;
   flex-direction: column;
   align-items: center;
   text-align: center;
+  justify-content: center;
   gap: 1px;
   background: var(--paper-bg-soft);
   border: 1px solid var(--ink);
@@ -2979,8 +2983,21 @@ body:has(#shared-view) .share-hint {
   box-shadow: 2px 2px 0 var(--paper-edge), 0 0 0 1px var(--accent-red);
   transform: translateY(-1px);
 }
+/* Gender distinction via the top border AND a tinted background — accent-red
+   for nam, indigo for nữ. The dual cue survives the small-zoom view where
+   the top stripe alone is hard to read. */
+#shared-view .tree-node-box.gender-male {
+  background: #fcf5ee;
+}
 #shared-view .tree-node-box.gender-female {
-  border-top-color: var(--accent-pink);
+  border-top-color: var(--accent-blue);
+  background: #eef2f9;
+}
+#shared-view .tree-node-box.gender-female .tree-name-text {
+  color: var(--accent-blue);
+}
+#shared-view .tree-node-box.gender-male .tree-name-text {
+  color: var(--accent-red);
 }
 #shared-view .tree-node-box.gender-other {
   border-top-color: var(--ink-muted);
@@ -2988,6 +3005,9 @@ body:has(#shared-view) .share-hint {
 #shared-view .tree-node-box.deceased {
   background: #f1ebd9;
   color: var(--ink-soft);
+}
+#shared-view .tree-node-box.gender-female.deceased {
+  background: #e6e9f0;
 }
 #shared-view .tree-spouse-box {
   background: transparent;
@@ -2998,32 +3018,19 @@ body:has(#shared-view) .share-hint {
   font-weight: 700;
   font-size: 13px;
   line-height: 1.2;
-  color: var(--ink);
 }
-#shared-view .tree-alias {
-  font-style: italic;
-  font-size: 11px;
-  line-height: 1.2;
-  color: var(--ink-muted);
-}
-#shared-view .tree-years,
-#shared-view .tree-title {
+#shared-view .tree-meta {
   font-family: var(--font-body);
   font-size: 10px;
   line-height: 1.2;
-  color: var(--ink-soft);
+  color: var(--ink-muted);
+  font-style: italic;
   white-space: nowrap;
 }
-#shared-view .tree-title {
-  font-style: italic;
-}
 
-/* Below a readable threshold, drop alias/years/title so the boxes shrink
-   back to "name only" and the tree stays scannable. JS toggles
-   data-zoom-small="1" on the .tree element when zoom < 0.7. */
-#shared-view .tree[data-zoom-small="1"] .tree-alias,
-#shared-view .tree[data-zoom-small="1"] .tree-years,
-#shared-view .tree[data-zoom-small="1"] .tree-title {
+/* Below a readable threshold, drop the meta line so boxes shrink back to a
+   single-line "name only" view. JS toggles data-zoom-small="1" when zoom < 0.7. */
+#shared-view .tree[data-zoom-small="1"] .tree-meta {
   display: none;
 }
 

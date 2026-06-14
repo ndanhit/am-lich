@@ -1,9 +1,5 @@
 import type { Person, FamilyTreeNode, FamilyTree } from "../../lib/index";
-import {
-  countDescendants,
-  collectCollapsibleIds,
-  formatPartialDate,
-} from "../../lib/index";
+import { countDescendants, collectCollapsibleIds } from "../../lib/index";
 import { GENDER_LABELS } from "../types";
 import type { AppState } from "../state";
 
@@ -97,10 +93,25 @@ export function renderFamilyTree(
     }
   }
 
-  const peopleById = new Map(state.getPeople().map((p) => [p.id, p]));
-  // Share-view (readOnly) shows extra biographical fields inside each box —
-  // tự, năm sinh-mất, chức danh — to match the traditional phả đồ feel.
-  const cb: NodeCallbacks = { onSelect, peopleById, detailed: readOnly };
+  const allPeople = state.getPeople();
+  const peopleById = new Map(allPeople.map((p) => [p.id, p]));
+  // Pre-count children per person so the meta line can fall back to "N con"
+  // without a per-node scan.
+  const childCountById = new Map<string, number>();
+  for (const p of allPeople) {
+    if (p.parentId != null) {
+      childCountById.set(p.parentId, (childCountById.get(p.parentId) ?? 0) + 1);
+    }
+  }
+  // Share-view (readOnly) shows a second biographical line inside each box —
+  // priority: giỗ → tuổi → tự → số con. Matches the traditional phả đồ feel
+  // while keeping every box exactly two lines high.
+  const cb: NodeCallbacks = {
+    onSelect,
+    peopleById,
+    detailed: readOnly,
+    childCountById,
+  };
 
   // Header: back to list + orientation toggle.
   const header = document.createElement("div");
@@ -350,6 +361,7 @@ type NodeCallbacks = {
   onSelect: (person: Person) => void;
   peopleById: Map<string, Person>;
   detailed: boolean;
+  childCountById: Map<string, number>;
 };
 
 function touchDistance(touches: TouchList): number {
@@ -469,7 +481,8 @@ function renderNode(node: FamilyTreeNode, cb: NodeCallbacks): HTMLElement {
 }
 
 /** A clickable node box. Name only by default; in `detailed` mode (share view)
- * also stacks tự, năm sinh-mất, and chức danh — the traditional phả đồ feel. */
+ * adds exactly one meta line (giỗ / tuổi / tự / số con — first hit) so every
+ * box ends up the same two-line height. */
 function makeBox(person: Person, cb: NodeCallbacks): HTMLElement {
   const box = document.createElement("button");
   box.type = "button";
@@ -483,30 +496,35 @@ function makeBox(person: Person, cb: NodeCallbacks): HTMLElement {
     `<span class="tree-name-text">${escapeHtml(person.name)}</span>`,
   ];
   if (cb.detailed) {
-    const alias = (person.aliasName ?? "").trim();
-    if (alias)
-      lines.push(`<span class="tree-alias">tự ${escapeHtml(alias)}</span>`);
-    const years = formatLifespan(person);
-    if (years) lines.push(`<span class="tree-years">${years}</span>`);
-    const titles = (person.titles ?? "").trim();
-    if (titles)
-      lines.push(`<span class="tree-title">${escapeHtml(titles)}</span>`);
+    const meta = pickMetaLine(person, cb.childCountById.get(person.id) ?? 0);
+    // Always emit the meta line slot — empty placeholder keeps every box at the
+    // same height even when nothing is known.
+    lines.push(`<span class="tree-meta">${meta}</span>`);
   }
   box.innerHTML = lines.join("");
   box.addEventListener("click", () => cb.onSelect(person));
   return box;
 }
 
-/** "1958 — giỗ 18/2 ÂL" / "1958" / "giỗ 18/2 ÂL" / "đã mất" / "". */
-function formatLifespan(p: Person): string {
-  const birth = p.birthDate ? escapeHtml(formatPartialDate(p.birthDate)) : "";
-  const death = p.isDeceased
-    ? p.deathLunar
-      ? `giỗ ${p.deathLunar.day}/${p.deathLunar.month} ÂL`
-      : "đã mất"
-    : "";
-  if (birth && death) return `${birth} — ${death}`;
-  return birth || death;
+/** Single-line meta with cascading priority:
+ *  1. giỗ N/M ÂL (if deathLunar)
+ *  2. N tuổi    (if birthDate.year and age ≥ 1)
+ *  3. tự X       (if aliasName)
+ *  4. N con      (if direct children exist)
+ * Returns "" (rendered as a non-breaking space) to preserve box height. */
+function pickMetaLine(p: Person, childCount: number): string {
+  if (p.deathLunar) {
+    return `giỗ ${p.deathLunar.day}/${p.deathLunar.month} ÂL`;
+  }
+  if (p.birthDate && p.birthDate.year) {
+    const age = new Date().getFullYear() - p.birthDate.year;
+    if (age >= 1) return `${age} tuổi`;
+  }
+  const alias = (p.aliasName ?? "").trim();
+  if (alias) return `tự ${escapeHtml(alias)}`;
+  if (childCount > 0) return `${childCount} con`;
+  // Non-breaking space keeps the .tree-meta line from collapsing.
+  return "&nbsp;";
 }
 
 function escapeHtml(str: string): string {
