@@ -2613,7 +2613,7 @@ textarea:focus {
   }
 }
 
-/* ── Phả ký (printable narrative) ────────────────────────────────── */
+/* ── Phả ký (read-only narrative) ────────────────────────────────── */
 .phaky-modal {
   max-width: 720px;
 }
@@ -2680,49 +2680,4 @@ textarea:focus {
   font-size: var(--font-size-xs, 11px);
   font-style: italic;
   color: var(--color-text-secondary);
-}
-
-/* ── Print: only the phả ký document ─────────────────────────────── */
-@media print {
-  body * {
-    visibility: hidden;
-  }
-
-  .no-print {
-    display: none !important;
-  }
-
-  .phaky-overlay,
-  .phaky-overlay * {
-    visibility: visible;
-  }
-
-  .phaky-overlay {
-    position: absolute;
-    inset: 0;
-    background: #fff;
-    padding: 0;
-    overflow: visible;
-  }
-
-  .phaky-overlay .modal-content {
-    box-shadow: none;
-    max-width: none;
-    width: 100%;
-    max-height: none;
-    border-radius: 0;
-  }
-
-  .phaky-overlay .modal-body {
-    overflow: visible;
-    max-height: none;
-  }
-
-  .phaky-entry {
-    break-inside: avoid;
-  }
-
-  .phaky-gen-title {
-    break-after: avoid;
-  }
 }
