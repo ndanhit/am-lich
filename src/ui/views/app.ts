@@ -31,7 +31,7 @@ import { renderPhaKyView } from "../components/phaky-view";
 import { showLoginModal } from "../components/auth-modals";
 import { generationOf, parseShareHash } from "../../lib/index";
 import { renderDateConverterModal } from "../components/date-converter-modal";
-import { convertSolarToLunar, computeBranchInsights } from "../../lib/index";
+import { convertLunarToSolar, computeBranchInsights } from "../../lib/index";
 import type { CalendarCell } from "../types";
 import type { AppView } from "../types";
 import type {
@@ -773,15 +773,20 @@ async function onPersonDeleteRequest(person: Person) {
 }
 
 function onCreateGio(person: Person) {
-  const d = person.deathDate;
-  if (!d || d.month == null || d.day == null) {
-    showToast("Cần đủ ngày/tháng/năm mất để tạo nhắc giỗ", "warning");
+  const gio = person.deathLunar;
+  if (!gio || gio.month == null || gio.day == null) {
+    showToast("Cần ngày giỗ âm lịch để tạo nhắc giỗ", "warning");
     return;
   }
-  const deathSolar: SolarDate = { year: d.year, month: d.month, day: d.day };
-  const lunar = convertSolarToLunar(deathSolar.year, deathSolar.month, deathSolar.day);
-  if (!lunar) {
-    showToast("Không thể quy đổi ngày mất sang âm lịch", "warning");
+  // Prefill the (lunar) event form via the giỗ's solar date in the current year.
+  const year = new Date().getFullYear();
+  const deathSolar: SolarDate | null = convertLunarToSolar(
+    year,
+    { day: gio.day, month: gio.month },
+    false,
+  );
+  if (!deathSolar) {
+    showToast("Không thể tạo nhắc giỗ", "warning");
     return;
   }
   pushOverlayState();

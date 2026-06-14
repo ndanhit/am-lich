@@ -1,4 +1,9 @@
-import type { Person, Gender, PartialDate } from "../../core/models/types";
+import type {
+  Person,
+  Gender,
+  PartialDate,
+  LunarDate,
+} from "../../core/models/types";
 
 export type SuggestionKind =
   | "add_child"
@@ -12,7 +17,7 @@ export type SuggestionForm = {
   gender: Gender;
   birthDate: PartialDate | null;
   isDeceased: boolean;
-  deathDate: PartialDate | null;
+  deathLunar: LunarDate | null;
   aliasName: string;
   altNames: string;
   homeland: string;

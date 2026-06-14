@@ -138,6 +138,7 @@ export {
   removePerson,
   importPeople,
   validatePersonCreationParams,
+  validateLunarGio,
   isValidGender,
 } from "../application/people/crud";
 export {
@@ -160,10 +161,14 @@ export {
 } from "../application/people/relations";
 export { computeBranchInsights } from "../application/people/insights";
 export type { BranchInsights } from "../application/people/insights";
-export { searchPeople, normalizeText } from "../application/people/search";
+export {
+  searchPeople,
+  normalizeText,
+  availableGenerations,
+} from "../application/people/search";
 export type {
   SearchFilters,
-  PersonStatusFilter,
+  GenerationFilter,
 } from "../application/people/search";
 export { buildGioEvents, getUpcomingGio } from "../application/people/gio";
 export type { GioOccurrence } from "../application/people/gio";

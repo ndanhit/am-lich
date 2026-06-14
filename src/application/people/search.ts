@@ -1,10 +1,12 @@
 import type { Person } from "../../core/models/types";
+import { generationOf } from "./kinship";
 
-export type PersonStatusFilter = "all" | "alive" | "deceased";
+/** Generation filter: a specific đời (1, 2, …) or "all". */
+export type GenerationFilter = number | "all";
 
 export type SearchFilters = {
   query: string;
-  status: PersonStatusFilter;
+  generation: GenerationFilter;
 };
 
 /** Lowercase + strip Vietnamese diacritics for accent-insensitive matching. */
@@ -16,12 +18,8 @@ export function normalizeText(str: string): string {
     .replace(/đ/g, "d");
 }
 
-function isDeceasedPerson(p: Person): boolean {
-  return p.isDeceased || p.deathDate !== null;
-}
-
 /**
- * Filter people by name (accent-insensitive substring) and living status.
+ * Filter people by name (accent-insensitive substring) and by generation (đời).
  * Searches `name`, `aliasName` and `altNames`. Results sorted by name.
  */
 export function searchPeople(
@@ -31,8 +29,12 @@ export function searchPeople(
   const q = normalizeText(filters.query.trim());
 
   const matched = people.filter((p) => {
-    if (filters.status === "alive" && isDeceasedPerson(p)) return false;
-    if (filters.status === "deceased" && !isDeceasedPerson(p)) return false;
+    if (
+      filters.generation !== "all" &&
+      generationOf(people, p.id) !== filters.generation
+    ) {
+      return false;
+    }
     if (q === "") return true;
     const haystack = normalizeText(
       `${p.name} ${p.aliasName ?? ""} ${p.altNames ?? ""}`,
@@ -41,4 +43,14 @@ export function searchPeople(
   });
 
   return matched.sort((a, b) => a.name.localeCompare(b.name, "vi"));
+}
+
+/** Distinct generations present among `people`, ascending (for filter UIs). */
+export function availableGenerations(people: Person[]): number[] {
+  const gens = new Set<number>();
+  for (const p of people) {
+    const g = generationOf(people, p.id);
+    if (g > 0) gens.add(g);
+  }
+  return Array.from(gens).sort((a, b) => a - b);
 }

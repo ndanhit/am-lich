@@ -112,8 +112,8 @@ function renderEntry(entry: PhaKyEntry): HTMLElement {
     parts.push(`sinh ${formatPartialDate(person.birthDate)}`);
   if (person.isDeceased) {
     parts.push(
-      person.deathDate
-        ? `mất ${formatPartialDate(person.deathDate)}`
+      person.deathLunar
+        ? `giỗ ${person.deathLunar.day}/${person.deathLunar.month} ÂL`
         : "đã mất",
     );
   }

@@ -1,5 +1,5 @@
-import type { Person, FamilyTreeNode, PersonStatusFilter } from "../../lib/index";
-import { searchPeople } from "../../lib/index";
+import type { Person, FamilyTreeNode, GenerationFilter } from "../../lib/index";
+import { searchPeople, availableGenerations } from "../../lib/index";
 import { GENDER_LABELS } from "../types";
 import type { AppState } from "../state";
 
@@ -10,6 +10,11 @@ export function renderSearchPeople(
   onSelect: (person: Person) => void,
 ): void {
   const depthById = buildDepthMap(state.getFamilyTree());
+  const gens = availableGenerations(state.getPeople());
+  const genOptions = [
+    `<option value="all">Tất cả các đời</option>`,
+    ...gens.map((g) => `<option value="${g}">Đời ${g}</option>`),
+  ].join("");
 
   const overlay = document.createElement("div");
   overlay.className = "modal-overlay open";
@@ -28,10 +33,10 @@ export function renderSearchPeople(
         <div class="form-group">
           <input type="text" id="search-input" placeholder="Nhập tên..." autocomplete="off">
         </div>
-        <div class="search-filters" id="search-filters">
-          <button class="search-filter active" data-status="all">Tất cả</button>
-          <button class="search-filter" data-status="alive">Còn sống</button>
-          <button class="search-filter" data-status="deceased">Đã mất</button>
+        <div class="form-group">
+          <select id="search-gen" class="date-select" aria-label="Lọc theo đời">
+            ${genOptions}
+          </select>
         </div>
         <div class="search-results" id="search-results"></div>
       </div>
@@ -41,8 +46,8 @@ export function renderSearchPeople(
 
   const input = overlay.querySelector("#search-input") as HTMLInputElement;
   const results = overlay.querySelector("#search-results") as HTMLElement;
-  const filterBar = overlay.querySelector("#search-filters") as HTMLElement;
-  let status: PersonStatusFilter = "all";
+  const genSelect = overlay.querySelector("#search-gen") as HTMLSelectElement;
+  let generation: GenerationFilter = "all";
 
   const close = (): void => {
     overlay.classList.remove("open");
@@ -52,7 +57,7 @@ export function renderSearchPeople(
   const render = (): void => {
     const matches = searchPeople(state.getPeople(), {
       query: input.value,
-      status,
+      generation,
     });
     results.innerHTML = "";
     if (matches.length === 0) {
@@ -65,7 +70,7 @@ export function renderSearchPeople(
       const depth = depthById.get(p.id);
       const meta: string[] = [GENDER_LABELS[p.gender]];
       if (depth != null) meta.push(`đời ${depth + 1}`);
-      if (p.isDeceased || p.deathDate) meta.push("đã mất");
+      if (p.isDeceased || p.deathLunar != null) meta.push("đã mất");
       row.innerHTML = `
         <span class="search-result-name">${escapeHtml(p.name)}</span>
         <span class="search-result-meta">${meta.join(" · ")}</span>
@@ -79,14 +84,9 @@ export function renderSearchPeople(
   };
 
   input.addEventListener("input", render);
-  filterBar.querySelectorAll(".search-filter").forEach((btn) => {
-    btn.addEventListener("click", () => {
-      status = (btn as HTMLElement).dataset.status as PersonStatusFilter;
-      filterBar
-        .querySelectorAll(".search-filter")
-        .forEach((b) => b.classList.toggle("active", b === btn));
-      render();
-    });
+  genSelect.addEventListener("change", () => {
+    generation = genSelect.value === "all" ? "all" : Number(genSelect.value);
+    render();
   });
 
   overlay.querySelector("#search-close")!.addEventListener("click", close);

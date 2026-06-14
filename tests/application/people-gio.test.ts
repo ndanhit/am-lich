@@ -40,7 +40,7 @@ describe("buildGioEvents", () => {
     expect(events[0].name).toBe("Giỗ Người");
   });
 
-  it("uses the lunar date of death", () => {
+  it("uses the lunar date of death (legacy solar fallback)", () => {
     const lunar = convertSolarToLunar(2000, 3, 10)!;
     const events = buildGioEvents([
       person({ id: "x", deathDate: { year: 2000, month: 3, day: 10 } }),
@@ -49,6 +49,20 @@ describe("buildGioEvents", () => {
       day: lunar.lunarDay,
       month: Math.abs(lunar.lunarMonth),
     });
+  });
+
+  it("prefers the lunar giỗ entered directly (deathLunar)", () => {
+    const events = buildGioEvents([
+      person({
+        id: "x",
+        isDeceased: true,
+        deathLunar: { month: 8, day: 15 },
+        // A different legacy solar date must be ignored when deathLunar exists.
+        deathDate: { year: 2000, month: 3, day: 10 },
+      }),
+    ]);
+    expect(events).toHaveLength(1);
+    expect(events[0].lunarDate).toEqual({ day: 15, month: 8 });
   });
 });
 

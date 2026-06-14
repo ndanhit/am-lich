@@ -54,13 +54,13 @@ export function renderPersonDetail(
   if (person.birthDate) {
     metaRows.push(metaRow("Ngày sinh", formatDateWithLunar(person.birthDate)));
   }
-  const deceased = person.isDeceased || person.deathDate !== null;
+  const deceased = person.isDeceased || person.deathLunar != null;
   if (deceased) {
     metaRows.push(
       metaRow(
-        "Ngày mất",
-        person.deathDate
-          ? formatDateWithLunar(person.deathDate)
+        "Ngày giỗ (ÂL)",
+        person.deathLunar
+          ? `Ngày ${person.deathLunar.day} tháng ${person.deathLunar.month}`
           : "Chưa cập nhật",
       ),
     );
@@ -105,9 +105,10 @@ export function renderPersonDetail(
     insights.directChildren >= 2
       ? `<button class="btn btn-secondary reorder-btn">Sắp xếp con</button>`
       : "";
-  const gioBtn = isCompleteDate(person.deathDate)
-    ? `<button class="btn btn-secondary gio-btn">Tạo nhắc giỗ</button>`
-    : "";
+  const gioBtn =
+    person.deathLunar != null
+      ? `<button class="btn btn-secondary gio-btn">Tạo nhắc giỗ</button>`
+      : "";
 
   panel.innerHTML = `
     <div class="modal-header">
@@ -247,11 +248,6 @@ function formatDateWithLunar(date: PartialDate): string {
   });
   const lunar = convertSolarToLunar(date.year, date.month, date.day);
   return lunar ? `${solar} (${formatLunarDate(lunar)})` : solar;
-}
-
-/** Whether a partial date has all of year/month/day (needed for lunar/giỗ). */
-function isCompleteDate(date: PartialDate | null): boolean {
-  return date != null && date.month != null && date.day != null;
 }
 
 function escapeHtml(str: string): string {

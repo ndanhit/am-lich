@@ -391,7 +391,7 @@ function renderNode(node: FamilyTreeNode, cb: NodeCallbacks): HTMLElement {
 function makeBox(person: Person, cb: NodeCallbacks): HTMLElement {
   const box = document.createElement("button");
   box.type = "button";
-  const deceased = person.isDeceased || person.deathDate !== null;
+  const deceased = person.isDeceased || person.deathLunar != null;
   box.className = `tree-node-box gender-${person.gender}${deceased ? " deceased" : ""}`;
   box.setAttribute(
     "aria-label",

@@ -121,7 +121,10 @@ export type Person = {
   gender: Gender;
   birthDate: PartialDate | null;
   isDeceased: boolean;
+  /** @deprecated Ngày mất dương lịch (giữ để tương thích dữ liệu cũ). */
   deathDate: PartialDate | null;
+  /** Ngày giỗ âm lịch (tháng/ngày). Nguồn dữ liệu cho lịch giỗ. */
+  deathLunar?: LunarDate | null;
   /** false = nhánh chính (huyết thống); true = lấy vào (vợ/chồng) */
   isMarriedIn: boolean;
   parentId: string | null;

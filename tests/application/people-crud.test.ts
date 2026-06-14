@@ -5,6 +5,7 @@ import {
   removePerson,
   importPeople,
   validatePersonCreationParams,
+  validateLunarGio,
   isValidGender,
 } from "../../src/application/people/crud";
 import type { Person } from "../../src/core/models/types";
@@ -228,6 +229,24 @@ describe("validatePersonCreationParams", () => {
         { year: 1950, month: null, day: null },
       ),
     ).not.toThrow();
+  });
+});
+
+describe("validateLunarGio", () => {
+  it("accepts null (chưa rõ) and a valid month/day", () => {
+    expect(() => validateLunarGio(null)).not.toThrow();
+    expect(() => validateLunarGio({ month: 3, day: 10 })).not.toThrow();
+    expect(() => validateLunarGio({ month: 12, day: 30 })).not.toThrow();
+  });
+
+  it("rejects an out-of-range lunar month", () => {
+    expect(() => validateLunarGio({ month: 0, day: 1 })).toThrow(/Tháng giỗ/);
+    expect(() => validateLunarGio({ month: 13, day: 1 })).toThrow(/Tháng giỗ/);
+  });
+
+  it("rejects an out-of-range lunar day", () => {
+    expect(() => validateLunarGio({ month: 1, day: 0 })).toThrow(/Ngày giỗ/);
+    expect(() => validateLunarGio({ month: 1, day: 31 })).toThrow(/Ngày giỗ/);
   });
 });
 
