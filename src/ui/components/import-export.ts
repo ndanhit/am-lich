@@ -107,7 +107,9 @@ export function renderImportExport(
     try {
       backupBtn.disabled = true;
       backupBtn.innerHTML = "⏳ Đang sao lưu...";
-      await SyncAdapter.backupEvents(state.getEvents());
+      // Send the full payload (events + memos + people + families + settings)
+      // so cloud backups stay in sync with the local JSON export.
+      await SyncAdapter.backupAll(state.buildExportPayload());
       localStorage.setItem(LAST_BACKUP_KEY, Date.now().toString());
       updateLastBackupDisplay();
       showToast("Sao lưu đám mây thành công", "success");
@@ -129,16 +131,25 @@ export function renderImportExport(
     try {
       restoreBtn.disabled = true;
       restoreBtn.innerHTML = "⏳ Đang phục hồi...";
-      const events = await SyncAdapter.restoreEvents();
+      const payload = await SyncAdapter.restoreAll();
 
-      if (!events) {
+      if (!payload) {
         showToast("Không tìm thấy bản sao lưu nào trên đám mây", "warning");
         return;
       }
 
-      const payload = { version: 1, exportedAt: Date.now(), events };
-      const result = await state.importFromJson(JSON.stringify(payload), true);
-      showToast(`Phục hồi thành công: ${result.added} sự kiện`, "success");
+      await state.importFromJson(JSON.stringify(payload), true);
+      const parts: string[] = [];
+      const eventCount = payload.events?.length ?? 0;
+      const memoCount = payload.memos?.length ?? 0;
+      const peopleCount = payload.people?.length ?? 0;
+      const familyCount = payload.families?.length ?? 0;
+      if (eventCount > 0) parts.push(`${eventCount} sự kiện`);
+      if (memoCount > 0) parts.push(`${memoCount} ghi chú`);
+      if (familyCount > 0) parts.push(`${familyCount} gia phả`);
+      if (peopleCount > 0) parts.push(`${peopleCount} thành viên`);
+      const summary = parts.length ? parts.join(", ") : "không có dữ liệu";
+      showToast(`Phục hồi thành công: ${summary}`, "success");
       if (onSuccess) onSuccess();
     } catch (err: any) {
       showToast(`Lỗi phục hồi: ${err.message}`, "error");

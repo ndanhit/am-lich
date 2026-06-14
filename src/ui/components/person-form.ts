@@ -74,6 +74,11 @@ export function renderPersonForm(
           </div>
 
           <div class="form-group">
+            <label for="person-alias">Tên thường gọi</label>
+            <input type="text" id="person-alias" maxlength="100" value="${escapeAttr(editPerson ? editPerson.aliasName ?? "" : "")}">
+          </div>
+
+          <div class="form-group">
             <label>Giới tính</label>
             ${genderField}
           </div>
@@ -100,10 +105,6 @@ export function renderPersonForm(
 
           <details class="form-extra">
             <summary>Thông tin thêm</summary>
-            <div class="form-group">
-              <label for="person-alias">Tên thường gọi</label>
-              <input type="text" id="person-alias" maxlength="100" value="${escapeAttr(editPerson ? editPerson.aliasName ?? "" : "")}">
-            </div>
             <div class="form-group">
               <label for="person-altnames">Tên khác (huý / tự / hiệu)</label>
               <input type="text" id="person-altnames" maxlength="200" value="${escapeAttr(editPerson ? editPerson.altNames ?? "" : "")}">

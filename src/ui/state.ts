@@ -10,6 +10,7 @@ import type {
   Person,
   FamilyTree,
   FamilyTreeNode,
+  ExportPayload,
 } from "../core/models/types";
 import {
   calculateOccurrencesForYear,
@@ -289,16 +290,21 @@ export class AppState {
     return getUpcomingEvents(this.getAllEventsForDisplay(), referenceSolar, limit);
   }
 
-  /** Export user events + memos + settings payload */
-  exportPayload(): string {
-    const payload = generateExportPayload(
+  /** Build the export payload object (events + memos + people + families +
+   * settings). Used by both JSON-file export and cloud backup. */
+  buildExportPayload(): ExportPayload {
+    return generateExportPayload(
       this.events,
       this.memos,
       Array.from(this.hiddenSystemEventIds),
       this.people,
       this.families,
     );
-    return JSON.stringify(payload, null, 2);
+  }
+
+  /** Export user events + memos + people + families + settings as JSON. */
+  exportPayload(): string {
+    return JSON.stringify(this.buildExportPayload(), null, 2);
   }
 
   // ---- System Events API ----

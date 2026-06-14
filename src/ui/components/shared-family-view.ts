@@ -70,7 +70,6 @@ export function renderSnapshotViewer(
     <section class="family-hero family-hero--compact" id="shared-hero">
       <div class="family-hero-head">
         <h1 class="family-hero-title">Dòng họ ${escapeHtml(fam.name)}</h1>
-        <span class="readonly-chip" title="Bạn đang xem bản chia sẻ — chỉ đọc">Chỉ đọc</span>
       </div>
       ${(fam.description ?? "").trim() ? `<p class="family-hero-desc">${escapeHtml(fam.description)}</p>` : ""}
       <div class="family-hero-stats">
@@ -216,10 +215,16 @@ export function renderSnapshotViewer(
 /** One-time interaction hint for first-time viewers, dismissible. */
 function maybeShowViewerHint(host: HTMLElement): void {
   if (localStorage.getItem("am-lich-share-hint-seen")) return;
+  // Pinch gestures only exist on touch; show keyboard/mouse equivalents on
+  // desktop so the copy actually matches what the user can do.
+  const touch = window.matchMedia("(pointer: coarse)").matches;
+  const copy = touch
+    ? "Chạm vào tên để xem chi tiết · Kéo để di chuyển · Chụm 2 ngón để phóng to"
+    : "Bấm vào tên để xem chi tiết · Kéo để di chuyển · Ctrl + cuộn để phóng to";
   const hint = document.createElement("div");
   hint.className = "share-hint";
   hint.innerHTML = `
-    <span>Chạm vào tên để xem chi tiết · Kéo để di chuyển · Chụm 2 ngón để phóng to</span>
+    <span>${copy}</span>
     <button class="share-hint-close" aria-label="Đóng gợi ý">✕</button>
   `;
   const dismiss = (): void => {

@@ -1,29 +1,31 @@
-import type { LunarEvent } from '../../lib/index';
+import type { LunarEvent, ExportPayload } from '../../lib/index';
 import { supabase } from './client';
 
 // Note: Actual implementations will be added in Phase 3 & 4
 
 export class SyncAdapter {
     /**
-     * Backs up all local events to the Supabase cloud database.
-     * Replaces the remote JSON payload with these events.
-     * @param events The complete list of local events
+     * Back up the full export payload (events + memos + people + families +
+     * settings) to the Supabase cloud. The remote `events_payload` column is
+     * reused as a generic JSON blob — kept the column name for backwards
+     * compatibility with existing backups (older clients stored a plain event
+     * array there, which `restoreAll` still understands).
      */
-    static async backupEvents(events: LunarEvent[]): Promise<void> {
+    static async backupAll(payload: ExportPayload): Promise<void> {
         const { data: authData, error: authError } = await supabase.auth.getUser();
         if (authError || !authData?.user) {
             throw new Error('User not authenticated');
         }
 
-        const payload = {
+        const row = {
             user_id: authData.user.id,
-            events_payload: events,
+            events_payload: payload,
             updated_at: new Date().toISOString()
         };
 
         const { error: upsertError } = await supabase
             .from('lich_user_events_backup')
-            .upsert(payload, { onConflict: 'user_id' });
+            .upsert(row, { onConflict: 'user_id' });
 
         if (upsertError) {
             throw new Error(`Backup failed: ${upsertError.message}`);
@@ -31,10 +33,12 @@ export class SyncAdapter {
     }
 
     /**
-     * Retrieves all previously backed up events from the Supabase cloud database.
-     * @returns The remote events, or null if no backup exists or user is unauthenticated
+     * Restore the full export payload from cloud. Returns null if no backup
+     * exists. If the remote shape is an older "events-only" array (pre-genealogy
+     * clients), it's wrapped into a minimal ExportPayload so callers always
+     * receive the same shape.
      */
-    static async restoreEvents(): Promise<LunarEvent[] | null> {
+    static async restoreAll(): Promise<ExportPayload | null> {
         const { data: authData, error: authError } = await supabase.auth.getUser();
         if (authError || !authData?.user) {
             throw new Error('User not authenticated');
@@ -58,7 +62,33 @@ export class SyncAdapter {
             return null;
         }
 
-        return data.events_payload as LunarEvent[];
+        const raw = data.events_payload as unknown;
+        // Legacy: events_payload was just an array of events. Wrap so the
+        // caller can treat both old and new backups uniformly.
+        if (Array.isArray(raw)) {
+            return {
+                version: 1,
+                exportedAt: Date.now(),
+                events: raw as LunarEvent[],
+            };
+        }
+        return raw as ExportPayload;
+    }
+
+    /** @deprecated Use {@link backupAll} — kept for callers that haven't migrated. */
+    static async backupEvents(events: LunarEvent[]): Promise<void> {
+        await this.backupAll({
+            version: 1,
+            exportedAt: Date.now(),
+            events,
+        });
+    }
+
+    /** @deprecated Use {@link restoreAll}. Returns just the events list from
+     *  whatever shape the remote stored. */
+    static async restoreEvents(): Promise<LunarEvent[] | null> {
+        const payload = await this.restoreAll();
+        return payload ? payload.events : null;
     }
 
     /**

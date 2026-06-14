@@ -3,6 +3,11 @@
    Design Token System & Component Styles
    ======================================== */
 
+/* Traditional book-style fonts for the shared family-tree view (scope: hero,
+   shared-view, phả ký overlay when share view is mounted). Both families
+   ship the Vietnamese subset. */
+@import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,400;0,600;0,700;1,400&family=Inknut+Antiqua:wght@500;700&display=swap');
+
 /* --- Design Tokens --- */
 :root {
   /* Colors */
@@ -1422,10 +1427,12 @@ textarea:focus {
 }
 
 .form-group input,
-.form-group select {
+.form-group select,
+.form-group textarea {
   width: 100%;
   padding: var(--space-3);
   font-size: var(--font-size-base);
+  box-sizing: border-box;
 }
 
 .form-group .char-count {
@@ -1849,11 +1856,29 @@ textarea:focus {
   padding: 4px;
 }
 
+/* Mobile: anchor closer to the bottom edge so it sits near the tree and
+   stays in easy thumb reach. */
+@media (max-width: 767px) {
+  .tree-fab {
+    bottom: var(--space-3);
+    right: var(--space-3);
+  }
+}
+
 /* Desktop: keep the FAB anchored near the (centered) content column instead
    of drifting to the far bottom-right corner of a wide viewport. */
 @media (min-width: 768px) {
   .tree-fab {
     right: max(var(--space-6), calc(50vw - 540px));
+  }
+}
+
+/* Touch devices: header controls (search / lịch giỗ / phả ký / orientation)
+   need a 44×44 hit area for thumbs. Keep the FAB and tree-toggle compact. */
+@media (pointer: coarse) {
+  .family-tree-header .tree-ctrl-btn {
+    min-width: 44px;
+    height: 44px;
   }
 }
 
@@ -2422,6 +2447,21 @@ textarea:focus {
   flex: 1 1 calc(50% - var(--space-2));
 }
 
+/* Viewer mode: only 2 buttons (Cách xưng hô + Đề xuất). Use a tight 2-col
+   grid with reduced padding so labels stay on one line in a narrow side
+   panel. */
+.detail-actions-viewer {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: var(--space-2);
+}
+.detail-actions-viewer .btn {
+  padding: 10px var(--space-2);
+  width: 100%;
+  font-size: var(--font-size-sm, 13px);
+  white-space: nowrap;
+}
+
 /* --- Reorder children modal --- */
 .reorder-hint {
   font-size: var(--font-size-sm);
@@ -2656,10 +2696,71 @@ textarea:focus {
   align-self: center;
 }
 
+/* Mobile: "Xem phả ký" drops to its own full-width row so the stats stay
+   on one tidy line. */
+@media (max-width: 480px) {
+  .family-hero--compact .family-hero-stats {
+    justify-content: space-around;
+  }
+  .family-hero--compact .family-hero-stats .btn-sm {
+    flex: 0 0 100%;
+    margin-top: var(--space-1);
+  }
+}
+
 /* When there is no back button (read-only viewer), keep the tree controls
    tidy on the right. */
 #shared-view .family-tree-header {
   justify-content: flex-end;
+}
+
+/* Make the shared view fill the viewport so the tree gets the available
+   vertical space instead of collapsing to content height. */
+#shared-view {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+#shared-view .family-tree {
+  flex: 1 1 auto;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+#shared-view .tree-scroll {
+  flex: 1 1 auto;
+  min-height: 320px;
+}
+
+/* Footer with a soft CTA back to the main app. Recipients of a share link
+   often land here without ever having opened Âm Lịch. On mobile we leave
+   extra padding so the fixed FAB (zoom controls) doesn't overlap the link. */
+.share-footer {
+  padding: var(--space-4) var(--space-4) var(--space-6);
+  text-align: center;
+  font-size: var(--font-size-xs, 11px);
+  color: var(--color-text-secondary);
+}
+.share-footer a {
+  color: var(--color-primary, #5b52e6);
+  text-decoration: none;
+  font-weight: 600;
+}
+.share-footer a:hover {
+  text-decoration: underline;
+}
+@media (max-width: 767px) {
+  /* Compact, left-aligned on mobile with enough right padding to clear the
+     fixed FAB. Keeps the CTA discoverable without competing with the tree
+     controls. */
+  .share-footer {
+    padding: var(--space-3) var(--space-4);
+    padding-right: 220px;
+    text-align: left;
+    font-size: 10px;
+    line-height: 1.3;
+  }
 }
 
 /* One-time interaction hint for first-time viewers. */
@@ -2756,4 +2857,565 @@ textarea:focus {
   font-size: var(--font-size-xs, 11px);
   font-style: italic;
   color: var(--color-text-secondary);
+}
+
+/* ====================================================================
+   "Sách phả đồ" reskin — shared-view only (read-only viewer)
+   Scope: #shared-view, the compact hero, and the phả ký modal when it
+   opens on top of a shared view. Owner mode keeps the modern look.
+   ==================================================================== */
+
+/* Define the parchment palette on the body when a share view is active so
+   every descendant — including modals (.modal-overlay) and the detail panel
+   (.detail-panel) which sit outside #shared-view — can resolve var(--paper-bg)
+   et al. Previously only #shared-view + its descendants saw these, which
+   left .modal-overlay .modal-content rendering transparent. */
+body:has(.family-tree) {
+  --font-display: 'Inknut Antiqua', 'Be Vietnam Pro', Georgia, serif;
+  --font-body: 'Be Vietnam Pro', system-ui, sans-serif;
+  --paper-bg: #f7f1e3;
+  --paper-bg-soft: #fdf9ee;
+  --paper-edge: #e6dcc4;
+  --ink: #2a221a;
+  --ink-soft: #4a3f33;
+  --ink-muted: #6b5d4a;
+  /* Red for the lineage (nam), indigo for nữ — a high-contrast pairing that
+     keeps the parchment palette but mirrors the red-vs-blue ink convention
+     used in old Vietnamese phả manuscripts. */
+  --accent-red: #8a2b2b;
+  --accent-blue: #2a4a7a;
+}
+
+/* Paper background with soft aged corners. Pure CSS — no images. */
+body:has(.family-tree) .family-hero--compact,
+#shared-view {
+  background: var(--paper-bg);
+  background-image:
+    radial-gradient(at 0% 0%, rgba(74, 63, 51, 0.05), transparent 40%),
+    radial-gradient(at 100% 100%, rgba(74, 63, 51, 0.05), transparent 40%);
+  color: var(--ink);
+}
+
+/* Footer underneath also gets the parchment tone so the page reads as one
+   continuous "spread". */
+body:has(.family-tree) {
+  background: var(--paper-bg);
+}
+
+/* --- Hero as a book frontispiece ---------------------------------- */
+body:has(.family-tree) .family-hero-title {
+  font-family: var(--font-display);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  color: var(--accent-red);
+}
+body:has(.family-tree) .family-hero-head::after {
+  content: "❦";
+  display: block;
+  flex-basis: 100%;
+  margin-top: 4px;
+  text-align: center;
+  color: var(--ink-muted);
+  font-size: 18px;
+  line-height: 1;
+}
+body:has(.family-tree) .family-hero-desc {
+  font-family: var(--font-body);
+  font-style: italic;
+  color: var(--ink-soft);
+}
+body:has(.family-tree) .hero-stat-num {
+  font-family: var(--font-display);
+  color: var(--ink);
+}
+body:has(.family-tree) .hero-stat-label {
+  font-family: var(--font-body);
+  font-style: italic;
+  color: var(--ink-muted);
+}
+
+/* "Chỉ đọc" chip as a small red seal. */
+body:has(.family-tree) .readonly-chip {
+  background: #fdf6e3;
+  border: 1px solid var(--accent-red);
+  color: var(--accent-red);
+  font-family: var(--font-body);
+  font-weight: 600;
+  letter-spacing: 0.04em;
+}
+
+/* "Xem phả ký" button — small ink-stroke pill. */
+body:has(.family-tree) .family-hero-stats .btn-sm {
+  background: var(--paper-bg-soft);
+  border: 1px solid var(--ink);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-weight: 600;
+}
+body:has(.family-tree) .family-hero-stats .btn-sm:hover {
+  background: #f1ebd9;
+}
+
+/* --- Hint banner ------------------------------------------------- */
+body:has(.family-tree) .share-hint {
+  background: var(--paper-bg-soft);
+  border: 1px dashed var(--ink-muted);
+  color: var(--ink-soft);
+  font-family: var(--font-body);
+  font-style: italic;
+}
+
+/* --- Tree node box: ink-framed, fixed 2-line height ---------------- */
+.family-tree .tree-node-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  justify-content: center;
+  gap: 1px;
+  background: var(--paper-bg-soft);
+  border: 1px solid var(--ink);
+  border-top: 3px solid var(--accent-red);
+  border-radius: 3px;
+  box-shadow: 1px 1px 0 var(--paper-edge);
+  padding: 6px 12px;
+  font-family: var(--font-display);
+  color: var(--ink);
+  min-width: 64px;
+  transition: box-shadow 0.15s, transform 0.15s;
+}
+.family-tree .tree-node-box:hover {
+  box-shadow: 2px 2px 0 var(--paper-edge), 0 0 0 1px var(--accent-red);
+  transform: translateY(-1px);
+}
+/* Gender distinction via the top border AND a tinted background — accent-red
+   for nam, indigo for nữ. The dual cue survives the small-zoom view where
+   the top stripe alone is hard to read. */
+.family-tree .tree-node-box.gender-male {
+  background: #fcf5ee;
+}
+.family-tree .tree-node-box.gender-female {
+  border-top-color: var(--accent-blue);
+  background: #eef2f9;
+}
+.family-tree .tree-node-box.gender-female .tree-name-text {
+  color: var(--accent-blue);
+}
+.family-tree .tree-node-box.gender-male .tree-name-text {
+  color: var(--accent-red);
+}
+.family-tree .tree-node-box.gender-other {
+  border-top-color: var(--ink-muted);
+}
+.family-tree .tree-node-box.deceased {
+  background: #f1ebd9;
+  color: var(--ink-soft);
+}
+.family-tree .tree-node-box.gender-female.deceased {
+  background: #e6e9f0;
+}
+.family-tree .tree-spouse-box {
+  background: transparent;
+  border-style: dashed;
+  border-top-style: solid;
+}
+.family-tree .tree-name-text {
+  font-weight: 700;
+  font-size: 13px;
+  line-height: 1.2;
+}
+.family-tree .tree-meta {
+  font-family: var(--font-body);
+  font-size: 10px;
+  line-height: 1.2;
+  color: var(--ink-muted);
+  font-style: italic;
+  white-space: nowrap;
+}
+
+/* Below a readable threshold, drop the meta line so boxes shrink back to a
+   single-line "name only" view. JS toggles data-zoom-small="1" when zoom < 0.7. */
+.family-tree .tree[data-zoom-small="1"] .tree-meta {
+  display: none;
+}
+
+/* --- Ink connectors ------------------------------------------------ */
+.family-tree .tree li::before,
+.family-tree .tree li::after,
+.family-tree .tree ul::before {
+  border-color: var(--ink);
+  border-width: 1.5px;
+}
+
+/* --- Collapse / expand toggle: ink-styled small chip --------------- */
+.family-tree .tree-toggle {
+  background: var(--paper-bg-soft);
+  border: 1px solid var(--ink);
+  color: var(--ink);
+  font-family: var(--font-body);
+  box-shadow: 1px 1px 0 var(--paper-edge);
+}
+
+/* --- Tree-fab + header controls: same parchment family ------------- */
+body:has(.family-tree) .tree-fab {
+  background: var(--paper-bg-soft);
+  border: 1px solid var(--ink);
+  box-shadow: 2px 2px 0 var(--paper-edge);
+}
+body:has(.family-tree) .tree-ctrl-btn {
+  color: var(--ink);
+  font-family: var(--font-body);
+}
+body:has(.family-tree) .tree-zoom-label {
+  color: var(--ink-soft);
+}
+
+/* Footer CTA in the same paper palette. */
+body:has(.family-tree) .share-footer {
+  color: var(--ink-muted);
+  font-family: var(--font-body);
+}
+body:has(.family-tree) .share-footer a {
+  color: var(--accent-red);
+}
+
+/* --- Phả ký modal: book-chapter feel ------------------------------ */
+body:has(.family-tree) .phaky-overlay .modal-content {
+  background: var(--paper-bg);
+  background-image:
+    radial-gradient(at 0% 0%, rgba(74, 63, 51, 0.05), transparent 40%),
+    radial-gradient(at 100% 100%, rgba(74, 63, 51, 0.05), transparent 40%);
+  color: var(--ink);
+  border: 1px solid var(--ink);
+  border-radius: 4px;
+}
+body:has(.family-tree) .phaky-overlay .modal-header {
+  border-bottom: 1px solid var(--ink-muted);
+}
+body:has(.family-tree) .phaky-overlay .modal-title-text {
+  font-family: var(--font-display);
+  font-weight: 700;
+  color: var(--accent-red);
+}
+body:has(.family-tree) .phaky-overlay .modal-title-text::before,
+body:has(.family-tree) .phaky-overlay .modal-title-text::after {
+  content: "❦";
+  display: inline-block;
+  margin: 0 8px;
+  color: var(--ink-muted);
+  font-weight: 400;
+}
+body:has(.family-tree) .phaky-overlay .close-btn {
+  color: var(--ink);
+}
+body:has(.family-tree) .phaky-doc {
+  color: var(--ink);
+  font-family: var(--font-body);
+}
+body:has(.family-tree) .phaky-doc-header {
+  border-bottom: double 3px var(--ink);
+}
+body:has(.family-tree) .phaky-desc {
+  font-style: italic;
+  color: var(--ink-soft);
+}
+body:has(.family-tree) .phaky-meta {
+  color: var(--ink-muted);
+  font-family: var(--font-body);
+  font-style: italic;
+}
+body:has(.family-tree) .phaky-gen-title {
+  font-family: var(--font-display);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--accent-red);
+  border-bottom: double 3px var(--ink);
+  padding-bottom: 4px;
+}
+body:has(.family-tree) .phaky-entry {
+  border-left: 2px solid var(--ink-muted);
+}
+body:has(.family-tree) .phaky-entry-name {
+  font-family: var(--font-display);
+  color: var(--accent-red);
+}
+body:has(.family-tree) .phaky-entry-detail {
+  font-family: var(--font-body);
+  color: var(--ink-soft);
+}
+body:has(.family-tree) .phaky-entry-notes {
+  color: var(--ink-muted);
+}
+
+/* --- Detail panel (right-side): inherit paper feel on share view --- */
+body:has(.family-tree) .detail-panel {
+  background: var(--paper-bg);
+  background-image:
+    radial-gradient(at 0% 0%, rgba(74, 63, 51, 0.05), transparent 40%),
+    radial-gradient(at 100% 100%, rgba(74, 63, 51, 0.05), transparent 40%);
+  color: var(--ink);
+}
+body:has(.family-tree) .detail-panel .modal-title-text {
+  font-family: var(--font-display);
+  color: var(--accent-red);
+}
+body:has(.family-tree) .detail-panel .detail-section-title {
+  font-family: var(--font-display);
+  color: var(--ink);
+}
+body:has(.family-tree) .detail-actions-viewer .btn {
+  background: var(--paper-bg-soft);
+  border: 1px solid var(--ink);
+  color: var(--ink);
+  font-family: var(--font-body);
+}
+body:has(.family-tree) .detail-actions-viewer .btn:hover {
+  background: #f1ebd9;
+}
+
+/* Owner-mode detail panel buttons (Thêm con / Sửa / Xóa / Thêm vợ / ...).
+   Modern style would jar against the paper bg, so re-skin them too. */
+body:has(.family-tree) .detail-panel .detail-actions-wrap .btn {
+  background: var(--paper-bg-soft);
+  border: 1px solid var(--ink);
+  color: var(--ink);
+  font-family: var(--font-body);
+}
+body:has(.family-tree) .detail-panel .detail-actions-wrap .btn:hover {
+  background: #f1ebd9;
+}
+body:has(.family-tree) .detail-panel .detail-actions-wrap .btn-danger {
+  color: var(--accent-red);
+  border-color: var(--accent-red);
+}
+body:has(.family-tree) .detail-panel .detail-actions-wrap .btn-danger:hover {
+  background: rgba(138, 43, 43, 0.08);
+}
+
+/* "Thống kê nhánh" stat cards inside the detail panel — drop the purple
+   modern feel, match parchment + ink. */
+body:has(.family-tree) .detail-panel .stat-card {
+  background: var(--paper-bg-soft);
+  border: 1px solid var(--ink-muted);
+  border-radius: 3px;
+}
+body:has(.family-tree) .detail-panel .stat-card .num {
+  font-family: var(--font-display);
+  color: var(--accent-red);
+}
+body:has(.family-tree) .detail-panel .stat-card .lbl {
+  font-family: var(--font-body);
+  font-style: italic;
+  color: var(--ink-muted);
+}
+body:has(.family-tree) .detail-panel .detail-meta-item {
+  color: var(--ink);
+}
+body:has(.family-tree) .detail-panel .detail-meta-item .label {
+  color: var(--ink-muted);
+  font-family: var(--font-body);
+  font-style: italic;
+}
+body:has(.family-tree) .detail-panel .detail-empty {
+  color: var(--ink-muted);
+  font-style: italic;
+}
+
+/* --- Generic modal-overlay inside share view (lịch giỗ, search, etc.) ---
+   Same paper feel as the phả ký modal. Phả ký keeps its ❦ flourish via the
+   more specific .phaky-overlay rules above. */
+body:has(.family-tree) .modal-overlay .modal-content {
+  background: var(--paper-bg);
+  background-image:
+    radial-gradient(at 0% 0%, rgba(74, 63, 51, 0.05), transparent 40%),
+    radial-gradient(at 100% 100%, rgba(74, 63, 51, 0.05), transparent 40%);
+  color: var(--ink);
+  border: 1px solid var(--ink);
+  border-radius: 4px;
+  /* Lock the modal to a stable height so filtering (e.g. tìm thành viên)
+     doesn't make the dialog jump as the result count changes. The body
+     scrolls instead. Capped at 85vh for short viewports. */
+  height: min(640px, 85vh);
+}
+body:has(.family-tree) .modal-overlay .modal-body {
+  flex: 1 1 auto;
+  min-height: 0;
+  overflow-y: auto;
+}
+/* Inner lists used to manage their own scroll (max-height: 50–55vh). With
+   the modal now fixed-height + modal-body scrolling, defer to the outer
+   container so we have a single scroll context. */
+body:has(.family-tree) .modal-overlay .search-results,
+body:has(.family-tree) .modal-overlay .gio-list,
+body:has(.family-tree) .modal-overlay .kin-list {
+  max-height: none;
+  overflow: visible;
+}
+body:has(.family-tree) .modal-overlay .modal-header {
+  border-bottom: 1px solid var(--ink-muted);
+}
+body:has(.family-tree) .modal-overlay .modal-title-text {
+  font-family: var(--font-display);
+  color: var(--accent-red);
+}
+body:has(.family-tree) .modal-overlay .close-btn {
+  color: var(--ink);
+}
+
+/* Lịch giỗ list rows: ink frame + ink-soft secondary text. */
+body:has(.family-tree) .gio-item {
+  background: var(--paper-bg-soft);
+  border: 1px solid var(--ink-muted);
+  border-radius: 3px;
+}
+body:has(.family-tree) .gio-item:hover {
+  background: #f1ebd9;
+}
+body:has(.family-tree) .gio-item-name {
+  font-family: var(--font-display);
+  color: var(--ink);
+}
+body:has(.family-tree) .gio-item-sub {
+  font-family: var(--font-body);
+  color: var(--ink-soft);
+}
+body:has(.family-tree) .gio-item-days {
+  font-family: var(--font-body);
+  color: var(--accent-red);
+  font-weight: 700;
+}
+
+/* The TH-month / day badge on the left of each gio row. */
+body:has(.family-tree) .upcoming-date-badge {
+  background: #fdf6e3;
+  border: 1px solid var(--accent-red);
+  border-radius: 3px;
+}
+body:has(.family-tree) .upcoming-date-badge .month,
+body:has(.family-tree) .upcoming-date-badge .day {
+  color: var(--accent-red);
+  font-family: var(--font-display);
+}
+
+/* Inputs / selects inside share-view modals — same paper feel. */
+body:has(.family-tree) .modal-overlay input,
+body:has(.family-tree) .modal-overlay select,
+body:has(.family-tree) .modal-overlay textarea {
+  background: var(--paper-bg-soft);
+  border: 1px solid var(--ink-muted);
+  border-radius: 3px;
+  color: var(--ink);
+  font-family: var(--font-body);
+}
+body:has(.family-tree) .modal-overlay input:focus,
+body:has(.family-tree) .modal-overlay select:focus,
+body:has(.family-tree) .modal-overlay textarea:focus {
+  border-color: var(--accent-red);
+  box-shadow: 0 0 0 2px rgba(138, 43, 43, 0.15);
+}
+
+/* Tìm thành viên: result rows. */
+body:has(.family-tree) .search-result {
+  background: var(--paper-bg-soft);
+  border: 1px solid var(--ink-muted);
+  border-radius: 3px;
+}
+body:has(.family-tree) .search-result:hover {
+  background: #f1ebd9;
+}
+body:has(.family-tree) .search-result-name {
+  font-family: var(--font-display);
+  color: var(--ink);
+}
+body:has(.family-tree) .search-result-meta {
+  font-family: var(--font-body);
+  color: var(--ink-soft);
+  font-style: italic;
+}
+
+/* Cách xưng hô: kin rows. */
+body:has(.family-tree) .kin-item {
+  background: var(--paper-bg-soft);
+  border: 1px solid var(--ink-muted);
+  border-radius: 3px;
+}
+body:has(.family-tree) .kin-item:hover {
+  background: #f1ebd9;
+}
+
+/* CTA submit buttons (Thêm / Lưu / Tạo sự kiện) — swap modern purple for an
+   ink-stroke red pill so they match the paper aesthetic. */
+body:has(.family-tree) .modal-overlay .btn-cta {
+  background: var(--accent-red);
+  color: #fdf9ee;
+  border-radius: 3px;
+  font-family: var(--font-body);
+  font-weight: 700;
+  letter-spacing: 0.02em;
+  box-shadow: 1px 1px 0 var(--paper-edge);
+}
+body:has(.family-tree) .modal-overlay .btn-cta:hover {
+  background: #732222;
+}
+body:has(.family-tree) .modal-overlay .btn-cta:disabled {
+  background: var(--ink-muted);
+}
+
+/* Form field labels inside share-mode modals. */
+body:has(.family-tree) .modal-overlay label,
+body:has(.family-tree) .modal-overlay .form-label {
+  color: var(--ink-soft);
+  font-family: var(--font-body);
+}
+
+/* Native radio + checkbox — color them with accent-red so they read as ink
+   strokes on parchment rather than the default Chrome blue. */
+body:has(.family-tree) .modal-overlay input[type="radio"],
+body:has(.family-tree) .modal-overlay input[type="checkbox"] {
+  accent-color: var(--accent-red);
+}
+
+/* Sắp xếp con: numbered rank chip — paper-soft with ink frame instead of a
+   purple disc. */
+body:has(.family-tree) .reorder-item {
+  background: var(--paper-bg-soft);
+  border: 1px solid var(--ink-muted);
+  border-radius: 3px;
+}
+body:has(.family-tree) .reorder-rank {
+  background: var(--accent-red);
+  color: #fdf9ee;
+  font-family: var(--font-body);
+}
+body:has(.family-tree) .reorder-name {
+  font-family: var(--font-display);
+  color: var(--ink);
+}
+body:has(.family-tree) .reorder-gender {
+  color: var(--ink-soft);
+  font-style: italic;
+  font-family: var(--font-body);
+}
+body:has(.family-tree) .reorder-actions .icon-btn {
+  color: var(--ink);
+}
+
+/* Collapsible "Thông tin thêm" heading inside the person form. */
+body:has(.family-tree) .modal-overlay summary,
+body:has(.family-tree) .modal-overlay details > summary {
+  color: var(--accent-red);
+  font-family: var(--font-display);
+}
+body:has(.family-tree) .kin-name {
+  font-family: var(--font-display);
+  color: var(--ink);
+}
+body:has(.family-tree) .kin-gender {
+  font-family: var(--font-body);
+  color: var(--ink-soft);
+  font-style: italic;
+}
+body:has(.family-tree) .kin-term {
+  font-family: var(--font-display);
+  color: var(--accent-red);
 }

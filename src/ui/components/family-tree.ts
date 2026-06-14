@@ -6,7 +6,12 @@ import type { AppState } from "../state";
 const MIN_ZOOM = 0.3;
 const MAX_ZOOM = 2;
 // Read-only viewers open at a legible zoom rather than the full-tree overview.
-const MIN_READABLE_ZOOM = 0.6;
+// Bumped to 0.75 once boxes started showing alias + years + titles — at lower
+// zoom the meta becomes unreadable, so we floor higher and rely on user pinch
+// to see the whole tree at once.
+const MIN_READABLE_ZOOM = 0.75;
+// Below this zoom we hide meta (alias / years / titles) via [data-zoom-small].
+const META_HIDE_ZOOM = 0.7;
 const AUTO_COLLAPSE_THRESHOLD = 15; // blood-node count above which we auto-collapse
 const AUTO_COLLAPSE_FROM_DEPTH = 2; // collapse generations at depth >= 2 (show ~3 levels)
 
@@ -88,8 +93,25 @@ export function renderFamilyTree(
     }
   }
 
-  const peopleById = new Map(state.getPeople().map((p) => [p.id, p]));
-  const cb: NodeCallbacks = { onSelect, peopleById };
+  const allPeople = state.getPeople();
+  const peopleById = new Map(allPeople.map((p) => [p.id, p]));
+  // Pre-count children per person so the meta line can fall back to "N con"
+  // without a per-node scan.
+  const childCountById = new Map<string, number>();
+  for (const p of allPeople) {
+    if (p.parentId != null) {
+      childCountById.set(p.parentId, (childCountById.get(p.parentId) ?? 0) + 1);
+    }
+  }
+  // Every box gets a second biographical line — priority: giỗ → tuổi → tự →
+  // số con — so the entire tree reads as a traditional phả đồ in both viewer
+  // and owner mode. Empty slot keeps box height consistent.
+  const cb: NodeCallbacks = {
+    onSelect,
+    peopleById,
+    detailed: true,
+    childCountById,
+  };
 
   // Header: back to list + orientation toggle.
   const header = document.createElement("div");
@@ -166,12 +188,35 @@ export function renderFamilyTree(
 
   const applyZoom = (): void => {
     const tree = scroll.querySelector(".tree") as HTMLElement | null;
-    if (tree) tree.style.setProperty("zoom", String(zoomLevel));
+    if (tree) {
+      tree.style.setProperty("zoom", String(zoomLevel));
+      // CSS hides alias/years/titles when this attribute is set so very small
+      // boxes don't smear text on top of the connector lines.
+      if (zoomLevel < META_HIDE_ZOOM) {
+        tree.setAttribute("data-zoom-small", "1");
+      } else {
+        tree.removeAttribute("data-zoom-small");
+      }
+    }
     label.textContent = `${Math.round(zoomLevel * 100)}%`;
   };
   const setZoom = (next: number): void => {
     zoomLevel = Math.min(MAX_ZOOM, Math.max(MIN_ZOOM, next));
     applyZoom();
+  };
+
+  // Track whether the current zoom value came from an auto-fit (vs. a manual
+  // user gesture). We re-fit on resize ONLY while this flag is true so the
+  // tree adapts when the detail panel slides in, but never overrides a zoom
+  // the user explicitly set.
+  let autoFitActive = false;
+  let manualSetZoom: ((next: number) => void) | null = null;
+
+  const centerHorizontally = (): void => {
+    if (scroll.scrollWidth > scroll.clientWidth) {
+      scroll.scrollLeft = (scroll.scrollWidth - scroll.clientWidth) / 2;
+    }
+    scroll.scrollTop = 0;
   };
 
   // Scale the tree down so its natural width fits the visible scroll area
@@ -182,19 +227,36 @@ export function renderFamilyTree(
     tree.style.setProperty("zoom", "1");
     const natural = tree.scrollWidth;
     const avail = scroll.clientWidth;
+    autoFitActive = true;
     setZoom(natural > 0 ? Math.min(1, avail / natural) : 1);
+    autoFitActive = true;
+    requestAnimationFrame(centerHorizontally);
   };
 
   // Read-only viewers open at a legible zoom: fit the width but never shrink
   // below MIN_READABLE_ZOOM (they pan/pinch to explore instead of squinting).
+  // Small trees that already fit are shown at 100% — no point shrinking them.
   const fitReadable = (): void => {
     const tree = scroll.querySelector(".tree") as HTMLElement | null;
     if (!tree) return;
     tree.style.setProperty("zoom", "1");
     const natural = tree.scrollWidth;
     const avail = scroll.clientWidth;
-    const fit = natural > 0 ? Math.min(1, avail / natural) : 1;
-    setZoom(Math.max(MIN_READABLE_ZOOM, fit));
+    autoFitActive = true;
+    if (natural === 0 || natural <= avail) {
+      setZoom(1);
+    } else {
+      setZoom(Math.max(MIN_READABLE_ZOOM, avail / natural));
+    }
+    autoFitActive = true;
+    requestAnimationFrame(centerHorizontally);
+  };
+
+  // Any setZoom call from a user gesture should turn off the auto-fit flag
+  // so subsequent ResizeObserver ticks don't override the user's choice.
+  manualSetZoom = (next: number): void => {
+    autoFitActive = false;
+    setZoom(next);
   };
 
   const buildTree = (): void => {
@@ -229,10 +291,10 @@ export function renderFamilyTree(
   // --- Zoom controls ---
   fab
     .querySelector("#zoom-in")!
-    .addEventListener("click", () => setZoom(zoomLevel + 0.1));
+    .addEventListener("click", () => manualSetZoom!(zoomLevel + 0.1));
   fab
     .querySelector("#zoom-out")!
-    .addEventListener("click", () => setZoom(zoomLevel - 0.1));
+    .addEventListener("click", () => manualSetZoom!(zoomLevel - 0.1));
   fab.querySelector("#zoom-fit")!.addEventListener("click", () => fitToWidth());
 
   // --- Pinch-to-zoom ---
@@ -253,7 +315,9 @@ export function renderFamilyTree(
     (e) => {
       if (e.touches.length === 2 && pinchStartDist > 0) {
         e.preventDefault();
-        setZoom((pinchStartZoom * touchDistance(e.touches)) / pinchStartDist);
+        manualSetZoom!(
+          (pinchStartZoom * touchDistance(e.touches)) / pinchStartDist,
+        );
       }
     },
     { passive: false },
@@ -262,6 +326,33 @@ export function renderFamilyTree(
     if (e.touches.length < 2) pinchStartDist = 0;
   });
 
+  // --- Ctrl/Cmd + wheel zoom (desktop) ---
+  scroll.addEventListener(
+    "wheel",
+    (e) => {
+      if (!(e.ctrlKey || e.metaKey)) return;
+      e.preventDefault();
+      const step = e.deltaY > 0 ? -0.1 : 0.1;
+      manualSetZoom!(zoomLevel + step);
+    },
+    { passive: false },
+  );
+
+  // --- Re-fit when the scroll width changes (detail panel open/close, window
+  // resize). Only while auto-fit is active so we never override a user zoom. ---
+  let resizeTimer: number | null = null;
+  const ro = new ResizeObserver(() => {
+    if (!autoFitActive) return;
+    if (resizeTimer != null) window.clearTimeout(resizeTimer);
+    resizeTimer = window.setTimeout(() => {
+      resizeTimer = null;
+      if (!autoFitActive) return;
+      if (readOnly) fitReadable();
+      else fitToWidth();
+    }, 150);
+  });
+  ro.observe(scroll);
+
   // --- Drag-to-pan (mouse / single pointer) ---
   enableDragPan(scroll);
 }
@@ -269,6 +360,8 @@ export function renderFamilyTree(
 type NodeCallbacks = {
   onSelect: (person: Person) => void;
   peopleById: Map<string, Person>;
+  detailed: boolean;
+  childCountById: Map<string, number>;
 };
 
 function touchDistance(touches: TouchList): number {
@@ -387,7 +480,9 @@ function renderNode(node: FamilyTreeNode, cb: NodeCallbacks): HTMLElement {
   return li;
 }
 
-/** A compact, clickable node box: name + gender icon (outline) after the name. */
+/** A clickable node box. Name only by default; in `detailed` mode (share view)
+ * adds exactly one meta line (giỗ / tuổi / tự / số con — first hit) so every
+ * box ends up the same two-line height. */
 function makeBox(person: Person, cb: NodeCallbacks): HTMLElement {
   const box = document.createElement("button");
   box.type = "button";
@@ -397,9 +492,39 @@ function makeBox(person: Person, cb: NodeCallbacks): HTMLElement {
     "aria-label",
     `Chi tiết ${person.name} (${GENDER_LABELS[person.gender]})`,
   );
-  box.innerHTML = `<span class="tree-name-text">${escapeHtml(person.name)}</span>`;
+  const lines: string[] = [
+    `<span class="tree-name-text">${escapeHtml(person.name)}</span>`,
+  ];
+  if (cb.detailed) {
+    const meta = pickMetaLine(person, cb.childCountById.get(person.id) ?? 0);
+    // Always emit the meta line slot — empty placeholder keeps every box at the
+    // same height even when nothing is known.
+    lines.push(`<span class="tree-meta">${meta}</span>`);
+  }
+  box.innerHTML = lines.join("");
   box.addEventListener("click", () => cb.onSelect(person));
   return box;
+}
+
+/** Single-line meta with cascading priority:
+ *  1. giỗ N/M ÂL (if deathLunar)
+ *  2. N tuổi    (if birthDate.year and age ≥ 1)
+ *  3. tự X       (if aliasName)
+ *  4. N con      (if direct children exist)
+ * Returns "" (rendered as a non-breaking space) to preserve box height. */
+function pickMetaLine(p: Person, childCount: number): string {
+  if (p.deathLunar) {
+    return `giỗ ${p.deathLunar.day}/${p.deathLunar.month} ÂL`;
+  }
+  if (p.birthDate && p.birthDate.year) {
+    const age = new Date().getFullYear() - p.birthDate.year;
+    if (age >= 1) return `${age} tuổi`;
+  }
+  const alias = (p.aliasName ?? "").trim();
+  if (alias) return `tự ${escapeHtml(alias)}`;
+  if (childCount > 0) return `${childCount} con`;
+  // Non-breaking space keeps the .tree-meta line from collapsing.
+  return "&nbsp;";
 }
 
 function escapeHtml(str: string): string {
