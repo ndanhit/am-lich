@@ -67,17 +67,17 @@ export function renderSnapshotViewer(
   const fam = snapshot.family;
 
   app.innerHTML = `
-    <div class="shared-banner">Đang xem gia phả được chia sẻ — chỉ đọc</div>
-    <section class="family-hero" id="shared-hero">
-      <h1 class="family-hero-title">Dòng họ ${escapeHtml(fam.name)}</h1>
-      ${fam.description.trim() ? `<p class="family-hero-desc">${escapeHtml(fam.description)}</p>` : ""}
+    <section class="family-hero family-hero--compact" id="shared-hero">
+      <div class="family-hero-head">
+        <h1 class="family-hero-title">Dòng họ ${escapeHtml(fam.name)}</h1>
+        <span class="readonly-chip" title="Bạn đang xem bản chia sẻ — chỉ đọc">Chỉ đọc</span>
+      </div>
+      ${(fam.description ?? "").trim() ? `<p class="family-hero-desc">${escapeHtml(fam.description)}</p>` : ""}
       <div class="family-hero-stats">
         <div class="hero-stat"><span class="hero-stat-num">${generations}</span><span class="hero-stat-label">thế hệ</span></div>
         <div class="hero-stat"><span class="hero-stat-num">${totalMembers}</span><span class="hero-stat-label">thành viên</span></div>
         <div class="hero-stat"><span class="hero-stat-num">${deceasedCount}</span><span class="hero-stat-label">đã khuất</span></div>
-      </div>
-      <div class="family-hero-actions">
-        <button class="btn btn-secondary" id="shared-phaky-btn">Xem phả ký</button>
+        <button class="btn btn-secondary btn-sm" id="shared-phaky-btn">Xem phả ký</button>
       </div>
     </section>
     <main id="shared-view"></main>
@@ -207,7 +207,27 @@ export function renderSnapshotViewer(
     onBack,
     () => renderSearchPeople(modal, state, openDetail),
     () => renderGioList(modal, state, openDetail),
+    { readOnly: true },
   );
+
+  maybeShowViewerHint(view);
+}
+
+/** One-time interaction hint for first-time viewers, dismissible. */
+function maybeShowViewerHint(host: HTMLElement): void {
+  if (localStorage.getItem("am-lich-share-hint-seen")) return;
+  const hint = document.createElement("div");
+  hint.className = "share-hint";
+  hint.innerHTML = `
+    <span>Chạm vào tên để xem chi tiết · Kéo để di chuyển · Chụm 2 ngón để phóng to</span>
+    <button class="share-hint-close" aria-label="Đóng gợi ý">✕</button>
+  `;
+  const dismiss = (): void => {
+    localStorage.setItem("am-lich-share-hint-seen", "1");
+    hint.remove();
+  };
+  hint.querySelector(".share-hint-close")!.addEventListener("click", dismiss);
+  host.prepend(hint);
 }
 
 /** Render a read-only public view of a shared family from a #/share link. */

@@ -278,7 +278,7 @@ function renderFamilyView() {
     () => state.setCurrentTree(null),
     openSearchPeople,
     openGioList,
-    openPhaKy,
+    { onPhaKy: openPhaKy },
   );
 }
 
