@@ -43,7 +43,18 @@ export function renderPersonDetail(
   const metaRows: string[] = [];
   metaRows.push(metaRow("Giới tính", GENDER_LABELS[person.gender]));
   if (generation > 0) {
-    metaRows.push(metaRow("Vai vế", `Đời thứ ${generation}`));
+    // Người lấy vào: dâu (vợ) / rể (chồng) theo đời của vợ/chồng huyết thống.
+    let role = `Đời thứ ${generation}`;
+    if (person.isMarriedIn) {
+      const prefix =
+        person.gender === "female"
+          ? "Dâu"
+          : person.gender === "male"
+            ? "Rể"
+            : "Dâu/Rể";
+      role = `${prefix} đời thứ ${generation}`;
+    }
+    metaRows.push(metaRow("Vai vế", role));
   }
   if (person.aliasName?.trim()) {
     metaRows.push(metaRow("Tên thường gọi", escapeHtml(person.aliasName)));

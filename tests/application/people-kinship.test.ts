@@ -78,7 +78,7 @@ describe("kinshipTerm (from = me)", () => {
     expect(t("dad")).toBe("cha");
     expect(t("mom")).toBe("mẹ"); // mẹ (lấy vào → theo bố)
     expect(t("g")).toBe("ông nội");
-    expect(t("gw")).toBe("bà nội"); // bà (lấy vào → theo ông)
+    expect(t("gw")).toBe("mệ nội"); // mệ (miền Trung) (lấy vào → theo ông)
   });
 
   it("direct line down", () => {
@@ -90,9 +90,9 @@ describe("kinshipTerm (from = me)", () => {
     expect(t("sis")).toBe("em");
   });
 
-  it("parent's siblings (cô / dượng)", () => {
-    expect(t("aunt")).toBe("cô"); // em gái của bố
-    expect(t("unclehb")).toBe("chú"); // chồng của cô → vai chú (paternal, younger)
+  it("parent's siblings (O / dượng)", () => {
+    expect(t("aunt")).toBe("O"); // chị/em gái của bố → O (miền Trung)
+    expect(t("unclehb")).toBe("dượng"); // chồng của O → dượng
   });
 
   it("first cousins", () => {
@@ -116,13 +116,17 @@ describe("kinshipTerm (downward)", () => {
 });
 
 describe("kinshipTerm (paternal extras)", () => {
-  // cụ(gg) → ông(g) → { Bác(uncle, order 0), Bố(dad, order 1) }
+  // cụ(gg) → ông(g) → { Bác(uncle, order 0) ⚭ uncw, Bố(dad, order 1),
+  //                     Chú(chu, order 2) ⚭ thim }
   // Bố → me; Bác → coz
   const p: Person[] = [
     person({ id: "gg", gender: "male", order: 0 }),
     person({ id: "g", gender: "male", parentId: "gg", order: 0 }),
-    person({ id: "uncle", gender: "male", parentId: "g", order: 0 }),
+    person({ id: "uncle", gender: "male", parentId: "g", order: 0, spouseId: "uncw" }),
+    person({ id: "uncw", gender: "female", isMarriedIn: true, spouseId: "uncle" }),
     person({ id: "dad", gender: "male", parentId: "g", order: 1 }),
+    person({ id: "chu", gender: "male", parentId: "g", order: 2, spouseId: "thim" }),
+    person({ id: "thim", gender: "female", isMarriedIn: true, spouseId: "chu" }),
     person({ id: "me", gender: "male", parentId: "dad", order: 0 }),
     person({ id: "coz", gender: "female", parentId: "uncle", order: 0 }),
   ];
@@ -133,25 +137,39 @@ describe("kinshipTerm (paternal extras)", () => {
   it("addresses father's older brother as bác", () => {
     expect(kinshipTerm(p, "me", "uncle")).toBe("bác");
   });
+  it("addresses bác's wife as bác", () => {
+    expect(kinshipTerm(p, "me", "uncw")).toBe("bác");
+  });
+  it("addresses father's younger brother as chú, his wife as thím", () => {
+    expect(kinshipTerm(p, "me", "chu")).toBe("chú");
+    expect(kinshipTerm(p, "me", "thim")).toBe("thím");
+  });
   it("addresses an older first cousin as chị họ", () => {
     expect(kinshipTerm(p, "me", "coz")).toBe("chị họ");
   });
 });
 
 describe("kinshipTerm (maternal — tree built through the mother)", () => {
-  // ông ngoại(mg) → { Mẹ(mom, order 0), Cậu(cau, order 1), Dì(di, order 2) }
+  // ông ngoại(mg) → { Mẹ(mom, order 0), Cậu(cau, order 1) ⚭ mu,
+  //                   Dì(di, order 2) ⚭ dihb }
   // me has the mother as recorded parent.
   const p: Person[] = [
     person({ id: "mg", gender: "male", order: 0 }),
     person({ id: "mom", gender: "female", parentId: "mg", order: 0 }),
-    person({ id: "cau", gender: "male", parentId: "mg", order: 1 }),
-    person({ id: "di", gender: "female", parentId: "mg", order: 2 }),
+    person({ id: "cau", gender: "male", parentId: "mg", order: 1, spouseId: "mu" }),
+    person({ id: "mu", gender: "female", isMarriedIn: true, spouseId: "cau" }),
+    person({ id: "di", gender: "female", parentId: "mg", order: 2, spouseId: "dihb" }),
+    person({ id: "dihb", gender: "male", isMarriedIn: true, spouseId: "di" }),
     person({ id: "me", gender: "male", parentId: "mom", order: 0 }),
   ];
 
-  it("addresses mother's younger siblings as cậu / dì", () => {
+  it("addresses mother's siblings as cậu / dì", () => {
     expect(kinshipTerm(p, "me", "cau")).toBe("cậu");
     expect(kinshipTerm(p, "me", "di")).toBe("dì");
+  });
+  it("addresses cậu's wife as mự, dì's husband as dượng", () => {
+    expect(kinshipTerm(p, "me", "mu")).toBe("mự");
+    expect(kinshipTerm(p, "me", "dihb")).toBe("dượng");
   });
   it("addresses maternal grandfather as ông ngoại", () => {
     expect(kinshipTerm(p, "me", "mg")).toBe("ông ngoại");
