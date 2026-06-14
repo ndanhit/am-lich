@@ -67,7 +67,7 @@ export function renderSnapshotViewer(
   const fam = snapshot.family;
 
   app.innerHTML = `
-    <div class="shared-banner no-print">Đang xem gia phả được chia sẻ — chỉ đọc</div>
+    <div class="shared-banner">Đang xem gia phả được chia sẻ — chỉ đọc</div>
     <section class="family-hero" id="shared-hero">
       <h1 class="family-hero-title">Dòng họ ${escapeHtml(fam.name)}</h1>
       ${fam.description.trim() ? `<p class="family-hero-desc">${escapeHtml(fam.description)}</p>` : ""}
@@ -76,8 +76,8 @@ export function renderSnapshotViewer(
         <div class="hero-stat"><span class="hero-stat-num">${totalMembers}</span><span class="hero-stat-label">thành viên</span></div>
         <div class="hero-stat"><span class="hero-stat-num">${deceasedCount}</span><span class="hero-stat-label">đã khuất</span></div>
       </div>
-      <div class="family-hero-actions no-print">
-        <button class="btn btn-secondary" id="shared-phaky-btn">Phả ký / In</button>
+      <div class="family-hero-actions">
+        <button class="btn btn-secondary" id="shared-phaky-btn">Xem phả ký</button>
       </div>
     </section>
     <main id="shared-view"></main>
