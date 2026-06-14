@@ -103,13 +103,13 @@ export function renderFamilyTree(
       childCountById.set(p.parentId, (childCountById.get(p.parentId) ?? 0) + 1);
     }
   }
-  // Share-view (readOnly) shows a second biographical line inside each box —
-  // priority: giỗ → tuổi → tự → số con. Matches the traditional phả đồ feel
-  // while keeping every box exactly two lines high.
+  // Every box gets a second biographical line — priority: giỗ → tuổi → tự →
+  // số con — so the entire tree reads as a traditional phả đồ in both viewer
+  // and owner mode. Empty slot keeps box height consistent.
   const cb: NodeCallbacks = {
     onSelect,
     peopleById,
-    detailed: readOnly,
+    detailed: true,
     childCountById,
   };
 

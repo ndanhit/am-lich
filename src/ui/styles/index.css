@@ -2868,7 +2868,7 @@ textarea:focus {
    (.detail-panel) which sit outside #shared-view — can resolve var(--paper-bg)
    et al. Previously only #shared-view + its descendants saw these, which
    left .modal-overlay .modal-content rendering transparent. */
-body:has(#shared-view) {
+body:has(.family-tree) {
   --font-display: 'Inknut Antiqua', 'Be Vietnam Pro', Georgia, serif;
   --font-body: 'Be Vietnam Pro', system-ui, sans-serif;
   --paper-bg: #f7f1e3;
@@ -2885,7 +2885,7 @@ body:has(#shared-view) {
 }
 
 /* Paper background with soft aged corners. Pure CSS — no images. */
-body:has(#shared-view) .family-hero--compact,
+body:has(.family-tree) .family-hero--compact,
 #shared-view {
   background: var(--paper-bg);
   background-image:
@@ -2896,18 +2896,18 @@ body:has(#shared-view) .family-hero--compact,
 
 /* Footer underneath also gets the parchment tone so the page reads as one
    continuous "spread". */
-body:has(#shared-view) {
+body:has(.family-tree) {
   background: var(--paper-bg);
 }
 
 /* --- Hero as a book frontispiece ---------------------------------- */
-body:has(#shared-view) .family-hero-title {
+body:has(.family-tree) .family-hero-title {
   font-family: var(--font-display);
   font-weight: 700;
   letter-spacing: 0.02em;
   color: var(--accent-red);
 }
-body:has(#shared-view) .family-hero-head::after {
+body:has(.family-tree) .family-hero-head::after {
   content: "❦";
   display: block;
   flex-basis: 100%;
@@ -2917,23 +2917,23 @@ body:has(#shared-view) .family-hero-head::after {
   font-size: 18px;
   line-height: 1;
 }
-body:has(#shared-view) .family-hero-desc {
+body:has(.family-tree) .family-hero-desc {
   font-family: var(--font-body);
   font-style: italic;
   color: var(--ink-soft);
 }
-body:has(#shared-view) .hero-stat-num {
+body:has(.family-tree) .hero-stat-num {
   font-family: var(--font-display);
   color: var(--ink);
 }
-body:has(#shared-view) .hero-stat-label {
+body:has(.family-tree) .hero-stat-label {
   font-family: var(--font-body);
   font-style: italic;
   color: var(--ink-muted);
 }
 
 /* "Chỉ đọc" chip as a small red seal. */
-body:has(#shared-view) .readonly-chip {
+body:has(.family-tree) .readonly-chip {
   background: #fdf6e3;
   border: 1px solid var(--accent-red);
   color: var(--accent-red);
@@ -2943,19 +2943,19 @@ body:has(#shared-view) .readonly-chip {
 }
 
 /* "Xem phả ký" button — small ink-stroke pill. */
-body:has(#shared-view) .family-hero-stats .btn-sm {
+body:has(.family-tree) .family-hero-stats .btn-sm {
   background: var(--paper-bg-soft);
   border: 1px solid var(--ink);
   color: var(--ink);
   font-family: var(--font-body);
   font-weight: 600;
 }
-body:has(#shared-view) .family-hero-stats .btn-sm:hover {
+body:has(.family-tree) .family-hero-stats .btn-sm:hover {
   background: #f1ebd9;
 }
 
 /* --- Hint banner ------------------------------------------------- */
-body:has(#shared-view) .share-hint {
+body:has(.family-tree) .share-hint {
   background: var(--paper-bg-soft);
   border: 1px dashed var(--ink-muted);
   color: var(--ink-soft);
@@ -2964,7 +2964,7 @@ body:has(#shared-view) .share-hint {
 }
 
 /* --- Tree node box: ink-framed, fixed 2-line height ---------------- */
-#shared-view .tree-node-box {
+.family-tree .tree-node-box {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -2982,47 +2982,47 @@ body:has(#shared-view) .share-hint {
   min-width: 64px;
   transition: box-shadow 0.15s, transform 0.15s;
 }
-#shared-view .tree-node-box:hover {
+.family-tree .tree-node-box:hover {
   box-shadow: 2px 2px 0 var(--paper-edge), 0 0 0 1px var(--accent-red);
   transform: translateY(-1px);
 }
 /* Gender distinction via the top border AND a tinted background — accent-red
    for nam, indigo for nữ. The dual cue survives the small-zoom view where
    the top stripe alone is hard to read. */
-#shared-view .tree-node-box.gender-male {
+.family-tree .tree-node-box.gender-male {
   background: #fcf5ee;
 }
-#shared-view .tree-node-box.gender-female {
+.family-tree .tree-node-box.gender-female {
   border-top-color: var(--accent-blue);
   background: #eef2f9;
 }
-#shared-view .tree-node-box.gender-female .tree-name-text {
+.family-tree .tree-node-box.gender-female .tree-name-text {
   color: var(--accent-blue);
 }
-#shared-view .tree-node-box.gender-male .tree-name-text {
+.family-tree .tree-node-box.gender-male .tree-name-text {
   color: var(--accent-red);
 }
-#shared-view .tree-node-box.gender-other {
+.family-tree .tree-node-box.gender-other {
   border-top-color: var(--ink-muted);
 }
-#shared-view .tree-node-box.deceased {
+.family-tree .tree-node-box.deceased {
   background: #f1ebd9;
   color: var(--ink-soft);
 }
-#shared-view .tree-node-box.gender-female.deceased {
+.family-tree .tree-node-box.gender-female.deceased {
   background: #e6e9f0;
 }
-#shared-view .tree-spouse-box {
+.family-tree .tree-spouse-box {
   background: transparent;
   border-style: dashed;
   border-top-style: solid;
 }
-#shared-view .tree-name-text {
+.family-tree .tree-name-text {
   font-weight: 700;
   font-size: 13px;
   line-height: 1.2;
 }
-#shared-view .tree-meta {
+.family-tree .tree-meta {
   font-family: var(--font-body);
   font-size: 10px;
   line-height: 1.2;
@@ -3033,20 +3033,20 @@ body:has(#shared-view) .share-hint {
 
 /* Below a readable threshold, drop the meta line so boxes shrink back to a
    single-line "name only" view. JS toggles data-zoom-small="1" when zoom < 0.7. */
-#shared-view .tree[data-zoom-small="1"] .tree-meta {
+.family-tree .tree[data-zoom-small="1"] .tree-meta {
   display: none;
 }
 
 /* --- Ink connectors ------------------------------------------------ */
-#shared-view .tree li::before,
-#shared-view .tree li::after,
-#shared-view .tree ul::before {
+.family-tree .tree li::before,
+.family-tree .tree li::after,
+.family-tree .tree ul::before {
   border-color: var(--ink);
   border-width: 1.5px;
 }
 
 /* --- Collapse / expand toggle: ink-styled small chip --------------- */
-#shared-view .tree-toggle {
+.family-tree .tree-toggle {
   background: var(--paper-bg-soft);
   border: 1px solid var(--ink);
   color: var(--ink);
@@ -3055,30 +3055,30 @@ body:has(#shared-view) .share-hint {
 }
 
 /* --- Tree-fab + header controls: same parchment family ------------- */
-body:has(#shared-view) .tree-fab {
+body:has(.family-tree) .tree-fab {
   background: var(--paper-bg-soft);
   border: 1px solid var(--ink);
   box-shadow: 2px 2px 0 var(--paper-edge);
 }
-body:has(#shared-view) .tree-ctrl-btn {
+body:has(.family-tree) .tree-ctrl-btn {
   color: var(--ink);
   font-family: var(--font-body);
 }
-body:has(#shared-view) .tree-zoom-label {
+body:has(.family-tree) .tree-zoom-label {
   color: var(--ink-soft);
 }
 
 /* Footer CTA in the same paper palette. */
-body:has(#shared-view) .share-footer {
+body:has(.family-tree) .share-footer {
   color: var(--ink-muted);
   font-family: var(--font-body);
 }
-body:has(#shared-view) .share-footer a {
+body:has(.family-tree) .share-footer a {
   color: var(--accent-red);
 }
 
 /* --- Phả ký modal: book-chapter feel ------------------------------ */
-body:has(#shared-view) .phaky-overlay .modal-content {
+body:has(.family-tree) .phaky-overlay .modal-content {
   background: var(--paper-bg);
   background-image:
     radial-gradient(at 0% 0%, rgba(74, 63, 51, 0.05), transparent 40%),
@@ -3087,42 +3087,42 @@ body:has(#shared-view) .phaky-overlay .modal-content {
   border: 1px solid var(--ink);
   border-radius: 4px;
 }
-body:has(#shared-view) .phaky-overlay .modal-header {
+body:has(.family-tree) .phaky-overlay .modal-header {
   border-bottom: 1px solid var(--ink-muted);
 }
-body:has(#shared-view) .phaky-overlay .modal-title-text {
+body:has(.family-tree) .phaky-overlay .modal-title-text {
   font-family: var(--font-display);
   font-weight: 700;
   color: var(--accent-red);
 }
-body:has(#shared-view) .phaky-overlay .modal-title-text::before,
-body:has(#shared-view) .phaky-overlay .modal-title-text::after {
+body:has(.family-tree) .phaky-overlay .modal-title-text::before,
+body:has(.family-tree) .phaky-overlay .modal-title-text::after {
   content: "❦";
   display: inline-block;
   margin: 0 8px;
   color: var(--ink-muted);
   font-weight: 400;
 }
-body:has(#shared-view) .phaky-overlay .close-btn {
+body:has(.family-tree) .phaky-overlay .close-btn {
   color: var(--ink);
 }
-body:has(#shared-view) .phaky-doc {
+body:has(.family-tree) .phaky-doc {
   color: var(--ink);
   font-family: var(--font-body);
 }
-body:has(#shared-view) .phaky-doc-header {
+body:has(.family-tree) .phaky-doc-header {
   border-bottom: double 3px var(--ink);
 }
-body:has(#shared-view) .phaky-desc {
+body:has(.family-tree) .phaky-desc {
   font-style: italic;
   color: var(--ink-soft);
 }
-body:has(#shared-view) .phaky-meta {
+body:has(.family-tree) .phaky-meta {
   color: var(--ink-muted);
   font-family: var(--font-body);
   font-style: italic;
 }
-body:has(#shared-view) .phaky-gen-title {
+body:has(.family-tree) .phaky-gen-title {
   font-family: var(--font-display);
   text-transform: uppercase;
   letter-spacing: 0.05em;
@@ -3130,72 +3130,91 @@ body:has(#shared-view) .phaky-gen-title {
   border-bottom: double 3px var(--ink);
   padding-bottom: 4px;
 }
-body:has(#shared-view) .phaky-entry {
+body:has(.family-tree) .phaky-entry {
   border-left: 2px solid var(--ink-muted);
 }
-body:has(#shared-view) .phaky-entry-name {
+body:has(.family-tree) .phaky-entry-name {
   font-family: var(--font-display);
   color: var(--accent-red);
 }
-body:has(#shared-view) .phaky-entry-detail {
+body:has(.family-tree) .phaky-entry-detail {
   font-family: var(--font-body);
   color: var(--ink-soft);
 }
-body:has(#shared-view) .phaky-entry-notes {
+body:has(.family-tree) .phaky-entry-notes {
   color: var(--ink-muted);
 }
 
 /* --- Detail panel (right-side): inherit paper feel on share view --- */
-body:has(#shared-view) .detail-panel {
+body:has(.family-tree) .detail-panel {
   background: var(--paper-bg);
   background-image:
     radial-gradient(at 0% 0%, rgba(74, 63, 51, 0.05), transparent 40%),
     radial-gradient(at 100% 100%, rgba(74, 63, 51, 0.05), transparent 40%);
   color: var(--ink);
 }
-body:has(#shared-view) .detail-panel .modal-title-text {
+body:has(.family-tree) .detail-panel .modal-title-text {
   font-family: var(--font-display);
   color: var(--accent-red);
 }
-body:has(#shared-view) .detail-panel .detail-section-title {
+body:has(.family-tree) .detail-panel .detail-section-title {
   font-family: var(--font-display);
   color: var(--ink);
 }
-body:has(#shared-view) .detail-actions-viewer .btn {
+body:has(.family-tree) .detail-actions-viewer .btn {
   background: var(--paper-bg-soft);
   border: 1px solid var(--ink);
   color: var(--ink);
   font-family: var(--font-body);
 }
-body:has(#shared-view) .detail-actions-viewer .btn:hover {
+body:has(.family-tree) .detail-actions-viewer .btn:hover {
   background: #f1ebd9;
+}
+
+/* Owner-mode detail panel buttons (Thêm con / Sửa / Xóa / Thêm vợ / ...).
+   Modern style would jar against the paper bg, so re-skin them too. */
+body:has(.family-tree) .detail-panel .detail-actions-wrap .btn {
+  background: var(--paper-bg-soft);
+  border: 1px solid var(--ink);
+  color: var(--ink);
+  font-family: var(--font-body);
+}
+body:has(.family-tree) .detail-panel .detail-actions-wrap .btn:hover {
+  background: #f1ebd9;
+}
+body:has(.family-tree) .detail-panel .detail-actions-wrap .btn-danger {
+  color: var(--accent-red);
+  border-color: var(--accent-red);
+}
+body:has(.family-tree) .detail-panel .detail-actions-wrap .btn-danger:hover {
+  background: rgba(138, 43, 43, 0.08);
 }
 
 /* "Thống kê nhánh" stat cards inside the detail panel — drop the purple
    modern feel, match parchment + ink. */
-body:has(#shared-view) .detail-panel .stat-card {
+body:has(.family-tree) .detail-panel .stat-card {
   background: var(--paper-bg-soft);
   border: 1px solid var(--ink-muted);
   border-radius: 3px;
 }
-body:has(#shared-view) .detail-panel .stat-card .num {
+body:has(.family-tree) .detail-panel .stat-card .num {
   font-family: var(--font-display);
   color: var(--accent-red);
 }
-body:has(#shared-view) .detail-panel .stat-card .lbl {
+body:has(.family-tree) .detail-panel .stat-card .lbl {
   font-family: var(--font-body);
   font-style: italic;
   color: var(--ink-muted);
 }
-body:has(#shared-view) .detail-panel .detail-meta-item {
+body:has(.family-tree) .detail-panel .detail-meta-item {
   color: var(--ink);
 }
-body:has(#shared-view) .detail-panel .detail-meta-item .label {
+body:has(.family-tree) .detail-panel .detail-meta-item .label {
   color: var(--ink-muted);
   font-family: var(--font-body);
   font-style: italic;
 }
-body:has(#shared-view) .detail-panel .detail-empty {
+body:has(.family-tree) .detail-panel .detail-empty {
   color: var(--ink-muted);
   font-style: italic;
 }
@@ -3203,7 +3222,7 @@ body:has(#shared-view) .detail-panel .detail-empty {
 /* --- Generic modal-overlay inside share view (lịch giỗ, search, etc.) ---
    Same paper feel as the phả ký modal. Phả ký keeps its ❦ flourish via the
    more specific .phaky-overlay rules above. */
-body:has(#shared-view) .modal-overlay .modal-content {
+body:has(.family-tree) .modal-overlay .modal-content {
   background: var(--paper-bg);
   background-image:
     radial-gradient(at 0% 0%, rgba(74, 63, 51, 0.05), transparent 40%),
@@ -3216,7 +3235,7 @@ body:has(#shared-view) .modal-overlay .modal-content {
      scrolls instead. Capped at 85vh for short viewports. */
   height: min(640px, 85vh);
 }
-body:has(#shared-view) .modal-overlay .modal-body {
+body:has(.family-tree) .modal-overlay .modal-body {
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
@@ -3224,113 +3243,113 @@ body:has(#shared-view) .modal-overlay .modal-body {
 /* Inner lists used to manage their own scroll (max-height: 50–55vh). With
    the modal now fixed-height + modal-body scrolling, defer to the outer
    container so we have a single scroll context. */
-body:has(#shared-view) .modal-overlay .search-results,
-body:has(#shared-view) .modal-overlay .gio-list,
-body:has(#shared-view) .modal-overlay .kin-list {
+body:has(.family-tree) .modal-overlay .search-results,
+body:has(.family-tree) .modal-overlay .gio-list,
+body:has(.family-tree) .modal-overlay .kin-list {
   max-height: none;
   overflow: visible;
 }
-body:has(#shared-view) .modal-overlay .modal-header {
+body:has(.family-tree) .modal-overlay .modal-header {
   border-bottom: 1px solid var(--ink-muted);
 }
-body:has(#shared-view) .modal-overlay .modal-title-text {
+body:has(.family-tree) .modal-overlay .modal-title-text {
   font-family: var(--font-display);
   color: var(--accent-red);
 }
-body:has(#shared-view) .modal-overlay .close-btn {
+body:has(.family-tree) .modal-overlay .close-btn {
   color: var(--ink);
 }
 
 /* Lịch giỗ list rows: ink frame + ink-soft secondary text. */
-body:has(#shared-view) .gio-item {
+body:has(.family-tree) .gio-item {
   background: var(--paper-bg-soft);
   border: 1px solid var(--ink-muted);
   border-radius: 3px;
 }
-body:has(#shared-view) .gio-item:hover {
+body:has(.family-tree) .gio-item:hover {
   background: #f1ebd9;
 }
-body:has(#shared-view) .gio-item-name {
+body:has(.family-tree) .gio-item-name {
   font-family: var(--font-display);
   color: var(--ink);
 }
-body:has(#shared-view) .gio-item-sub {
+body:has(.family-tree) .gio-item-sub {
   font-family: var(--font-body);
   color: var(--ink-soft);
 }
-body:has(#shared-view) .gio-item-days {
+body:has(.family-tree) .gio-item-days {
   font-family: var(--font-body);
   color: var(--accent-red);
   font-weight: 700;
 }
 
 /* The TH-month / day badge on the left of each gio row. */
-body:has(#shared-view) .upcoming-date-badge {
+body:has(.family-tree) .upcoming-date-badge {
   background: #fdf6e3;
   border: 1px solid var(--accent-red);
   border-radius: 3px;
 }
-body:has(#shared-view) .upcoming-date-badge .month,
-body:has(#shared-view) .upcoming-date-badge .day {
+body:has(.family-tree) .upcoming-date-badge .month,
+body:has(.family-tree) .upcoming-date-badge .day {
   color: var(--accent-red);
   font-family: var(--font-display);
 }
 
 /* Inputs / selects inside share-view modals — same paper feel. */
-body:has(#shared-view) .modal-overlay input,
-body:has(#shared-view) .modal-overlay select,
-body:has(#shared-view) .modal-overlay textarea {
+body:has(.family-tree) .modal-overlay input,
+body:has(.family-tree) .modal-overlay select,
+body:has(.family-tree) .modal-overlay textarea {
   background: var(--paper-bg-soft);
   border: 1px solid var(--ink-muted);
   border-radius: 3px;
   color: var(--ink);
   font-family: var(--font-body);
 }
-body:has(#shared-view) .modal-overlay input:focus,
-body:has(#shared-view) .modal-overlay select:focus,
-body:has(#shared-view) .modal-overlay textarea:focus {
+body:has(.family-tree) .modal-overlay input:focus,
+body:has(.family-tree) .modal-overlay select:focus,
+body:has(.family-tree) .modal-overlay textarea:focus {
   border-color: var(--accent-red);
   box-shadow: 0 0 0 2px rgba(138, 43, 43, 0.15);
 }
 
 /* Tìm thành viên: result rows. */
-body:has(#shared-view) .search-result {
+body:has(.family-tree) .search-result {
   background: var(--paper-bg-soft);
   border: 1px solid var(--ink-muted);
   border-radius: 3px;
 }
-body:has(#shared-view) .search-result:hover {
+body:has(.family-tree) .search-result:hover {
   background: #f1ebd9;
 }
-body:has(#shared-view) .search-result-name {
+body:has(.family-tree) .search-result-name {
   font-family: var(--font-display);
   color: var(--ink);
 }
-body:has(#shared-view) .search-result-meta {
+body:has(.family-tree) .search-result-meta {
   font-family: var(--font-body);
   color: var(--ink-soft);
   font-style: italic;
 }
 
 /* Cách xưng hô: kin rows. */
-body:has(#shared-view) .kin-item {
+body:has(.family-tree) .kin-item {
   background: var(--paper-bg-soft);
   border: 1px solid var(--ink-muted);
   border-radius: 3px;
 }
-body:has(#shared-view) .kin-item:hover {
+body:has(.family-tree) .kin-item:hover {
   background: #f1ebd9;
 }
-body:has(#shared-view) .kin-name {
+body:has(.family-tree) .kin-name {
   font-family: var(--font-display);
   color: var(--ink);
 }
-body:has(#shared-view) .kin-gender {
+body:has(.family-tree) .kin-gender {
   font-family: var(--font-body);
   color: var(--ink-soft);
   font-style: italic;
 }
-body:has(#shared-view) .kin-term {
+body:has(.family-tree) .kin-term {
   font-family: var(--font-display);
   color: var(--accent-red);
 }
