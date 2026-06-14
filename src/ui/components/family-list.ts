@@ -24,24 +24,8 @@ export function renderFamilyList(
 
   const header = document.createElement("div");
   header.className = "family-tree-header";
-  header.innerHTML = `
-    <h2>Gia phả</h2>
-    <div class="tree-header-actions">
-      <button class="btn btn-secondary" id="suggestions-btn" title="Đề xuất gửi tới bạn">Đề xuất</button>
-      <button class="btn btn-secondary" id="shared-with-me-btn">Được chia sẻ</button>
-      <button class="btn btn-primary" id="create-family-btn">Tạo</button>
-    </div>
-  `;
+  header.innerHTML = `<h2>Gia phả</h2>`;
   section.appendChild(header);
-  header
-    .querySelector("#create-family-btn")!
-    .addEventListener("click", () => cb.onCreate());
-  header
-    .querySelector("#shared-with-me-btn")!
-    .addEventListener("click", () => cb.onSharedWithMe());
-  header
-    .querySelector("#suggestions-btn")!
-    .addEventListener("click", () => cb.onSuggestionsInbox());
 
   const families = state.getFamilies();
 
@@ -53,23 +37,42 @@ export function renderFamilyList(
         <img src="assets/images/ico-events.svg" alt="" style="width: 48px; height: 48px; opacity: 0.25;">
       </div>
       <p>Chưa có gia phả nào</p>
-      <button class="btn btn-primary" id="empty-create-family-btn">Tạo gia phả</button>
     `;
     section.appendChild(empty);
-    container.appendChild(section);
-    empty
-      .querySelector("#empty-create-family-btn")
-      ?.addEventListener("click", () => cb.onCreate());
-    return;
+  } else {
+    const list = document.createElement("div");
+    list.className = "family-cards";
+    for (const family of families) {
+      list.appendChild(
+        renderCard(family, state.countPeopleInTree(family.id), cb),
+      );
+    }
+    section.appendChild(list);
   }
 
-  const list = document.createElement("div");
-  list.className = "family-cards";
-  for (const family of families) {
-    list.appendChild(renderCard(family, state.countPeopleInTree(family.id), cb));
-  }
-  section.appendChild(list);
+  section.appendChild(renderActions(cb));
   container.appendChild(section);
+}
+
+/** Action bar shown below the family list: suggestions, shared-with-me, create. */
+function renderActions(cb: FamilyListCallbacks): HTMLElement {
+  const actions = document.createElement("div");
+  actions.className = "family-list-actions";
+  actions.innerHTML = `
+    <button class="btn btn-secondary" id="suggestions-btn" title="Đề xuất gửi tới bạn">Đề xuất</button>
+    <button class="btn btn-secondary" id="shared-with-me-btn">Được chia sẻ</button>
+    <button class="btn btn-primary" id="create-family-btn">Tạo gia phả</button>
+  `;
+  actions
+    .querySelector("#create-family-btn")!
+    .addEventListener("click", () => cb.onCreate());
+  actions
+    .querySelector("#shared-with-me-btn")!
+    .addEventListener("click", () => cb.onSharedWithMe());
+  actions
+    .querySelector("#suggestions-btn")!
+    .addEventListener("click", () => cb.onSuggestionsInbox());
+  return actions;
 }
 
 function renderCard(

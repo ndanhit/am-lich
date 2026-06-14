@@ -1785,6 +1785,17 @@ textarea:focus {
   gap: var(--space-3);
 }
 
+/* Action bar below the family list (Đề xuất / Được chia sẻ / Tạo). */
+.family-list-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-5, 24px);
+}
+.family-list-actions .btn {
+  flex: 1 1 auto;
+}
+
 .family-card {
   display: flex;
   align-items: stretch;
