@@ -1340,6 +1340,20 @@ textarea:focus {
   margin-top: 4px;
 }
 
+.modal-subtitle-text {
+  text-align: center;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  margin-bottom: 4px;
+}
+
+/* Compact choice sheet (e.g. "Đề xuất cho …"): hug content instead of the
+   tall fixed-height used by list modals. */
+.modal-content--sheet {
+  height: auto;
+  max-height: 85vh;
+}
+
 /* --- Modal / Form Overlay --- */
 .modal-overlay {
   position: fixed;
@@ -2819,6 +2833,10 @@ textarea:focus {
   font-weight: 600;
   cursor: pointer;
 }
+/* `display: flex` above overrides the [hidden] attribute, so re-assert it. */
+.suggest-tray[hidden] {
+  display: none;
+}
 .suggest-tray-badge {
   display: inline-flex;
   align-items: center;
@@ -3342,6 +3360,12 @@ body:has(.family-tree) .modal-overlay .modal-body {
   flex: 1 1 auto;
   min-height: 0;
   overflow-y: auto;
+}
+/* Compact choice sheet must hug its content, overriding the locked height
+   that list modals rely on. */
+body:has(.family-tree) .modal-overlay .modal-content--sheet {
+  height: auto;
+  max-height: 85vh;
 }
 /* Inner lists used to manage their own scroll (max-height: 50–55vh). With
    the modal now fixed-height + modal-body scrolling, defer to the outer

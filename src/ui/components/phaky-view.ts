@@ -134,7 +134,16 @@ function renderEntry(entry: PhaKyEntry): HTMLElement {
     );
   }
   if (parentName) parts.push(`con của ${escapeHtml(parentName)}`);
-  if (spouseName) parts.push(`vợ/chồng: ${escapeHtml(spouseName)}`);
+  if (spouseName) {
+    // Giới tính của người này đã đủ để suy ra vai vế của bạn đời.
+    const spouseLabel =
+      person.gender === "male"
+        ? "vợ"
+        : person.gender === "female"
+          ? "chồng"
+          : "vợ/chồng";
+    parts.push(`${spouseLabel}: ${escapeHtml(spouseName)}`);
+  }
   if ((person.homeland ?? "").trim())
     parts.push(`quê ${escapeHtml(person.homeland)}`);
   if ((person.titles ?? "").trim()) parts.push(escapeHtml(person.titles));

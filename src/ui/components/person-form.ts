@@ -3,7 +3,8 @@ import type { PersonFormData, PersonFormContext } from "../types";
 import { GENDER_LABELS } from "../types";
 
 const MIN_YEAR = 1901;
-const MAX_YEAR = 2099;
+// Cap at the current year — nobody is born or dies in a future year.
+const MAX_YEAR = new Date().getFullYear();
 
 /**
  * Render the family-tree person form. Only personal info is captured here —
