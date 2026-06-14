@@ -6,7 +6,12 @@ import type {
   QuickMemo,
   FamilyTree,
 } from "../../lib/index";
-import { computeBranchInsights, generationOf, buildPhaKy } from "../../lib/index";
+import {
+  computeBranchInsights,
+  generationOf,
+  buildPhaKy,
+  describeSuggestion,
+} from "../../lib/index";
 import type { StorageAdapter } from "../../adapters/storage/local-storage-adapter";
 import { FamilyShareAdapter } from "../../adapters/supabase/family-share-adapter";
 import { AppState } from "../state";
@@ -18,7 +23,7 @@ import { renderKinshipView } from "./kinship-view";
 import { renderPersonForm } from "./person-form";
 import { renderPhaKyView } from "./phaky-view";
 import type { PersonFormContext, PersonFormData } from "../types";
-import type { SuggestionKind } from "../../lib/index";
+import type { SuggestionKind, SuggestionPayload } from "../../lib/index";
 
 /** In-memory StorageAdapter seeded from a shared snapshot (read-only). */
 class SnapshotAdapter implements StorageAdapter {
@@ -93,32 +98,141 @@ export function renderSnapshotViewer(
     .querySelector("#shared-phaky-btn")!
     .addEventListener("click", () => renderPhaKyView(modal, fam, people));
 
-  const doSuggest = (
+  // A "cart" of suggestions the guest builds up, then sends in one go.
+  const drafts: SuggestionPayload[] = [];
+
+  const tray = document.createElement("div");
+  tray.className = "suggest-tray";
+  tray.hidden = true;
+  app.appendChild(tray);
+  const renderTray = (): void => {
+    if (drafts.length === 0) {
+      tray.hidden = true;
+      tray.innerHTML = "";
+      return;
+    }
+    tray.hidden = false;
+    tray.innerHTML = `
+      <span class="suggest-tray-badge">${drafts.length}</span>
+      <span>đề xuất đang soạn</span>
+      <strong class="suggest-tray-send">Gửi →</strong>`;
+  };
+  tray.addEventListener("click", () => openCart());
+
+  const addDraft = (
     kind: SuggestionKind,
     targetId: string,
     form: PersonFormData,
   ): void => {
+    drafts.push({ kind, targetId, form });
+    renderTray();
+    sharedToast(`Đã thêm vào giỏ đề xuất (${drafts.length})`);
+  };
+
+  const submitAll = async (): Promise<void> => {
     let name = localStorage.getItem("am-lich-suggester-name") ?? "";
     if (!name) {
       name = (window.prompt("Tên của bạn (người đề xuất):") ?? "").trim();
       if (name) localStorage.setItem("am-lich-suggester-name", name);
     }
-    FamilyShareAdapter.submitSuggestion(
-      familyId,
-      name || "Ẩn danh",
-      kind,
-      { kind, targetId, form },
-      token,
-    )
-      .then(() => sharedToast("Đã gửi đề xuất, chờ chủ gia phả duyệt."))
-      .catch((e) => sharedToast(e.message));
+    const sender = name || "Ẩn danh";
+    const pending = [...drafts];
+    const results = await Promise.allSettled(
+      pending.map((d) =>
+        FamilyShareAdapter.submitSuggestion(familyId, sender, d.kind, d, token),
+      ),
+    );
+    // Keep only the ones that failed so the guest can retry them.
+    const failed: SuggestionPayload[] = [];
+    let ok = 0;
+    results.forEach((r, i) => {
+      if (r.status === "fulfilled") ok++;
+      else failed.push(pending[i]);
+    });
+    drafts.length = 0;
+    drafts.push(...failed);
+    renderTray();
+    if (ok > 0) {
+      sharedToast(`Đã gửi ${ok}/${pending.length} đề xuất, chờ chủ gia phả duyệt.`);
+    }
+    if (failed.length > 0) {
+      sharedToast(`${failed.length} đề xuất gửi lỗi, vui lòng thử lại.`);
+    }
+  };
+
+  const openCart = (): void => {
+    if (drafts.length === 0) return;
+    const peopleById = new Map(state.getPeople().map((p) => [p.id, p]));
+    const overlay = document.createElement("div");
+    overlay.className = "modal-overlay open";
+    overlay.innerHTML = `
+      <div class="modal-content">
+        <div class="modal-header">
+          <button class="close-btn" id="cart-close" aria-label="Đóng">
+            <svg viewBox="0 0 24 24" width="16" height="16" stroke="currentColor" stroke-width="2.5" fill="none" stroke-linecap="round" stroke-linejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line><line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </button>
+          <div class="modal-title-text">Giỏ đề xuất</div>
+        </div>
+        <div class="modal-body">
+          <div id="cart-list"></div>
+          <div class="detail-actions detail-actions-wrap" style="margin-top:var(--space-3)">
+            <button class="btn btn-secondary" id="cart-more">Thêm đề xuất nữa</button>
+            <button class="btn-cta" id="cart-send">Gửi tất cả (${drafts.length})</button>
+          </div>
+        </div>
+      </div>`;
+    modal.appendChild(overlay);
+    const close = (): void => {
+      overlay.classList.remove("open");
+      setTimeout(() => overlay.remove(), 300);
+    };
+    const listEl = overlay.querySelector("#cart-list") as HTMLElement;
+    const sendBtn = overlay.querySelector("#cart-send") as HTMLButtonElement;
+
+    const renderList = (): void => {
+      if (drafts.length === 0) {
+        close();
+        return;
+      }
+      sendBtn.textContent = `Gửi tất cả (${drafts.length})`;
+      listEl.innerHTML = "";
+      drafts.forEach((d, i) => {
+        const item = document.createElement("div");
+        item.className = "suggest-cart-item";
+        item.innerHTML = `
+          <span class="suggest-cart-text">${escapeHtml(describeSuggestion(d, peopleById))}</span>
+          <button class="icon-btn" aria-label="Xoá đề xuất" title="Xoá">✕</button>`;
+        item.querySelector("button")!.addEventListener("click", () => {
+          drafts.splice(i, 1);
+          renderTray();
+          renderList();
+        });
+        listEl.appendChild(item);
+      });
+    };
+    renderList();
+
+    overlay.querySelector("#cart-close")!.addEventListener("click", close);
+    overlay.addEventListener("click", (e) => {
+      if (e.target === overlay) close();
+    });
+    overlay.querySelector("#cart-more")!.addEventListener("click", close);
+    sendBtn.addEventListener("click", async () => {
+      sendBtn.disabled = true;
+      await submitAll();
+      if (drafts.length === 0) close();
+      else renderList();
+      sendBtn.disabled = false;
+    });
   };
 
   const openSuggestForm = (context: PersonFormContext, kind: SuggestionKind, targetId: string): void => {
     renderPersonForm(
       modal,
       context,
-      (form) => doSuggest(kind, targetId, form),
+      (form) => addDraft(kind, targetId, form),
       () => {},
       () => {},
     );

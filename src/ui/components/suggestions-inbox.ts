@@ -44,37 +44,54 @@ export function renderSuggestionsInbox(
   const peopleByIdFor = (familyId: string): Map<string, any> =>
     new Map(state.getPeopleOfTree(familyId).map((p) => [p.id, p]));
 
-  const renderRow = (s: SuggestionRow): HTMLElement => {
-    const desc = describeSuggestion(s.payload, peopleByIdFor(s.familyId));
+  const familyName = (familyId: string): string | null =>
+    state.getFamilies().find((f) => f.id === familyId)?.name ?? null;
+
+  /** Apply one suggestion to the local tree and republish the snapshot. */
+  const approve = async (s: SuggestionRow): Promise<void> => {
+    const family = state.getFamilies().find((f) => f.id === s.familyId);
+    if (!family) throw new Error("Gia phả không có trên thiết bị này");
+    state.applySuggestion(
+      s.familyId,
+      s.payload.kind,
+      s.payload.targetId,
+      s.payload.form as any,
+    );
+    await FamilyShareAdapter.publishFamily(
+      family,
+      state.getPeopleOfTree(s.familyId),
+    );
+    await FamilyShareAdapter.setSuggestionStatus(s.id, "approved");
+  };
+
+  const refreshEmpty = (): void => {
+    if (!body.querySelector(".inbox-group")) {
+      body.innerHTML = `<div class="detail-empty">Chưa có đề xuất nào.</div>`;
+    }
+  };
+
+  const renderRow = (
+    s: SuggestionRow,
+    peopleById: Map<string, any>,
+    onResolved: () => void,
+  ): HTMLElement => {
+    const desc = describeSuggestion(s.payload, peopleById);
     const row = document.createElement("div");
-    row.className = "detail-section";
+    row.className = "inbox-row";
+    row.dataset.id = s.id;
     row.innerHTML = `
-      <div class="kin-item" style="cursor:default">
-        <span class="kin-name">${escapeHtml(desc)}<span class="kin-gender"> — bởi ${escapeHtml(s.suggesterName || "Ẩn danh")}</span></span>
-      </div>
-      <div class="detail-actions detail-actions-wrap" style="margin-top:var(--space-2)">
+      <div class="inbox-row-desc">${escapeHtml(desc)}<span class="inbox-row-by"> — bởi ${escapeHtml(s.suggesterName || "Ẩn danh")}</span></div>
+      <div class="detail-actions detail-actions-wrap">
         <button class="btn btn-secondary" data-act="approve">Duyệt</button>
         <button class="btn btn-danger" data-act="reject">Từ chối</button>
       </div>`;
-
     row.querySelector('[data-act="approve"]')!.addEventListener("click", async () => {
       try {
-        const family = state.getFamilies().find((f) => f.id === s.familyId);
-        if (!family) throw new Error("Gia phả không có trên thiết bị này");
-        state.applySuggestion(
-          s.familyId,
-          s.payload.kind,
-          s.payload.targetId,
-          s.payload.form as any,
-        );
-        await FamilyShareAdapter.publishFamily(
-          family,
-          state.getPeopleOfTree(s.familyId),
-        );
-        await FamilyShareAdapter.setSuggestionStatus(s.id, "approved");
+        await approve(s);
         showToast("Đã duyệt & cập nhật", "success");
         onApplied();
         row.remove();
+        onResolved();
       } catch (e: any) {
         showToast(e.message, "error");
       }
@@ -84,11 +101,73 @@ export function renderSuggestionsInbox(
         await FamilyShareAdapter.setSuggestionStatus(s.id, "rejected");
         showToast("Đã từ chối", "success");
         row.remove();
+        onResolved();
       } catch (e: any) {
         showToast(e.message, "error");
       }
     });
     return row;
+  };
+
+  /** A group of suggestions belonging to one family tree. */
+  const renderGroup = (familyId: string, rows: SuggestionRow[]): HTMLElement => {
+    const name = familyName(familyId);
+    const peopleById = peopleByIdFor(familyId);
+    const rowById = new Map(rows.map((s) => [s.id, s]));
+
+    const group = document.createElement("div");
+    group.className = "inbox-group";
+    group.innerHTML = `
+      <div class="inbox-group-title">
+        <span>${escapeHtml(name ?? "Gia phả không có trên thiết bị này")}</span>
+        <span class="inbox-group-count">${rows.length}</span>
+      </div>
+      <div class="inbox-group-rows"></div>
+      <div class="detail-actions"><button class="btn btn-secondary" data-act="approve-all">Duyệt tất cả</button></div>`;
+    const rowsWrap = group.querySelector(".inbox-group-rows") as HTMLElement;
+
+    const onResolved = (): void => {
+      if (!rowsWrap.querySelector(".inbox-row")) {
+        group.remove();
+        refreshEmpty();
+      }
+    };
+    for (const s of rows) {
+      rowsWrap.appendChild(renderRow(s, peopleById, onResolved));
+    }
+
+    const allBtn = group.querySelector('[data-act="approve-all"]') as HTMLButtonElement;
+    if (!name) {
+      // Off-device: can't apply, so hide the bulk action.
+      allBtn.remove();
+    } else {
+      allBtn.addEventListener("click", async () => {
+        allBtn.disabled = true;
+        const els = Array.from(
+          rowsWrap.querySelectorAll(".inbox-row"),
+        ) as HTMLElement[];
+        let done = 0;
+        for (const el of els) {
+          const s = rowById.get(el.dataset.id!);
+          if (!s) continue;
+          try {
+            await approve(s);
+            el.remove();
+            done++;
+          } catch (e: any) {
+            showToast(e.message, "error");
+            break;
+          }
+        }
+        if (done > 0) {
+          onApplied();
+          showToast(`Đã duyệt ${done} đề xuất`, "success");
+        }
+        allBtn.disabled = false;
+        onResolved();
+      });
+    }
+    return group;
   };
 
   const load = async (): Promise<void> => {
@@ -110,8 +189,17 @@ export function renderSuggestionsInbox(
         body.innerHTML = `<div class="detail-empty">Chưa có đề xuất nào.</div>`;
         return;
       }
+      // Group by family, preserving first-seen order.
+      const groups = new Map<string, SuggestionRow[]>();
+      for (const s of items) {
+        const arr = groups.get(s.familyId) ?? [];
+        arr.push(s);
+        groups.set(s.familyId, arr);
+      }
       body.innerHTML = "";
-      for (const s of items) body.appendChild(renderRow(s));
+      for (const [familyId, rows] of groups) {
+        body.appendChild(renderGroup(familyId, rows));
+      }
     } catch (e: any) {
       body.innerHTML = `<div class="detail-empty">Lỗi: ${escapeHtml(e.message)}</div>`;
     }
