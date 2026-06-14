@@ -2863,9 +2863,12 @@ textarea:focus {
    opens on top of a shared view. Owner mode keeps the modern look.
    ==================================================================== */
 
-#shared-view,
-body:has(#shared-view) .family-hero--compact,
-body:has(#shared-view) .phaky-overlay {
+/* Define the parchment palette on the body when a share view is active so
+   every descendant — including modals (.modal-overlay) and the detail panel
+   (.detail-panel) which sit outside #shared-view — can resolve var(--paper-bg)
+   et al. Previously only #shared-view + its descendants saw these, which
+   left .modal-overlay .modal-content rendering transparent. */
+body:has(#shared-view) {
   --font-display: 'Inknut Antiqua', 'Be Vietnam Pro', Georgia, serif;
   --font-body: 'Be Vietnam Pro', system-ui, sans-serif;
   --paper-bg: #f7f1e3;
