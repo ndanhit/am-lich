@@ -13,6 +13,8 @@ let zoomLevel = 1;
 let collapsedIds = new Set<string>();
 let collapseInitialized = false;
 let lastTreeId: string | null = null;
+// Auto fit-to-width once when a tree first opens (esp. wide trees on desktop).
+let autoFitPending = false;
 // View orientation is a user preference, kept across trees within a session.
 let orientation: "vertical" | "horizontal" = "vertical";
 
@@ -36,6 +38,7 @@ export function renderFamilyTree(
     zoomLevel = 1;
     collapsedIds = new Set<string>();
     collapseInitialized = false;
+    autoFitPending = true;
   }
 
   const section = document.createElement("div");
@@ -140,8 +143,12 @@ export function renderFamilyTree(
   // Orientation toggle (xem ngang / xem dọc).
   const orientBtn = header.querySelector("#tree-orient") as HTMLElement;
   const updateOrientBtn = (): void => {
-    orientBtn.textContent =
-      orientation === "vertical" ? "⇄ Xem ngang" : "⇅ Xem dọc";
+    // Icon-only to keep the header from overflowing on narrow screens; the
+    // full label lives in the tooltip / accessible name.
+    const next = orientation === "vertical" ? "Xem ngang" : "Xem dọc";
+    orientBtn.textContent = orientation === "vertical" ? "⇄" : "⇅";
+    orientBtn.title = next;
+    orientBtn.setAttribute("aria-label", next);
   };
   updateOrientBtn();
   orientBtn.addEventListener("click", () => {
@@ -162,6 +169,17 @@ export function renderFamilyTree(
     applyZoom();
   };
 
+  // Scale the tree down so its natural width fits the visible scroll area
+  // (never scales up past 100%).
+  const fitToWidth = (): void => {
+    const tree = scroll.querySelector(".tree") as HTMLElement | null;
+    if (!tree) return;
+    tree.style.setProperty("zoom", "1");
+    const natural = tree.scrollWidth;
+    const avail = scroll.clientWidth;
+    setZoom(natural > 0 ? Math.min(1, avail / natural) : 1);
+  };
+
   const buildTree = (): void => {
     scroll.innerHTML = "";
     const tree = document.createElement("ul");
@@ -170,6 +188,12 @@ export function renderFamilyTree(
     for (const root of roots) tree.appendChild(renderNode(root, cb));
     scroll.appendChild(tree);
     applyZoom();
+    // On first open of a tree, auto fit-to-width so wide trees are legible
+    // without manual zooming (especially when opening a share link on desktop).
+    if (autoFitPending) {
+      autoFitPending = false;
+      fitToWidth();
+    }
   };
   buildTree();
 
@@ -191,14 +215,7 @@ export function renderFamilyTree(
   fab
     .querySelector("#zoom-out")!
     .addEventListener("click", () => setZoom(zoomLevel - 0.1));
-  fab.querySelector("#zoom-fit")!.addEventListener("click", () => {
-    const tree = scroll.querySelector(".tree") as HTMLElement | null;
-    if (!tree) return;
-    tree.style.setProperty("zoom", "1");
-    const natural = tree.scrollWidth;
-    const avail = scroll.clientWidth;
-    setZoom(natural > 0 ? Math.min(1, avail / natural) : 1);
-  });
+  fab.querySelector("#zoom-fit")!.addEventListener("click", () => fitToWidth());
 
   // --- Pinch-to-zoom ---
   let pinchStartDist = 0;
